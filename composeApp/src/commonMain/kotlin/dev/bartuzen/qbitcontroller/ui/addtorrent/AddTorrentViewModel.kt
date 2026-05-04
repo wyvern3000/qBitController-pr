@@ -165,6 +165,9 @@ class AddTorrentViewModel(
                         eventChannel.send(Event.TorrentAdded(serverId))
                     }
                 }
+                is RequestResult.Error.ApiError if result.code == 409 -> {
+                    eventChannel.send(Event.TorrentAddError)
+                }
                 is RequestResult.Error.ApiError if result.code == 415 -> {
                     eventChannel.send(Event.InvalidTorrentFile)
                 }
