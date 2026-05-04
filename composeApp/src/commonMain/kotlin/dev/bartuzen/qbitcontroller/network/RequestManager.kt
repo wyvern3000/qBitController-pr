@@ -169,8 +169,8 @@ class RequestManager(
             when {
                 code == 403 -> RequestResult.Error.RequestError.Banned
                 body == "Fails." -> RequestResult.Error.RequestError.InvalidCredentials
-                body != "Ok." -> RequestResult.Error.RequestError.UnknownLoginResponse(body)
-                else -> RequestResult.Success(Unit)
+                body == "Ok." || (code in 200..<300 && body == null) -> RequestResult.Success(Unit)
+                else -> RequestResult.Error.RequestError.UnknownLoginResponse(body)
             }
         } else {
             RequestResult.Success(Unit)

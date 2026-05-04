@@ -58,10 +58,10 @@ class AddEditServerViewModel(
                         RequestResult.Error.RequestError.Banned
                     } else if (response.body == "Fails.") {
                         RequestResult.Error.RequestError.InvalidCredentials
-                    } else if (response.body != "Ok.") {
-                        RequestResult.Error.RequestError.UnknownLoginResponse(response.body)
-                    } else {
+                    } else if (response.body == "Ok." || (response.code in 200..<300 && response.body == null)) {
                         RequestResult.Success(Unit)
+                    } else {
+                        RequestResult.Error.RequestError.UnknownLoginResponse(response.body)
                     }
                 },
             )
