@@ -159,10 +159,10 @@ class AddTorrentViewModel(
                 )
             ) {
                 is RequestResult.Success -> {
-                    if (result.data == "Ok.") {
-                        eventChannel.send(Event.TorrentAdded(serverId))
-                    } else {
+                    if (result.data == "Fails.") {
                         eventChannel.send(Event.TorrentAddError)
+                    } else {
+                        eventChannel.send(Event.TorrentAdded(serverId))
                     }
                 }
                 is RequestResult.Error.ApiError if result.code == 415 -> {
