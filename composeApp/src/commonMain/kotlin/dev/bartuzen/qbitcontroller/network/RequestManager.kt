@@ -167,9 +167,9 @@ class RequestManager(
             val body = loginResponse.body
 
             when {
+                code in 200..<300 && (body == "Ok." || body == null) -> RequestResult.Success(Unit)
                 code == 403 -> RequestResult.Error.RequestError.Banned
-                body == "Fails." -> RequestResult.Error.RequestError.InvalidCredentials
-                body == "Ok." || (code in 200..<300 && body == null) -> RequestResult.Success(Unit)
+                body == "Fails." || code == 401 -> RequestResult.Error.RequestError.InvalidCredentials
                 else -> RequestResult.Error.RequestError.UnknownLoginResponse(body)
             }
         } else {

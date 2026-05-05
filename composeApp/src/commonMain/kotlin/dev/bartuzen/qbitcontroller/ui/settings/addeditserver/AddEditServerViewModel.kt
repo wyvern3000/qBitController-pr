@@ -54,14 +54,14 @@ class AddEditServerViewModel(
 
                     val response = service.login(serverConfig.username ?: "", serverConfig.password ?: "")
 
-                    if (response.code == 403) {
-                        RequestResult.Error.RequestError.Banned
-                    } else if (response.body == "Fails.") {
-                        RequestResult.Error.RequestError.InvalidCredentials
-                    } else if (response.body == "Ok." || (response.code in 200..<300 && response.body == null)) {
-                        RequestResult.Success(Unit)
-                    } else {
-                        RequestResult.Error.RequestError.UnknownLoginResponse(response.body)
+                    val code = response.code
+                    val body = response.body
+
+                    when {
+                        code in 200..<300 && (body == "Ok." || body == null) -> RequestResult.Success(Unit)
+                        code == 403 -> RequestResult.Error.RequestError.Banned
+                        body == "Fails." || code == 401 -> RequestResult.Error.RequestError.InvalidCredentials
+                        else -> RequestResult.Error.RequestError.UnknownLoginResponse(body)
                     }
                 },
             )
