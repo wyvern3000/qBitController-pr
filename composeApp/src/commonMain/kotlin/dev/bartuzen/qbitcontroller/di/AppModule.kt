@@ -12,6 +12,7 @@ import dev.bartuzen.qbitcontroller.data.repositories.rss.EditRssRuleRepository
 import dev.bartuzen.qbitcontroller.data.repositories.rss.RssArticlesRepository
 import dev.bartuzen.qbitcontroller.data.repositories.rss.RssFeedRepository
 import dev.bartuzen.qbitcontroller.data.repositories.rss.RssRulesRepository
+import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.SearchPluginsRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.SearchResultRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.SearchStartRepository
@@ -84,6 +85,7 @@ val appModule = module {
     singleOf(::LogRepository)
 
     singleOf(::ProwlarrRepository)
+    singleOf(::ProwlarrSearchRepository)
 
     viewModelOf(::TorrentListViewModel)
 

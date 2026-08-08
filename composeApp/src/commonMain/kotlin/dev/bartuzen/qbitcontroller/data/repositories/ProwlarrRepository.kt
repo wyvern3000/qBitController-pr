@@ -35,7 +35,14 @@ class ProwlarrRepository(
         settingsManager.prowlarrConfig.value = config
     }
 
-    private fun buildService(config: ProwlarrConfig): ProwlarrService {
+    /**
+     * Builds a one-off [ProwlarrService] bound to [config]. Not cached, since Prowlarr calls are
+     * infrequent (a settings test, or a user-initiated search) compared to qBittorrent's frequent
+     * polling - unlike [dev.bartuzen.qbitcontroller.network.RequestManager], there is no need to
+     * keep a long-lived client/session around. Also used by
+     * [dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository].
+     */
+    fun buildService(config: ProwlarrConfig): ProwlarrService {
         val client = createProwlarrHttpClient(config.trustSelfSignedCertificates) {
             install(ContentNegotiation) {
                 platformJsonIo(json)
