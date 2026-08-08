@@ -1,13 +1,7 @@
 # qBitController
+fork from https://github.com/Bartuzen/qBitController
 
 qBitController is a free and open-source app that allows you to control [qBittorrent](https://github.com/qbittorrent/qBittorrent) from Android, iOS, Windows, Linux, and macOS devices.
-
-## Download
-
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play Store" width="200">](https://play.google.com/store/apps/details?id=dev.bartuzen.qbitcontroller)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" width="200">](https://f-droid.org/en/packages/dev.bartuzen.qbitcontroller)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" width="200">](https://apt.izzysoft.de/fdroid/index/apk/dev.bartuzen.qbitcontroller)
-[<img src="https://user-images.githubusercontent.com/15032958/208871323-c1c5511c-d6bc-47c8-b82b-7ce2f95f244a.png" alt="Get it on GitHub" width="200">](https://github.com/Bartuzen/qBitController/releases)
 
 ## Screenshots
 
