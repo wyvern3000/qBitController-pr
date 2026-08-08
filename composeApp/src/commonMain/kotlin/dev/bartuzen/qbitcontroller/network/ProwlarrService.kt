@@ -1,5 +1,6 @@
 package dev.bartuzen.qbitcontroller.network
 
+import dev.bartuzen.qbitcontroller.model.ProwlarrSearchResult
 import dev.bartuzen.qbitcontroller.model.ProwlarrSystemStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -12,9 +13,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Thin wrapper around Prowlarr's REST API (`/api/v1/...`), following the same [Response]-returning
- * convention as [TorrentService]. Round 1 only needs [getSystemStatus] for the "Test Connection"
- * flow in the Prowlarr settings screen; search endpoints will be added once the search-source
- * integration lands (see docs/prowlarr-integration-plan.md).
+ * convention as [TorrentService].
  */
 class ProwlarrService(
     val client: HttpClient,
@@ -41,4 +40,18 @@ class ProwlarrService(
     }
 
     suspend fun getSystemStatus(): Response<ProwlarrSystemStatus> = get("system/status")
+
+    // indexerIds is a repeated query parameter (?indexerIds=1&indexerIds=2&...), which the generic
+    // get(path, parameters: Map<String, Any?>) helper above can't express (one value per key), so
+    // this is built directly instead of going through it.
+    suspend fun search(query: String, indexerIds: List<Int>? = null): Response<List<ProwlarrSearchResult>> =
+        client.prepareGet {
+            url.takeFrom(baseUrl).appendEncodedPathSegments("api/v1/search")
+            url.parameters.append("query", query)
+            url.parameters.append("type", "search")
+            indexerIds?.forEach { id ->
+                url.parameters.append("indexerIds", id.toString())
+            }
+        }.execute(::execute)
 }
+
