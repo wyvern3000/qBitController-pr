@@ -70,5 +70,8 @@ sealed class Destination {
 
         @Serializable
         data object Network : Destination()
+
+        @Serializable
+        data object Prowlarr : Destination()
     }
 }

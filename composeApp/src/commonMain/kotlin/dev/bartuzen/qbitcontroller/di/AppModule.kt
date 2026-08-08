@@ -5,6 +5,7 @@ import dev.bartuzen.qbitcontroller.data.ServerManager
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.notification.TorrentDownloadedNotifier
 import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
+import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.TorrentListRepository
 import dev.bartuzen.qbitcontroller.data.repositories.log.LogRepository
 import dev.bartuzen.qbitcontroller.data.repositories.rss.EditRssRuleRepository
@@ -35,6 +36,7 @@ import dev.bartuzen.qbitcontroller.ui.settings.addeditserver.AddEditServerViewMo
 import dev.bartuzen.qbitcontroller.ui.settings.appearance.AppearanceSettingsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.general.GeneralSettingsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.network.NetworkSettingsViewModel
+import dev.bartuzen.qbitcontroller.ui.settings.prowlarr.ProwlarrSettingsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.servers.ServersViewModel
 import dev.bartuzen.qbitcontroller.ui.torrent.tabs.files.TorrentFilesViewModel
 import dev.bartuzen.qbitcontroller.ui.torrent.tabs.overview.TorrentOverviewViewModel
@@ -81,6 +83,8 @@ val appModule = module {
 
     singleOf(::LogRepository)
 
+    singleOf(::ProwlarrRepository)
+
     viewModelOf(::TorrentListViewModel)
 
     viewModel { (serverId: Int, hash: String) -> TorrentOverviewViewModel(serverId, hash, get(), get(), get()) }
@@ -111,6 +115,7 @@ val appModule = module {
     viewModelOf(::GeneralSettingsViewModel)
     viewModelOf(::AppearanceSettingsViewModel)
     viewModelOf(::NetworkSettingsViewModel)
+    viewModelOf(::ProwlarrSettingsViewModel)
 }
 
 expect val platformModule: Module

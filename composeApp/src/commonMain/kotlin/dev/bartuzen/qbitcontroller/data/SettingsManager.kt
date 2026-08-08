@@ -3,6 +3,7 @@ package dev.bartuzen.qbitcontroller.data
 import androidx.compose.ui.graphics.Color
 import com.materialkolor.PaletteStyle
 import com.russhwolf.settings.Settings
+import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
 import dev.bartuzen.qbitcontroller.ui.theme.defaultPrimaryColor
 import dev.bartuzen.qbitcontroller.ui.torrentlist.TorrentFilter
 
@@ -38,6 +39,11 @@ open class SettingsManager(
 
     val searchSort = preference(settings, "searchSort", SearchSort.NAME)
     val isReverseSearchSorting = preference(settings, "isReverseSearchSort", false)
+
+    // Global Prowlarr connection config. A single instance is stored (as opposed to a list like
+    // ServerManager's ServerConfigs) since Prowlarr aggregates indexers independently of any one
+    // qBittorrent server - see docs/prowlarr-integration-plan.md section 4.3.
+    val prowlarrConfig = jsonPreference(settings, "prowlarrConfig", ProwlarrConfig())
 
     val checkUpdates = preference(settings, "checkUpdates", true)
 }

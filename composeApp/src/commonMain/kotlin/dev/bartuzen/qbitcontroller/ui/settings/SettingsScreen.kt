@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,6 +25,7 @@ import qbitcontroller.composeapp.generated.resources.Res
 import qbitcontroller.composeapp.generated.resources.settings_category_appearance
 import qbitcontroller.composeapp.generated.resources.settings_category_general
 import qbitcontroller.composeapp.generated.resources.settings_category_network
+import qbitcontroller.composeapp.generated.resources.settings_category_prowlarr
 import qbitcontroller.composeapp.generated.resources.settings_category_servers
 import qbitcontroller.composeapp.generated.resources.settings_title
 
@@ -33,6 +35,7 @@ fun SettingsScreen(
     onNavigateToGeneralSettings: () -> Unit,
     onNavigateToAppearanceSettings: () -> Unit,
     onNavigateToNetworkSettings: () -> Unit,
+    onNavigateToProwlarrSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -105,6 +108,19 @@ fun SettingsScreen(
                         )
                     },
                     onClick = { onNavigateToNetworkSettings() },
+                )
+            }
+
+            item {
+                Preference(
+                    title = { Text(text = stringResource(Res.string.settings_category_prowlarr)) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.TravelExplore,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = { onNavigateToProwlarrSettings() },
                 )
             }
         }
