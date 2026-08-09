@@ -134,24 +134,48 @@ feature/prowlarr-connection`，或用仓库 Contents API 之外的 Actions API �
 用户本地修正、重新编译、实机验证功能正常后推送。下一轮如果要碰导航相关代码，注意这个类现在的
 正确写法是密封类和每个子类都要有 `@Serializable`。
 
+## Round 9（2026-08-09）：P1 第五步（分类多选）完成，真机反馈后修了分类分组的显示 bug ✅
+
+**第五步：分类多选**（commit `3d229c87`，CI
+[31321894534](https://github.com/wyvern3000/qBitController-pr/actions/runs/31321894534) success）——
+`ProwlarrService.search()` / `ProwlarrSearchRepository.search()` / `ProwlarrSearchViewModel.search()`
+加了 `categories: List<Int>?` 参数，用法跟 `indexerIds` 一样（重复 query 参数，不传 = 查全部分类，
+解决了下面"待确认事项"里"categories 参数没接"那条）。`ProwlarrSearchScreen` 新增第二个可折叠区块，
+两级展开：大类本身直接可勾选（`CategoryChip`），有子分类时旁边才出现展开箭头。
+
+**偏离方案文档一处**（跟 Round 8 索引器多选那次同一个原则——核对真实数据，不照抄文档）：方案 2.2 节
+写的是固定 8 个 Torznab 标准大类（1000 Console ... 8000 Other）作为唯一顶层分组。核对 Round 7 那份
+真实索引器样本后发现这样会让 OpenCD（中文音乐站）的分类选择器基本没用——它的音乐流派
+（华语流行/古典音乐/...）全挂在 100000+ 的自定义分类号下，不属于任何标准大类。改成从"当前生效的
+索引器集合实际上报了什么"动态构建顶层分组（`buildCategoryGroups`），按 id 升序排列。
+
+**真机测试发现的 bug**（用户截图反馈"分类出现错乱了"）：按 id 排序的扁平列表，把 OurBits 的标准
+"Movies"（2000，真的有 "Movies/3D" 子分类）跟它自己重复注册的 site-specific "Movies"（100401，
+没有子分类）挨在一起显示，样式完全一样——用户看到两个同名 "Movies" chip 中间隔着 "Audio"/"TV"，
+以为是渲染错乱了。查了 Torznab/Newznab 规范确认：**id ≥ 100000 就是规范预留给站点自定义分类的范围**
+（跟标准 1000-8999 分开就是为了不冲突，不是瞎猜的）。据此把分类列表拆成 "Standard"/"Site-Specific"
+两个带标签的分组（`7df171a7`，CI
+[31341337943](https://github.com/wyvern3000/qBitController-pr/actions/runs/31341337943) success）——
+只是展示层面的分组，实际传给 `search()` 的分类号不变。`CategoryGroupRow` 抽出来复用，两个分组渲染
+逻辑不重复。
+
 ## 下一轮接手时先做什么
 
-1. 按方案第 6 节继续：**第五步（分类多选，大类+小类两级）** → 第六步（排序/过滤），每步单独
-   commit + push，完成后手动 dispatch 一次 `build-prowlarr-apk.yml` 验证（不要每个中间 commit
-   都触发构建，见 Round 8）
-2. 第五步可以直接复用 `ProwlarrIndexer.capabilities.categories`（已经是递归结构，Round 8 已建好模型），
-   UI 参照方案 2.2 节"两级展开"设计；沿用 Round 8 的教训——**FilterChip 在这个代码库里不存在**，
-   继续用 `CategoryChip`/`TagChip`
-- ProwlarrIndexer 的 GET 端点这轮验证过一次（数据出现且解析出预期字段），如果 CI 构建通过不代表
-  数据方向一定正确，第四步验收标准里"用真实 Prowlarr 实例实测勾选子集后结果确实只来自被勾选索引器"
-  这部分还没有用户实机确认过，有空档需要用户过一遍
-3. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
-4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
-5. 完成 P1 全部步骤后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
+1. 按方案第 6 节继续：**第六步（排序/过滤）**，完成后手动 dispatch 一次 `build-prowlarr-apk.yml`
+   验证（不要每个中间 commit 都触发构建，见 Round 8）
+2. 索引器多选（第四步）和分类多选（第五步）都还没有真正意义上的"搜索结果确实被过滤对了"的实机验证——
+   Round 9 的截图只验证了 UI 渲染本身（勾选、展开、显示分组），没有验证"只勾 OurBits + 只选 Movies
+   分类后，搜出来的结果确实只来自 OurBits 的电影分类"这条功能性验收标准，需要用户实测一遍
+3. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
+   Torznab 大类名（Movies/TV/Audio/...）都还是硬编码英文，没有走 strings.xml 之外的本地化路径——
+   目前判断这是合理的（协议层面的分类名，不是面向用户的文案，参照 indexer.name 本身也不本地化），
+   但如果用户觉得别扭需要反馈
+4. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
+5. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
+6. 完成 P1 全部步骤后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
    "实施纪要"一节，避免两份方案文档长期并存
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
-- `categories`（Torznab 分类号）参数目前没接，Prowlarr 端默认查全部分类
 - 分页 `limit`/`offset` 在当前 Prowlarr 版本上是否生效未实测确认
 - 未支持 Prowlarr 侧 Basic Auth / 反向代理鉴权场景
