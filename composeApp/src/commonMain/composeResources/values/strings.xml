@@ -823,6 +823,10 @@
     <string name="settings_prowlarr_go_to_appearance_settings">Go to Appearance settings</string>
 
     <string name="prowlarr_search_query_hint">Search Prowlarr indexers</string>
+    <string name="prowlarr_search_indexers">Indexers</string>
+    <string name="prowlarr_search_indexers_enabled">Enabled Indexers</string>
+    <string name="prowlarr_search_indexers_all">All Indexers</string>
+    <string name="prowlarr_search_indexers_select">Select Indexers</string>
     <string name="prowlarr_search_no_results">No results found.</string>
     <string name="prowlarr_search_not_configured">Prowlarr isn\'t configured yet.</string>
     <string name="prowlarr_search_go_to_settings">Go to Settings</string>

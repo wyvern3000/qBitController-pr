@@ -1,5 +1,6 @@
 package dev.bartuzen.qbitcontroller.network
 
+import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.ProwlarrSearchResult
 import dev.bartuzen.qbitcontroller.model.ProwlarrSystemStatus
 import io.ktor.client.HttpClient
@@ -40,6 +41,8 @@ class ProwlarrService(
     }
 
     suspend fun getSystemStatus(): Response<ProwlarrSystemStatus> = get("system/status")
+
+    suspend fun getIndexers(): Response<List<ProwlarrIndexer>> = get("indexer")
 
     // Used for fetching a .torrent file's raw bytes directly from the client (phone/desktop)
     // rather than requiring the qBittorrent server to be able to reach Prowlarr - see

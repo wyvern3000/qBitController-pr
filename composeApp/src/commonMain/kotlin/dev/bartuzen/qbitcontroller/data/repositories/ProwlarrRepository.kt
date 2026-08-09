@@ -2,6 +2,7 @@ package dev.bartuzen.qbitcontroller.data.repositories
 
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
+import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.network.ProwlarrService
 import dev.bartuzen.qbitcontroller.network.RequestResult
 import dev.bartuzen.qbitcontroller.network.catchRequestError
@@ -71,4 +72,31 @@ class ProwlarrRepository(
             }
         },
     )
+
+    /**
+     * Used by [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchViewModel] to populate
+     * the indexer multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.1).
+     * Failure here shouldn't block searching - callers should fall back to an unrestricted search
+     * (no indexerIds filter) rather than surfacing this as a hard error.
+     */
+    suspend fun getIndexers(): RequestResult<List<ProwlarrIndexer>> {
+        val config = getConfig()
+        if (!config.isConfigured) {
+            return RequestResult.Error.RequestError.Unknown("Prowlarr is not configured")
+        }
+
+        return catchRequestError(
+            block = {
+                val service = buildService(config)
+                val response = service.getIndexers()
+                val indexers = response.body
+
+                if (response.code in 200..<300 && indexers != null) {
+                    RequestResult.Success(indexers)
+                } else {
+                    RequestResult.Error.ApiError(response.code)
+                }
+            },
+        )
+    }
 }
