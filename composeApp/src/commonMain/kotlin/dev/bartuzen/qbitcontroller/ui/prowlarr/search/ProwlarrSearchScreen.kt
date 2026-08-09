@@ -28,6 +28,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
@@ -67,8 +68,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.bartuzen.qbitcontroller.model.ProwlarrCategory
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.Search
+import dev.bartuzen.qbitcontroller.ui.components.CategoryChip
 import dev.bartuzen.qbitcontroller.ui.components.EmptyListMessage
 import dev.bartuzen.qbitcontroller.ui.components.RadioButtonWithLabel
 import dev.bartuzen.qbitcontroller.ui.components.SwipeableSnackbarHost
@@ -88,6 +91,9 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import qbitcontroller.composeapp.generated.resources.Res
 import qbitcontroller.composeapp.generated.resources.destination_prowlarr
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_all
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_selected
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_all
@@ -134,6 +140,11 @@ fun ProwlarrSearchScreen(
     var selectedIndexerOption by rememberSaveable { mutableStateOf(IndexerSelection.Enabled) }
     val selectedIndexerIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
 
+    var categorySectionExpanded by rememberSaveable { mutableStateOf(false) }
+    val expandedCategoryGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+    val selectedTopCategoryIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+    val selectedSubCategoryIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+
     // Populate the indexer list once Prowlarr is configured (it may not be yet on first render -
     // e.g. a fresh install). loadIndexers() is a no-op if a fetch is already in flight, so this is
     // safe to re-trigger if isConfigured flips true -> false -> true again.
@@ -152,6 +163,32 @@ fun ProwlarrSearchScreen(
         }
     }
 
+    // The indexers whose categories currently feed the category picker below - not the same thing
+    // as the indexerIds actually sent to search() (see runSearch): "Enabled"/"Selected" fall back to
+    // an empty list here while the indexer list is still loading, so the category picker just shows
+    // nothing yet rather than null-checking everywhere below.
+    val effectiveIndexers = when (selectedIndexerOption) {
+        IndexerSelection.Enabled -> indexers?.filter { it.enable }
+        IndexerSelection.All -> indexers
+        IndexerSelection.Selected -> indexers?.filter { it.id in selectedIndexerIds }
+    } ?: emptyList()
+
+    // See buildCategoryGroups KDoc for why this is a union across effectiveIndexers rather than a
+    // fixed 8-item Torznab top-level list, which is what the plan doc originally called for.
+    val categoryGroups = remember(effectiveIndexers) { buildCategoryGroups(effectiveIndexers) }
+
+    // Same cleanup idea as the indexer LaunchedEffect above, but for categories: dropping an
+    // indexer from the selection can shrink categoryGroups (a category only offered by that
+    // indexer disappears), so any previously-checked top/sub category id no longer present has to
+    // be un-checked too, or the search would silently keep applying a filter the UI no longer shows
+    // as selected.
+    LaunchedEffect(categoryGroups) {
+        val validTopIds = categoryGroups.mapTo(mutableSetOf()) { it.id }
+        val validSubIds = categoryGroups.flatMapTo(mutableSetOf()) { group -> group.subCategories.map { it.id } }
+        selectedTopCategoryIds.removeAll { it !in validTopIds }
+        selectedSubCategoryIds.removeAll { it !in validSubIds }
+    }
+
     fun runSearch() {
         if (!config.isConfigured) {
             return
@@ -162,7 +199,8 @@ fun ProwlarrSearchScreen(
             IndexerSelection.All -> null
             IndexerSelection.Selected -> selectedIndexerIds.toList()
         }
-        viewModel.search(query.text, indexerIds)
+        val categories = (selectedTopCategoryIds + selectedSubCategoryIds).takeIf { it.isNotEmpty() }
+        viewModel.search(query.text, indexerIds, categories)
     }
 
     // Tapping the bottom-nav tab again while already on this screen resets to a blank search,
@@ -255,6 +293,39 @@ fun ProwlarrSearchScreen(
                             selectedIndexerIds.remove(id)
                         } else {
                             selectedIndexerIds.add(id)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+
+                CategorySelectionSection(
+                    expanded = categorySectionExpanded,
+                    onExpandedChange = { categorySectionExpanded = it },
+                    categoryGroups = categoryGroups,
+                    expandedGroupIds = expandedCategoryGroupIds,
+                    onToggleGroupExpanded = { id ->
+                        if (id in expandedCategoryGroupIds) {
+                            expandedCategoryGroupIds.remove(id)
+                        } else {
+                            expandedCategoryGroupIds.add(id)
+                        }
+                    },
+                    selectedTopCategoryIds = selectedTopCategoryIds,
+                    onToggleTopCategory = { id ->
+                        if (id in selectedTopCategoryIds) {
+                            selectedTopCategoryIds.remove(id)
+                        } else {
+                            selectedTopCategoryIds.add(id)
+                        }
+                    },
+                    selectedSubCategoryIds = selectedSubCategoryIds,
+                    onToggleSubCategory = { id ->
+                        if (id in selectedSubCategoryIds) {
+                            selectedSubCategoryIds.remove(id)
+                        } else {
+                            selectedSubCategoryIds.add(id)
                         }
                     },
                     modifier = Modifier
@@ -561,4 +632,183 @@ private enum class IndexerSelection {
     Enabled,
     All,
     Selected,
+}
+
+/**
+ * A top-level Torznab/Newznab category entry (e.g. id 2000 "Movies", or an indexer-specific custom
+ * entry like id 100401 "Movies" - see [buildCategoryGroups]) together with the union of its
+ * [subCategories][ProwlarrCategory.subCategories] across whichever indexers are currently in play.
+ */
+private data class CategoryGroup(val id: Int, val name: String, val subCategories: List<ProwlarrCategory>)
+
+/**
+ * Groups [indexers]' `capabilities.categories` ([ProwlarrCategory] list) by top-level id,
+ * unioning subcategories for ids more than one indexer reports.
+ *
+ * Deliberately **not** the plan doc's original design (section 2.2): that called for a fixed list of
+ * the 8 standard Torznab top-level categories (1000 Console ... 8000 Other) as the only top-level
+ * groups. Checked against the real indexer sample from round 7 and that would have made the picker
+ * nearly useless for exactly the indexers this instance has configured - e.g. OpenCD (a Chinese
+ * music tracker) puts effectively its entire genre taxonomy (华语流行/古典音乐/摇滚/爵士/... ) under
+ * custom ids in the 100000+ range, as flat top-level entries with no parent among the 8 standard
+ * ones, and OurBits reports both a standard "Movies" (2000, with real subCategories) and a redundant
+ * custom "Movies" (100401, no subCategories) as two separate top-level entries. Prowlarr's
+ * `capabilities.categories` array doesn't structurally distinguish "standard" from "custom" - both
+ * are just top-level entries, some with subCategories, some without - so building groups from
+ * whatever indexers actually report (rather than hardcoding the 8) is the only way to expose the
+ * custom ones at all. Sorting by id keeps the standard 1000-8000 range naturally first, ahead of the
+ * 100000+ custom entries, without needing to special-case anything.
+ *
+ * One known quirk this doesn't try to solve: two groups from different indexers (or, per the OurBits
+ * example above, the same indexer) can share a display name but not an id - they show up as separate
+ * chips. Deduping by name would risk merging categories that only coincidentally share a label, so
+ * this leaves that as-is rather than guessing.
+ */
+private fun buildCategoryGroups(indexers: List<ProwlarrIndexer>): List<CategoryGroup> {
+    val byId = linkedMapOf<Int, CategoryGroup>()
+    for (indexer in indexers) {
+        val categories = indexer.capabilities?.categories ?: continue
+        for (category in categories) {
+            val existing = byId[category.id]
+            byId[category.id] = if (existing == null) {
+                CategoryGroup(category.id, category.name, category.subCategories)
+            } else {
+                existing.copy(subCategories = (existing.subCategories + category.subCategories).distinctBy { it.id })
+            }
+        }
+    }
+    return byId.values.sortedBy { it.id }
+}
+
+/**
+ * Collapsible category multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.2,
+ * and [buildCategoryGroups] for why the grouping itself deviates from that doc). Two-level: each
+ * [CategoryGroup] is its own row - directly selectable via [CategoryChip], with an expand chevron
+ * next to it only when it actually has subcategories to show. There's no existing two-level
+ * selector anywhere else in this codebase to mirror (TorrentListScreen's category filter is a flat,
+ * single-select list) - only the leaf [CategoryChip] component itself follows an established
+ * pattern, the grouping/expand layout here is new.
+ */
+@Composable
+private fun CategorySelectionSection(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    categoryGroups: List<CategoryGroup>,
+    expandedGroupIds: List<Int>,
+    onToggleGroupExpanded: (Int) -> Unit,
+    selectedTopCategoryIds: List<Int>,
+    onToggleTopCategory: (Int) -> Unit,
+    selectedSubCategoryIds: List<Int>,
+    onToggleSubCategory: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
+    val selectedCount = selectedTopCategoryIds.size + selectedSubCategoryIds.size
+
+    Column(modifier = modifier) {
+        val summary = if (selectedCount == 0) {
+            stringResource(Res.string.prowlarr_search_categories_all)
+        } else {
+            stringResource(Res.string.prowlarr_search_categories_selected, selectedCount)
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onExpandedChange(!expanded) }
+                .padding(vertical = 8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Category,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = "${stringResource(Res.string.prowlarr_search_categories)}: $summary",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
+            )
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .rotate(rotation),
+            )
+        }
+
+        AnimatedVisibility(visible = expanded) {
+            if (categoryGroups.isEmpty()) {
+                Text(
+                    text = stringResource(Res.string.prowlarr_search_categories_all),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    categoryGroups.forEach { group ->
+                        val groupExpanded = group.id in expandedGroupIds
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (group.subCategories.isNotEmpty()) {
+                                val groupRotation by animateFloatAsState(targetValue = if (groupExpanded) 180f else 0f)
+                                IconButton(
+                                    onClick = { onToggleGroupExpanded(group.id) },
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .rotate(groupRotation),
+                                    )
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.size(32.dp))
+                            }
+
+                            CategoryChip(
+                                category = group.name,
+                                isSelected = group.id in selectedTopCategoryIds,
+                                onClick = { onToggleTopCategory(group.id) },
+                            )
+                        }
+
+                        if (group.subCategories.isNotEmpty()) {
+                            AnimatedVisibility(visible = groupExpanded) {
+                                FlowRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 32.dp, top = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    group.subCategories.forEach { subCategory ->
+                                        CategoryChip(
+                                            category = subCategory.name,
+                                            isSelected = subCategory.id in selectedSubCategoryIds,
+                                            onClick = { onToggleSubCategory(subCategory.id) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

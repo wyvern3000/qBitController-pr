@@ -827,6 +827,9 @@
     <string name="prowlarr_search_indexers_enabled">Enabled Indexers</string>
     <string name="prowlarr_search_indexers_all">All Indexers</string>
     <string name="prowlarr_search_indexers_select">Select Indexers</string>
+    <string name="prowlarr_search_categories">Categories</string>
+    <string name="prowlarr_search_categories_all">All Categories</string>
+    <string name="prowlarr_search_categories_selected">%1$d selected</string>
     <string name="prowlarr_search_no_results">No results found.</string>
     <string name="prowlarr_search_not_configured">Prowlarr isn\'t configured yet.</string>
     <string name="prowlarr_search_go_to_settings">Go to Settings</string>

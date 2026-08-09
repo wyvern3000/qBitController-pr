@@ -57,7 +57,7 @@ class ProwlarrSearchViewModel(
     private var addTorrentJob: Job? = null
     private var loadIndexersJob: Job? = null
 
-    fun search(query: String, indexerIds: List<Int>? = null) {
+    fun search(query: String, indexerIds: List<Int>? = null, categories: List<Int>? = null) {
         if (query.isBlank()) {
             searchJob?.cancel()
             _results.value = emptyList()
@@ -68,7 +68,7 @@ class ProwlarrSearchViewModel(
 
         _isLoading.value = true
         val job = viewModelScope.launch {
-            when (val result = prowlarrSearchRepository.search(query, indexerIds)) {
+            when (val result = prowlarrSearchRepository.search(query, indexerIds, categories)) {
                 is RequestResult.Success -> _results.value = result.data
                 is RequestResult.Error -> {
                     _results.value = emptyList()
