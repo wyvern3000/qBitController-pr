@@ -4,12 +4,16 @@ name: Build Prowlarr Feature APK (dev)
 # release process (see build.yml / build-snapshot.yml / build-release.yml for those). Builds only
 # the free-flavor debug APK, which Android Gradle Plugin signs automatically with a debug keystore,
 # so no signing secrets are needed here. Safe to delete once this branch is merged or abandoned.
+#
+# Manual-dispatch only (round 8+): this used to also trigger on every push to the branch, but the
+# push-after-every-commit habit from the collaboration convention (see repo-level 代码协作与推送策略)
+# meant a ~6min CI build fired on every small, individually-verified commit, not just at meaningful
+# checkpoints. Push-to-save-progress and build-to-verify are different concerns and shouldn't be
+# coupled - commits/pushes stay frequent, but a build only runs when explicitly dispatched (gh CLI:
+# `gh workflow run build-prowlarr-apk.yml --ref feature/prowlarr-connection`, or the Actions tab).
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/prowlarr-connection
 
 permissions:
   contents: write
