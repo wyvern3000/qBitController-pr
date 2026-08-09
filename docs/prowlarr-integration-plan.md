@@ -3,6 +3,8 @@
 > 目标仓库：https://github.com/Bartuzen/qBitController
 > 本方案基于对 `master` 分支源码的实际拉取核查（而非纯粹的规划推测），所有文件路径、类名、字段名均对照真实代码。文末列出了仍需在开发阶段用 Prowlarr 的 Swagger（`http://<prowlarr>:9696/docs`）二次确认的细节。
 
+> **⚠️ 本节以下（第 0～7 节）是 P0 阶段动工前写的最初方案，保留作为背景记录。实际开发中方向有过一次重大调整（复用现有搜索 UI → 完全独立的 Prowlarr 页面），已实施的部分以「实施纪要」一节（在文末）为准，两者冲突时以实施纪要为准。**
+
 ---
 
 ## 0. 先说结论：这与附件里的原始方案有本质区别
@@ -327,3 +329,43 @@ iosMain/.../di/AppModule.ios.kt                     # 同上
 2. 当前部署的 Prowlarr 版本上 `limit`/`offset` 分页参数是否生效，如果不生效，一次搜索可能返回全部结果，是否需要客户端自己截断/虚拟分页
 3. `categories` 参数（Torznab 分类号）是否要在 P0 就接入，还是先不传（不传时 Prowlarr 默认查全部分类）
 4. 是否要支持 Prowlarr 侧配置了 Basic Auth/反向代理鉴权的场景（如果部署方式和 qBittorrent 一样套了 Caddy/Nginx，可能需要复用 `ServerConfig.advanced.customHeaders` 这一套机制）
+
+---
+
+## 8. 实施纪要（Round 1-4，方案变更记录）
+
+> 本节记录实际开发中相对第 0～7 节最初方案的偏离，以及原因。以下描述均对照 `feature/prowlarr-connection` 分支的真实代码，是当前的权威状态。
+
+### 8.1 核心方向调整：不复用 `ui/search/*`，改成完全独立的页面
+
+最初方案（第 4.6 节）设想的是"抽出 `SearchResultScreen` 里纯展示部分的 Composable，两条数据源共用一套 UI"。实际开发时改成了**完全独立、零侵入**的方案：
+
+- 新建 `ui/prowlarr/search/ProwlarrSearchScreen.kt` + `ProwlarrSearchViewModel.kt`，**没有修改 `ui/search/*` 下任何一个文件**
+- 结果列表是独立写的一份简化版展示（标题/大小/来源/做种吸血数/下载按钮），没有复用 `SearchResultScreen` 原有的排序菜单、过滤 Dialog、详情弹窗
+- 代价：牺牲了一部分 UI 复用（排序/过滤这些交互目前 Prowlarr 页面没有），换来对现有功能**零侵入、可独立回退**——这条分支上出的任何问题都不会牵连到原有的 qBit 插件搜索功能，符合协作文档里"小步提交、可验证的最小单元"的约定
+- 入口：Prowlarr 页面作为**可选的第 6 个底部导航 Tab**（`SettingsManager.showProwlarrTab` 控制显隐），追加在 Settings 之后，而不是插入到中间——这样能避开 `MainScreen.kt` 里好几处硬编码的 tab 下标（如 deep link 里的 `selectedTabIndex = 4`），显隐切换不需要改动其他 tab 的下标逻辑
+
+如果后续要做"两条数据源结果合并展示"（原方案 P1），需要重新评估是否值得回头做 UI 层的抽象复用；目前 P0 阶段判断不值得，改动面/风险都更大。
+
+### 8.2 下载方式调整：客户端直传，不依赖 qBit 服务端能访问 Prowlarr
+
+最初方案（第 4.7 节坑点表格第一行）认为"qBit 服务器必须能访问到 Prowlarr 的 `downloadUrl`"这条限制依然成立。实际实现绕开了这个限制：
+
+- **磁力链**（`fileUrl` 以 `magnet:` 开头）：原样作为 `links` 传给 `torrents/add`，和原方案一致，无变化
+- **种子直链**（`downloadUrl`，非 magnet）：**改为客户端（手机/桌面）自己先把种子文件下载下来**，拿到字节数组后以文件上传的方式传给 qBittorrent（`AddTorrentRepository.addTorrent` 本来就支持的 `files: List<Pair<String, ByteArray>>?` 参数，无需新增能力）
+- 效果：qBittorrent 服务端完全不需要有到 Prowlarr 的网络连通性，只需要客户端这一端同时连得上两边即可。第 4.7 节表格里"downloadUrl 主机名必须从 qBittorrent 所在容器可达"这条注意事项，对**这个实现**已经不成立，但如果部署环境比较特殊（比如客户端和 Prowlarr 不在同一局域网），需要客户端能连到 Prowlarr 这条新约束要记在设置页帮助文案里
+- 实现位置：`ProwlarrSearchViewModel.addTorrent()` 判断 `fileUrl` 前缀分流；下载逻辑在 `ProwlarrSearchRepository.downloadTorrentFile()`
+
+### 8.3 设置页新增项（对照第 4.6 节原方案，基本一致，补充了一项）
+
+- `ui/settings/prowlarr/ProwlarrSettingsScreen.kt` + ViewModel：Prowlarr Server URL、API Key、测试连接按钮——与原方案一致
+- **新增**（原方案未提及）：设置页最下面加了"在底部导航栏中显示"开关，对应 `SettingsManager.showProwlarrTab`，即改即生效（不需要点保存），用来控制 8.1 节提到的第 6 个 tab 的显隐
+
+### 8.4 当前状态与本轮（继续第 4 轮之后）修的问题
+
+Round 4（把 Prowlarr 页面接入底部导航栏）推送后触发 CI，编译失败，报错见 `build-error.log` 思路 / 用户贴的构建日志。排查后定位到两个独立问题，均已修复并推送到 `feature/prowlarr-connection`：
+
+1. **源码 bug（真正的编译失败原因）**：`ProwlarrSearchScreen.kt` 的 KDoc 里字面写了 `ui/search/*` 这段路径，Kotlin 的块注释支持嵌套，`/*` 被解析成 KDoc 内部又开了一层嵌套注释，嵌套注释在 KDoc 自己的 `*/` 处关闭，但最外层的 `/**` 就再也没闭合，导致解析器把这之后的全部代码都吞成"注释"直到文件末尾——这就是编译器报的 `365:1 Unclosed comment`，以及 `MainScreen.kt` 里 `Unresolved reference 'ProwlarrSearchScreen'`（因为那个符号事实上"不存在"，被注释掉了）的根本原因。修复：把 KDoc 里的 `ui/search/*` 改写成不含 `/*` 序列的表述。
+2. **CI 脚本 bug（导致上一次"看起来成功"的构建其实是假的）**：`build-prowlarr-apk.yml` 里 `./gradlew ... | tee build-output.log` 没有开 `pipefail`，导致管道最终的退出码是 `tee` 的（恒为 0），而不是 `gradlew` 真实的失败退出码。核对 Actions 运行记录发现：commit `30d72335`（只改了 workflow、没改任何源码）对应的那次运行，"Build debug APK" 步骤显示 success、耗时和上一次真实失败的构建几乎一样长（~5分52秒），但 `Upload artifact` 实际上传了 0 个文件——说明真实构建其实还是失败的，只是失败信号被吞掉了，日志兜底机制（写 `build-error.log` 回仓库那一步）从未真正触发过。已加 `set -o pipefail`，并给 `actions/upload-artifact` 加了 `if-no-files-found: error` 作为第二道保险。
+
+这两个修复都还没有被 CI 真正验证通过（这个沙盒本身连不上 `google()`/`mavenCentral()`，无法本地跑 Gradle），需要等这一轮推送触发的 CI 跑完确认。
