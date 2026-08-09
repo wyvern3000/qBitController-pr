@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,9 @@ import dev.bartuzen.qbitcontroller.utils.formatUri
 import dev.bartuzen.qbitcontroller.utils.getErrorMessage
 import dev.bartuzen.qbitcontroller.utils.getString
 import dev.bartuzen.qbitcontroller.utils.stringResource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import qbitcontroller.composeapp.generated.resources.Res
@@ -81,7 +85,7 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_invalid_file
 /**
  * A standalone search screen for Prowlarr, deliberately kept separate from ui/search/* (the
  * qBittorrent-search-plugin feature) so this can be built/iterated on without touching that
- * existing code at all - see docs/prowlarr-integration-plan.md, round 3.
+ * existing code at all - see docs/prowlarr-integration-plan.md, rounds 3-4.
  *
  * [serverId] is the currently selected qBittorrent server (if any) that a tapped result gets
  * added to. Search itself doesn't need one, since it only talks to Prowlarr.
@@ -90,6 +94,7 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_invalid_file
 fun ProwlarrSearchScreen(
     serverId: Int?,
     onNavigateToSettings: () -> Unit,
+    navigateToStartFlow: Flow<Unit> = remember { emptyFlow() },
     modifier: Modifier = Modifier,
     viewModel: ProwlarrSearchViewModel = koinViewModel(),
 ) {
@@ -110,6 +115,18 @@ fun ProwlarrSearchScreen(
         }
         hasSearched = true
         viewModel.search(query.text)
+    }
+
+    // Tapping the bottom-nav tab again while already on this screen resets to a blank search,
+    // matching the "tap current tab to go back to its root" convention used by the other tabs
+    // (which pop their own nav stack back to the start screen instead - this screen has none, so
+    // clearing the query/results is the closest equivalent).
+    LaunchedEffect(navigateToStartFlow) {
+        navigateToStartFlow.collectLatest {
+            query = TextFieldValue("")
+            hasSearched = false
+            viewModel.search("")
+        }
     }
 
     EventEffect(viewModel.eventFlow) { event ->

@@ -1,0 +1,37 @@
+name: Build Prowlarr Feature APK (dev)
+
+# Temporary, dev-only workflow for testing the Prowlarr feature branch - not part of upstream's
+# release process (see build.yml / build-snapshot.yml / build-release.yml for those). Builds only
+# the free-flavor debug APK, which Android Gradle Plugin signs automatically with a debug keystore,
+# so no signing secrets are needed here. Safe to delete once this branch is merged or abandoned.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/prowlarr-connection
+
+jobs:
+  build-android-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: ./gradlew assembleFreeDebug
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qbitcontroller-prowlarr-debug-apk
+          path: composeApp/build/outputs/apk/free/debug/*.apk
