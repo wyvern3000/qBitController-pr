@@ -92,18 +92,61 @@ Prowlarr 移位才暴露，所以提前在第二步一并修掉：把持久化�
 的 getter/setter、`PaddingValues`、`Settings.hasKey()` 等）后推送，靠 CI 远程验证——三次运行都是
 `success`，没有出现过编译错误。
 
+## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 ✅
+
+**CI 触发方式改动**：用户要求"编译先改为按需编译，不要每次改动一点都编译"——`build-prowlarr-apk.yml`
+原来 `push` 到本分支就自动触发（配合协作规范"每个 commit 后立即 push"，导致每个已经验证过的小 commit
+都触发一次 ~6 分钟构建）。改成只保留 `workflow_dispatch`，push 频率不变（继续遵守"及时同步防丢失"），
+但构建验证只在有意义的检查点手动触发（`gh workflow run build-prowlarr-apk.yml --ref
+feature/prowlarr-connection`，或用仓库 Contents API 之外的 Actions API 直接 POST
+`.../actions/workflows/build-prowlarr-apk.yml/dispatches`）。已确认改动生效：改动本身的 push 没有
+触发自动构建，随后手动 dispatch 两次都正常跑起来了。
+
+**第四步：索引器多选**（`83b907ef`→`c536ddc1` 之后，commit `735b7441` + 修复 `8b3d4508`）——
+
+用户提供了一份真实（但未脱敏）的 `GET /api/v1/indexer` 响应样本，核对后发现：`id`/`name`/`enable`
+字段名跟方案文档 2.1 节的猜测一致，但 `capabilities.categories` 是**递归**结构（子分类嵌套在父分类的
+`subCategories` 里，不是平铺列表），这是原方案没预料到的。样本里还带着真实站点的 session cookie/JWT，
+已在对话里提醒用户轮换，代码/文档里没有落地任何一个真实凭证。
+
+改动：
+- 新增 `model/ProwlarrIndexer.kt`：`ProwlarrIndexer` / `ProwlarrIndexerCapabilities` /
+  `ProwlarrCategory`（`subCategories: List<ProwlarrCategory>` 递归建模，为第五步分类多选直接复用）
+- `ProwlarrService.getIndexers()` + `ProwlarrRepository.getIndexers()` 转发（失败不阻塞搜索，退化为
+  不传 `indexerIds`）
+- `ProwlarrSearchViewModel`：`indexers`/`isLoadingIndexers` 状态，`loadIndexers()`，`search()` 加
+  `indexerIds: List<Int>?` 参数
+- `ProwlarrSearchScreen`：可折叠的三态选择器（已启用/全部/自选），复用
+  `SearchStartScreen.kt` 的 `RadioButtonWithLabel` 三态模式。**偏离了方案文档一处**：方案写的是
+  "FilterChip"，但核对代码发现这个 Material3 组件在本项目里从来没用过，实际的 chip 组件是
+  `TagChip`/`CategoryChip`（`TorrentOverviewTab.kt` 的标签选择器在用）——改用后者，跟"核对真实 API
+  而不是照抄文档猜测"是同一个原则的延伸
+
+**踩的一个坑**：第一次推送后手动 dispatch 构建，`compileFreeDebugKotlinAndroid` 报错——新增的
+`Event.IndexersError` 没有加进 `ProwlarrSearchScreen.kt` 里 `EventEffect` 那个穷尽 `when` 分支，
+漏了编译器要求的 exhaustive check。单独一个 commit（`8b3d4508`）修掉，重新 dispatch 构建，
+[run 31316463719](https://github.com/wyvern3000/qBitController-pr/actions/runs/31316463719)
+`success`。`build-error.log` 已清理。
+
+**用户手动修复的一处 bug**（`cc9fe525` + `29d6e0f4`，非本轮 Claude 改的，特此记录）：
+`NavHostDestination.kt` 的 `sealed class NavHostDestination` 本身缺了 `@Serializable` 注解
+（每个 `data object` 子类单独标了，但密封类自己没标），会影响 `NavHost` 类型安全导航的多态序列化。
+用户本地修正、重新编译、实机验证功能正常后推送。下一轮如果要碰导航相关代码，注意这个类现在的
+正确写法是密封类和每个子类都要有 `@Serializable`。
+
 ## 下一轮接手时先做什么
 
-1. **第四步开工前必须先拿到真实 Prowlarr `GET /api/v1/indexer` 响应样本**——问用户要一份脱敏后的
-   JSON，核对方案里 `ProwlarrIndexer`/`ProwlarrIndexerCapabilities` 的字段名是否跟真实响应一致，
-   这是唯一真正阻塞性的前置条件，不能直接假设方案文档写的字段名是对的
-2. 确认字段结构后按方案第 6 节继续：第四步（索引器多选）→ 第五步（分类多选）→ 第六步（排序/过滤），
-   每步单独 commit + push + 等 CI 跑绿再进下一步
-3. 方案第 2.4 节讨论的"下载目的地重新设计"（直链 vs 客户端直传、批量下载）**没有被列进第 6 节的
-   六步实施顺序**——如果这部分也要做，需要先跟用户确认要不要补一个"第七步"，不要假设它已经包含在
-   当前六步范围内
-4. P0 验收（APK 实机测试）如果还没做完，参见 `docs/prowlarr-integration-plan.md` 第 6 节，优先级
-   高于继续往下做 P1 新步骤
+1. 按方案第 6 节继续：**第五步（分类多选，大类+小类两级）** → 第六步（排序/过滤），每步单独
+   commit + push，完成后手动 dispatch 一次 `build-prowlarr-apk.yml` 验证（不要每个中间 commit
+   都触发构建，见 Round 8）
+2. 第五步可以直接复用 `ProwlarrIndexer.capabilities.categories`（已经是递归结构，Round 8 已建好模型），
+   UI 参照方案 2.2 节"两级展开"设计；沿用 Round 8 的教训——**FilterChip 在这个代码库里不存在**，
+   继续用 `CategoryChip`/`TagChip`
+- ProwlarrIndexer 的 GET 端点这轮验证过一次（数据出现且解析出预期字段），如果 CI 构建通过不代表
+  数据方向一定正确，第四步验收标准里"用真实 Prowlarr 实例实测勾选子集后结果确实只来自被勾选索引器"
+  这部分还没有用户实机确认过，有空档需要用户过一遍
+3. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
+4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
 5. 完成 P1 全部步骤后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
    "实施纪要"一节，避免两份方案文档长期并存
 
