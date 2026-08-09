@@ -166,6 +166,17 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         ),
                     )
                 }
+                if (OptionalTab.PROWLARR in visibleTabs) {
+                    add(
+                        BottomNavigationItem(
+                            title = Res.string.destination_prowlarr,
+                            enabled = true,
+                            unselectedIcon = Icons.Outlined.TravelExplore,
+                            selectedIcon = Icons.Filled.TravelExplore,
+                            destination = NavHostDestination.Prowlarr,
+                        ),
+                    )
+                }
                 if (OptionalTab.RSS in visibleTabs) {
                     add(
                         BottomNavigationItem(
@@ -197,21 +208,6 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         destination = NavHostDestination.Settings,
                     ),
                 )
-                // Still appended last here rather than inserted right after Search - moving it there
-                // is docs/prowlarr-p1-search-ui-and-tabs-plan.md section 6 step 3, kept as a separate
-                // commit from this step (visibility only, not position) so each step stays
-                // independently revertible.
-                if (OptionalTab.PROWLARR in visibleTabs) {
-                    add(
-                        BottomNavigationItem(
-                            title = Res.string.destination_prowlarr,
-                            enabled = true,
-                            unselectedIcon = Icons.Outlined.TravelExplore,
-                            selectedIcon = Icons.Filled.TravelExplore,
-                            destination = NavHostDestination.Prowlarr,
-                        ),
-                    )
-                }
             }
         }
 
