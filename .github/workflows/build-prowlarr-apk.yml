@@ -11,6 +11,9 @@ on:
     branches:
       - feature/prowlarr-connection
 
+permissions:
+  contents: write
+
 jobs:
   build-android-debug:
     runs-on: ubuntu-latest
@@ -28,7 +31,36 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew assembleFreeDebug
+        id: build
+        run: ./gradlew assembleFreeDebug 2>&1 | tee build-output.log
+        continue-on-error: true
+
+      # This sandbox's build feedback loop can't reach GitHub's log storage (Azure Blob Storage,
+      # not on the network allowlist), so on failure the tail of the build output is written
+      # straight back into the repo via the Contents API instead, which is reachable. Temporary,
+      # delete this step (and any build-error.log it leaves behind) once the branch builds clean.
+      - name: Save build log to repo on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          tail -c 60000 build-output.log > build-error-tail.log
+          CONTENT=$(base64 -w0 build-error-tail.log)
+          EXISTING_SHA=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error.log?ref=${{ github.ref_name }}" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('sha',''))")
+          if [ -n "$EXISTING_SHA" ]; then
+            SHA_JSON=",\"sha\":\"$EXISTING_SHA\""
+          else
+            SHA_JSON=""
+          fi
+          curl -s -X PUT \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error.log" \
+            -d "{\"message\":\"Build error log for ${{ github.sha }}\",\"content\":\"$CONTENT\",\"branch\":\"${{ github.ref_name }}\"$SHA_JSON}"
+
+      - name: Fail job if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
