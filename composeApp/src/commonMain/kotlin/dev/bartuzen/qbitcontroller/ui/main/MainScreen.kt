@@ -53,7 +53,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,6 +66,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dev.bartuzen.qbitcontroller.data.OptionalTab
 import dev.bartuzen.qbitcontroller.data.ServerManager
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.ui.log.LogsNavHost
@@ -142,9 +142,9 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
         }
 
         val settingsManager = koinInject<SettingsManager>()
-        val showProwlarrTab by settingsManager.showProwlarrTab.flow.collectAsStateWithLifecycle()
+        val visibleTabs by settingsManager.visibleTabs.flow.collectAsStateWithLifecycle()
 
-        val tabs = remember(currentServer == null, showProwlarrTab) {
+        val tabs = remember(currentServer == null, visibleTabs) {
             buildList {
                 add(
                     BottomNavigationItem(
@@ -155,33 +155,39 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         destination = NavHostDestination.Torrents,
                     ),
                 )
-                add(
-                    BottomNavigationItem(
-                        title = Res.string.destination_search,
-                        enabled = currentServer != null,
-                        unselectedIcon = Icons.Outlined.Search,
-                        selectedIcon = Icons.Filled.Search,
-                        destination = NavHostDestination.Search,
-                    ),
-                )
-                add(
-                    BottomNavigationItem(
-                        title = Res.string.destination_rss,
-                        enabled = currentServer != null,
-                        unselectedIcon = Icons.Outlined.RssFeed,
-                        selectedIcon = Icons.Filled.RssFeed,
-                        destination = NavHostDestination.Rss,
-                    ),
-                )
-                add(
-                    BottomNavigationItem(
-                        title = Res.string.destination_logs,
-                        enabled = currentServer != null,
-                        unselectedIcon = Icons.Outlined.Description,
-                        selectedIcon = Icons.Filled.Description,
-                        destination = NavHostDestination.Logs,
-                    ),
-                )
+                if (OptionalTab.SEARCH in visibleTabs) {
+                    add(
+                        BottomNavigationItem(
+                            title = Res.string.destination_search,
+                            enabled = currentServer != null,
+                            unselectedIcon = Icons.Outlined.Search,
+                            selectedIcon = Icons.Filled.Search,
+                            destination = NavHostDestination.Search,
+                        ),
+                    )
+                }
+                if (OptionalTab.RSS in visibleTabs) {
+                    add(
+                        BottomNavigationItem(
+                            title = Res.string.destination_rss,
+                            enabled = currentServer != null,
+                            unselectedIcon = Icons.Outlined.RssFeed,
+                            selectedIcon = Icons.Filled.RssFeed,
+                            destination = NavHostDestination.Rss,
+                        ),
+                    )
+                }
+                if (OptionalTab.LOGS in visibleTabs) {
+                    add(
+                        BottomNavigationItem(
+                            title = Res.string.destination_logs,
+                            enabled = currentServer != null,
+                            unselectedIcon = Icons.Outlined.Description,
+                            selectedIcon = Icons.Filled.Description,
+                            destination = NavHostDestination.Logs,
+                        ),
+                    )
+                }
                 add(
                     BottomNavigationItem(
                         title = Res.string.destination_settings,
@@ -191,12 +197,11 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         destination = NavHostDestination.Settings,
                     ),
                 )
-                // Appended last (rather than inserted alongside the other tabs above) so that none
-                // of the hardcoded tab-index literals elsewhere in this file (e.g. selectedTabIndex
-                // = 4 for the Settings deep link, or onNavigateToRss = { selectedTabIndex = 2 })
-                // need to change when this optional tab is toggled - see
-                // docs/prowlarr-integration-plan.md, round 4.
-                if (showProwlarrTab) {
+                // Still appended last here rather than inserted right after Search - moving it there
+                // is docs/prowlarr-p1-search-ui-and-tabs-plan.md section 6 step 3, kept as a separate
+                // commit from this step (visibility only, not position) so each step stays
+                // independently revertible.
+                if (OptionalTab.PROWLARR in visibleTabs) {
                     add(
                         BottomNavigationItem(
                             title = Res.string.destination_prowlarr,
@@ -210,21 +215,23 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
             }
         }
 
-        // Keyed on tabs.size (not just Unit) so this is rebuilt if the optional Prowlarr tab is
-        // toggled on/off at runtime - otherwise this list could end up shorter than tabs, and
-        // navigateToStartChannels[5] below would throw.
+        // Keyed on tabs.size (not just Unit) so this is rebuilt if any optional tab is toggled on/off
+        // at runtime - otherwise this list could end up shorter than tabs, and the
+        // navigateToStartChannels[...] lookups below (by destination, via indexOfDestination) would
+        // throw.
         val navigateToStartChannels = remember(tabs.size) { List(tabs.size) { Channel<Unit>() } }
 
         val navController = rememberNavController()
-        var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-        // If the Prowlarr tab was showing, selected, and then gets toggled off (e.g. from the
-        // Settings tab in another window on a larger screen), fall back to the first tab instead
-        // of leaving selectedTabIndex pointing past the end of the now-shorter tabs list.
-        LaunchedEffect(tabs) {
-            if (selectedTabIndex !in tabs.indices) {
-                selectedTabIndex = 0
-            }
+        // Tracked by destination, not index. Indices shift whenever a tab is hidden/shown or
+        // reordered (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 3.3), so an index alone
+        // could silently end up pointing at the wrong tab after such a change instead of just going
+        // out of bounds. Tracking the destination sidesteps that: indexOfDestination() below already
+        // falls back to Torrents (index 0) if the previously-selected destination is no longer in
+        // tabs (i.e. its tab just got hidden).
+        var selectedDestination by rememberSaveable(stateSaver = jsonSaver()) {
+            mutableStateOf<NavHostDestination>(NavHostDestination.Torrents)
         }
+        val selectedTabIndex = tabs.indexOfDestination(selectedDestination)
         PersistentLaunchedEffect(selectedTabIndex) {
             try {
                 val index = selectedTabIndex.coerceIn(tabs.indices)
@@ -245,23 +252,23 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
             navigationFlow?.collect { destination ->
                 when (destination) {
                     is DeepLinkDestination.TorrentList -> {
-                        selectedTabIndex = 0
+                        selectedDestination = NavHostDestination.Torrents
                         if (destination.serverId != null) {
                             serverManager.getServerOrNull(destination.serverId)?.let { currentServer = it }
                         }
                         torrentsDeepLinkChannel.send(destination)
                     }
                     is DeepLinkDestination.Torrent -> {
-                        selectedTabIndex = 0
+                        selectedDestination = NavHostDestination.Torrents
                         torrentsDeepLinkChannel.send(destination)
                         serverManager.getServerOrNull(destination.serverId)?.let { currentServer = it }
                     }
                     is DeepLinkDestination.AddTorrent -> {
-                        selectedTabIndex = 0
+                        selectedDestination = NavHostDestination.Torrents
                         torrentsDeepLinkChannel.send(destination)
                     }
                     DeepLinkDestination.Settings -> {
-                        selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Settings)
+                        selectedDestination = NavHostDestination.Settings
                         settingsDeepLinkChannel.send(destination)
                     }
                 }
@@ -296,7 +303,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                                 selected = index == selectedTabIndex,
                                 onClick = {
                                     if (selectedTabIndex != index) {
-                                        selectedTabIndex = index
+                                        selectedDestination = item.destination
                                     } else {
                                         scope.launch {
                                             navigateToStartChannels[selectedTabIndex].send(Unit)
@@ -350,7 +357,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                                     selected = index == selectedTabIndex,
                                     onClick = {
                                         if (selectedTabIndex != index) {
-                                            selectedTabIndex = index
+                                            selectedDestination = item.destination
                                         } else {
                                             scope.launch {
                                                 navigateToStartChannels[selectedTabIndex].send(Unit)
@@ -408,10 +415,8 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                             ].receiveAsFlow(),
                             torrentsDeepLinkFlow = torrentsDeepLinkChannel.receiveAsFlow(),
                             onSelectServer = { currentServer = serverManager.getServer(it) },
-                            onNavigateToRss = { selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Rss) },
-                            onNavigateToSearch = {
-                                selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Search)
-                            },
+                            onNavigateToRss = { selectedDestination = NavHostDestination.Rss },
+                            onNavigateToSearch = { selectedDestination = NavHostDestination.Search },
                             onShowNotificationPermission = { showNotificationPermission = true },
                         )
                     }
@@ -419,7 +424,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Search> {
                         BackHandler {
                             if (currentPlatform != Platform.Mobile.IOS) {
-                                selectedTabIndex = 0
+                                selectedDestination = NavHostDestination.Torrents
                             }
                         }
 
@@ -434,7 +439,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Rss> {
                         BackHandler {
                             if (currentPlatform != Platform.Mobile.IOS) {
-                                selectedTabIndex = 0
+                                selectedDestination = NavHostDestination.Torrents
                             }
                         }
 
@@ -449,7 +454,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Logs> {
                         BackHandler {
                             if (currentPlatform != Platform.Mobile.IOS) {
-                                selectedTabIndex = 0
+                                selectedDestination = NavHostDestination.Torrents
                             }
                         }
 
@@ -464,7 +469,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Settings> {
                         BackHandler {
                             if (currentPlatform != Platform.Mobile.IOS) {
-                                selectedTabIndex = 0
+                                selectedDestination = NavHostDestination.Torrents
                             }
                         }
 
@@ -480,15 +485,13 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Prowlarr> {
                         BackHandler {
                             if (currentPlatform != Platform.Mobile.IOS) {
-                                selectedTabIndex = 0
+                                selectedDestination = NavHostDestination.Torrents
                             }
                         }
 
                         ProwlarrSearchScreen(
                             serverId = currentServer?.id,
-                            onNavigateToSettings = {
-                                selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Settings)
-                            },
+                            onNavigateToSettings = { selectedDestination = NavHostDestination.Settings },
                             navigateToStartFlow = navigateToStartChannels[
                                 tabs.indexOfDestination(NavHostDestination.Prowlarr),
                             ].receiveAsFlow(),

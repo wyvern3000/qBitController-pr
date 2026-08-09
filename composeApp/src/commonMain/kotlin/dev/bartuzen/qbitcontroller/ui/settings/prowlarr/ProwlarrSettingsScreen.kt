@@ -35,11 +35,13 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -83,8 +85,9 @@ import qbitcontroller.composeapp.generated.resources.settings_prowlarr_action_sa
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_api_key
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_connection_success
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_enable
+import qbitcontroller.composeapp.generated.resources.settings_prowlarr_go_to_appearance_settings
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_save_success
-import qbitcontroller.composeapp.generated.resources.settings_prowlarr_show_bottom_nav
+import qbitcontroller.composeapp.generated.resources.settings_prowlarr_tab_visibility_moved
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_test_connection
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_url
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_url_hint
@@ -94,6 +97,7 @@ import qbitcontroller.composeapp.generated.resources.settings_server_trust_self_
 @Composable
 fun ProwlarrSettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToAppearanceSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProwlarrSettingsViewModel = koinViewModel(),
 ) {
@@ -334,12 +338,17 @@ fun ProwlarrSettingsScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val showProwlarrTab by viewModel.showProwlarrTab.flow.collectAsStateWithLifecycle()
-                SwitchPreference(
-                    value = showProwlarrTab,
-                    onValueChange = { viewModel.showProwlarrTab.value = it },
-                    title = { Text(text = stringResource(Res.string.settings_prowlarr_show_bottom_nav)) },
+                Text(
+                    text = stringResource(Res.string.settings_prowlarr_tab_visibility_moved),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                TextButton(
+                    onClick = onNavigateToAppearanceSettings,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(text = stringResource(Res.string.settings_prowlarr_go_to_appearance_settings))
+                }
 
                 Spacer(
                     modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing),

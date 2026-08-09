@@ -755,6 +755,8 @@
     <string name="settings_palette_style_content">Content</string>
     <string name="settings_pure_black_dark_mode">Pure black dark mode</string>
     <string name="settings_relative_timestamps">Relative timestamps</string>
+    <string name="settings_visible_tabs">Visible tabs</string>
+    <string name="settings_visible_tabs_summary">Torrents and Settings are always shown</string>
 
     <string name="settings_servers_add_server">Add Server</string>
     <string name="settings_servers_no_server_configured">No Server Configured</string>
@@ -817,6 +819,8 @@
     <string name="settings_prowlarr_action_save">Save</string>
     <string name="settings_prowlarr_save_success">Prowlarr configuration has been saved.</string>
     <string name="settings_prowlarr_show_bottom_nav">Show in bottom navigation bar</string>
+    <string name="settings_prowlarr_tab_visibility_moved">Whether the Prowlarr tab is shown in the bottom navigation bar is now managed together with the other tabs in Appearance settings.</string>
+    <string name="settings_prowlarr_go_to_appearance_settings">Go to Appearance settings</string>
 
     <string name="prowlarr_search_query_hint">Search Prowlarr indexers</string>
     <string name="prowlarr_search_no_results">No results found.</string>
