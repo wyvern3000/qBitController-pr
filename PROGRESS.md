@@ -70,21 +70,45 @@ artifact（~28.5MB debug APK，free flavor），可以下载装到手机上测�
 另外顺便更新了 `docs/prowlarr-integration-plan.md`，加了第 8 节「实施纪要」，记录了跟最初方案的三点
 方向性偏离（见上面"核心结论"）。
 
+## Round 6（本轮，2026-08-09）：P0 验收通过，产出 P1 详细方案（纯文档，未动代码）
+
+用户确认 P0 已验收成功，提出三个新需求，均已写入
+`docs/prowlarr-p1-search-ui-and-tabs-plan.md`（该文档待第 4 节引用的字段核实后即可按第 6 节的六步
+顺序开工，本轮**只设计、不编码**）：
+
+1. Prowlarr 搜索页参照 Prowlarr 自身界面重做：索引器多选、分类多选（Torznab 大类）、结果排序/过滤
+2. Prowlarr 底部导航 tab 从"追加在最后"改为"排在搜索 tab 之后"——这要求先把 `MainScreen.kt` 里
+   round 4 故意写死的 7 处 tab 下标字面量重构成按 `NavHostDestination` 运行时查找（原来"追加在末
+   尾"就是为了避免这层重构，见方案第 3.1 节）
+3. 外观设置新增"页签显示"勾选组（默认全选，可隐藏 搜索/RSS/日志，种子/设置强制常显）——需要新增
+   `SettingsManager.visibleTabs`，并把现有 `showProwlarrTab` 迁移并入（方案第 4.3 节），避免两处
+   分别维护 Prowlarr tab 显隐状态
+
+方案文档里第 3.3 节额外发现一个现有代码没处理过的边界情况：`selectedTabIndex` 靠
+`rememberSaveable` 跨重启保存的是**下标**而不是**具体 tab**，一旦 tabs 顺序/显隐组合发生变化，可能
+出现"下标没越界、但指向了另一个 tab"的隐蔽错位，现有 `LaunchedEffect(tabs)` 的越界检查覆盖不到这
+种情况，第 3.3 节给出了修复方向（改成按 destination 比对）。
+
+方案第 2.1 节的 `ProwlarrIndexer`/`ProwlarrIndexerCapabilities` 数据模型是根据 Prowlarr 官方文档
+推测的字段结构，**没有**真实 Prowlarr 实例可以核对（沙盒连不上外网 Prowlarr 服务），第 7 节"待确认
+事项"第 1 条已标注：开工第一步（对应方案第 6 节"第四步"）必须先用真实 `GET /api/v1/indexer` 响应
+核对字段名，不能直接假设文档写的就是对的。
+
 ## 下一轮接手时先做什么
 
-功能已经能编译出 APK 了（round 5 的 CI 已验证）。建议：
-
-1. 找用户确认：APK 实际装到手机上跑一遍 P0 验收标准（见方案文档第 6 节）——配置 Prowlarr 连接、搜
-   索、点击下载（分别验证磁力链结果和种子直链结果两种情况）
-2. 功能验证通过后，`build-prowlarr-apk.yml` 上标注了"临时工作流，分支合并/废弃后可删"，可以考虑清
-   掉这个文件，改用仓库里已有的正式 build workflow；也可以问用户要不要继续做原方案 P1（indexer 多
-   选、结果合并展示、分类映射）
-3. Round 4 的 `MainScreen.kt` 改动里，`navigateToStartChannels[5]` 硬编码了 Prowlarr tab 排在第 6
-   位（下标 5）——目前看和 `tabs` 列表的追加顺序一致，没发现问题，但如果以后又加别的可选 tab，这类
-   写死的下标要留意
-4. `build-prowlarr-apk.yml` 现在的 `set -o pipefail` 修复是这轮才加上的，之前所有轮次报告的"CI 成
-   功"（round 4 之前）都没有这层保险，理论上也可能有被掩盖的失败，但已经用真实构建结果（round 5）
-   覆盖验证过一遍最新代码，不需要往回查
+1. **先找用户确认方案**（`docs/prowlarr-p1-search-ui-and-tabs-plan.md` 第 7 节六条待确认事项，尤其
+   第 1 条字段结构、第 2/3 条要不要做子分类/记忆勾选状态），确认后再按方案第 6 节的六步顺序开工，
+   每步单独 commit + push（第一步"tab 下标去字面量化"和第二步"visibleTabs + 外观设置勾选组"是后续
+   步骤的地基，务必按顺序做，不要跳步）
+2. P0 验收（APK 实机测试，见 `docs/prowlarr-integration-plan.md` 第 6 节）如果这轮还没做完，优先级
+   高于本轮新方案的编码——先确认 P0 稳定，再叠加 P1 改动，避免两层未验证的改动叠在一起排查困难
+3. 功能验证通过后，`build-prowlarr-apk.yml` 上标注了"临时工作流，分支合并/废弃后可删"，可以考虑清
+   掉这个文件，改用仓库里已有的正式 build workflow
+4. `build-prowlarr-apk.yml` 现在的 `set -o pipefail` 修复是 round 5 才加上的，之前所有轮次报告的
+   "CI 成功"（round 4 之前）都没有这层保险，理论上也可能有被掩盖的失败，但已经用真实构建结果
+   （round 5）覆盖验证过一遍最新代码，不需要往回查
+5. 完成 P1 方案后，按 `docs/prowlarr-p1-search-ui-and-tabs-plan.md` 第 8 节的建议，把本文档结论合并
+   进 `docs/prowlarr-integration-plan.md` 的"实施纪要"一节，避免两份方案文档长期并存
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
