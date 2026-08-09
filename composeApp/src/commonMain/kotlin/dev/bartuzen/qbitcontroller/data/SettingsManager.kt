@@ -7,6 +7,19 @@ import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
 import dev.bartuzen.qbitcontroller.ui.theme.defaultPrimaryColor
 import dev.bartuzen.qbitcontroller.ui.torrentlist.TorrentFilter
 
+// Computes the initial value visibleTabs should fall back to when its key has never been written -
+// see the visibleTabs property doc comment below. Kept as a top-level function (rather than inline
+// in the property initializer) purely for readability; it has no state of its own.
+private fun defaultVisibleTabs(settings: Settings, hadShowProwlarrTabEnabled: Boolean): Set<OptionalTab> {
+    val allVisible = OptionalTab.entries.toSet()
+    val isUpgradingFromShowProwlarrTabOnly = !settings.hasKey("visibleTabs") && settings.hasKey("showProwlarrTab")
+    return if (isUpgradingFromShowProwlarrTabOnly && !hadShowProwlarrTabEnabled) {
+        allVisible - OptionalTab.PROWLARR
+    } else {
+        allVisible
+    }
+}
+
 open class SettingsManager(
     settings: Settings,
 ) {
@@ -45,10 +58,28 @@ open class SettingsManager(
     // qBittorrent server - see docs/prowlarr-integration-plan.md section 4.3.
     val prowlarrConfig = jsonPreference(settings, "prowlarrConfig", ProwlarrConfig())
 
-    // Controls an optional extra "Prowlarr" tab in the bottom navigation bar. Kept separate from
-    // prowlarrConfig.isEnabled so that configuring Prowlarr doesn't silently rearrange the user's
-    // navigation bar - see docs/prowlarr-integration-plan.md, round 3/4.
+    // Superseded by visibleTabs below (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section
+    // 4.3). Kept declared - but no longer written to - purely so the one-time migration below can
+    // still read a value for users who had already set it under the old single-tab toggle.
     val showProwlarrTab = preference(settings, "showProwlarrTab", false)
+
+    // Which of the optional bottom-nav tabs are shown; Torrents and Settings are always shown and
+    // aren't part of this set. Defaults to everything visible for new users. Users upgrading from a
+    // version that only had showProwlarrTab get that toggle folded into the default here the first
+    // time this is read (before they've explicitly touched visibleTabs themselves), so their
+    // previous show/hide choice for the Prowlarr tab isn't silently lost - see
+    // docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 4.3.
+    val visibleTabs = preference(
+        settings,
+        "visibleTabs",
+        defaultVisibleTabs(settings, showProwlarrTab.value),
+        serializer = { tabs -> tabs.joinToString(",") { it.name } },
+        deserializer = { raw ->
+            raw.split(",").filter { it.isNotBlank() }.mapNotNull { name ->
+                OptionalTab.entries.find { it.name == name }
+            }.toSet()
+        },
+    )
 
     val checkUpdates = preference(settings, "checkUpdates", true)
 }
@@ -94,4 +125,14 @@ enum class TrafficStats {
     TOTAL,
     SESSION,
     COMPLETE,
+}
+
+// The optional bottom-nav tabs a user can hide from appearance settings. Torrents and Settings are
+// intentionally not included - they can't be hidden, so there's no "always true, can't uncheck"
+// state to model - see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 4.1.
+enum class OptionalTab {
+    SEARCH,
+    PROWLARR,
+    RSS,
+    LOGS,
 }

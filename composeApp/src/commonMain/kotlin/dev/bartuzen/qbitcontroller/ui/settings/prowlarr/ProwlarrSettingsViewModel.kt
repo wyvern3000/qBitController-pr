@@ -2,7 +2,6 @@ package dev.bartuzen.qbitcontroller.ui.settings.prowlarr
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
 import dev.bartuzen.qbitcontroller.network.RequestResult
@@ -16,16 +15,11 @@ import kotlinx.coroutines.launch
 
 class ProwlarrSettingsViewModel(
     private val prowlarrRepository: ProwlarrRepository,
-    settingsManager: SettingsManager,
 ) : ViewModel() {
     private val eventChannel = Channel<Event>()
     val eventFlow = eventChannel.receiveAsFlow()
 
     val config = prowlarrRepository.getConfig()
-
-    // Bound directly (no Save button) since it's a standalone display preference, unlike the
-    // connection fields above which are edited together and committed via saveConfig().
-    val showProwlarrTab = settingsManager.showProwlarrTab
 
     private val _isTesting = MutableStateFlow(false)
     val isTesting = _isTesting.asStateFlow()

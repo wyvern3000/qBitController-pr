@@ -190,6 +190,9 @@ fun SettingsNavHost(
         composable<Destination.Settings.Prowlarr> {
             ProwlarrSettingsScreen(
                 onNavigateBack = { navController.navigateUp() },
+                onNavigateToAppearanceSettings = {
+                    navController.navigateWithLifecycle(Destination.Settings.Appearance)
+                },
             )
         }
     }
