@@ -46,58 +46,58 @@ w: file:///home/runner/work/qBitController-pr/qBitController-pr/preferences/buil
 > Task :composeApp:generateBuildConfigClasses
 > Task :composeApp:generateExpectResourceCollectorsForCommonMain
 > Task :composeApp:generateJvmMainBuildConfigClasses SKIPPED
-> Task :composeApp:convertXmlValueResourcesForAndroidDebug NO-SOURCE
 > Task :composeApp:generateComposeResClass
-> Task :composeApp:copyNonXmlValueResourcesForAndroidDebug NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidDebug NO-SOURCE
 > Task :composeApp:convertXmlValueResourcesForAndroidFree NO-SOURCE
-> Task :composeApp:prepareComposeResourcesTaskForAndroidDebug NO-SOURCE
-> Task :composeApp:generateResourceAccessorsForAndroidDebug NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidDebug NO-SOURCE
 > Task :composeApp:copyNonXmlValueResourcesForAndroidFree NO-SOURCE
-> Task :composeApp:convertXmlValueResourcesForAndroidFreeDebug NO-SOURCE
-> Task :composeApp:copyNonXmlValueResourcesForAndroidFreeDebug NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidDebug NO-SOURCE
 > Task :composeApp:prepareComposeResourcesTaskForAndroidFree NO-SOURCE
-> Task :composeApp:prepareComposeResourcesTaskForAndroidFreeDebug NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidDebug NO-SOURCE
 > Task :composeApp:generateResourceAccessorsForAndroidFree NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidFreeDebug NO-SOURCE
 > Task :preferences:preBuild UP-TO-DATE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidFreeDebug NO-SOURCE
 > Task :preferences:preDebugBuild UP-TO-DATE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidFreeDebug NO-SOURCE
 > Task :composeApp:generateResourceAccessorsForAndroidFreeDebug NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForCommonMain
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain
 > Task :preferences:processDebugNavigationResources
 > Task :preferences:convertXmlValueResourcesForAndroidDebug NO-SOURCE
 > Task :preferences:copyNonXmlValueResourcesForAndroidDebug NO-SOURCE
-> Task :preferences:writeDebugAarMetadata
-> Task :preferences:convertXmlValueResourcesForAndroidMain NO-SOURCE
 > Task :preferences:prepareComposeResourcesTaskForAndroidDebug NO-SOURCE
-> Task :preferences:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :preferences:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :preferences:writeDebugAarMetadata
 > Task :preferences:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :preferences:convertXmlValueResourcesForCommonMain NO-SOURCE
 > Task :preferences:copyNonXmlValueResourcesForCommonMain NO-SOURCE
-> Task :composeApp:convertXmlValueResourcesForCommonMain
 > Task :preferences:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
 > Task :preferences:prepareComposeResourcesTaskForCommonMain NO-SOURCE
 > Task :preferences:generateDebugResValues
 > Task :preferences:copyDebugComposeResourcesToAndroidAssets
 > Task :preferences:generateDebugResources
-> Task :composeApp:copyNonXmlValueResourcesForCommonMain
-> Task :preferences:extractDeepLinksDebug
-> Task :composeApp:prepareComposeResourcesTaskForCommonMain
-> Task :preferences:packageDebugResources
 > Task :composeApp:copyFreeDebugComposeResourcesToAndroidAssets
+> Task :preferences:extractDeepLinksDebug
+> Task :preferences:packageDebugResources
 > Task :composeApp:generateLanguageList
 > Task :composeApp:preBuild
 > Task :composeApp:preFreeDebugBuild
 > Task :composeApp:mergeFreeDebugNativeDebugMetadata NO-SOURCE
-> Task :preferences:processDebugManifest
 > Task :preferences:compileDebugLibraryResources
+> Task :preferences:processDebugManifest
 > Task :composeApp:generateFreeDebugResValues
 > Task :composeApp:generateResourceAccessorsForCommonMain
 > Task :composeApp:generateActualResourceCollectorsForAndroidMain
 > Task :composeApp:generateFreeDebugResources
 > Task :composeApp:mapFreeDebugSourceSetPaths
 > Task :composeApp:processFreeDebugNavigationResources
+> Task :composeApp:compileFreeDebugNavigationResources
 > Task :composeApp:checkFreeDebugAarMetadata
 > Task :composeApp:createFreeDebugCompatibleScreenManifests
-> Task :composeApp:compileFreeDebugNavigationResources
-> Task :composeApp:extractDeepLinksFreeDebug
 > Task :composeApp:packageFreeDebugResources
+> Task :composeApp:extractDeepLinksFreeDebug
 > Task :composeApp:processFreeDebugMainManifest
 > Task :composeApp:processFreeDebugManifest
 > Task :composeApp:processFreeDebugManifestForPackage
@@ -111,6 +111,7 @@ w: file:///home/runner/work/qBitController-pr/qBitController-pr/preferences/buil
 > Task :preferences:generateResourceAccessorsForAndroidDebug SKIPPED
 > Task :preferences:javaPreCompileDebug
 > Task :composeApp:javaPreCompileFreeDebug
+> Task :preferences:parseDebugLocalResources
 > Task :composeApp:mergeFreeDebugShaders
 > Task :composeApp:compileFreeDebugShaders NO-SOURCE
 > Task :composeApp:freeDebugAssetsCopyForAGP NO-SOURCE
@@ -120,14 +121,13 @@ w: file:///home/runner/work/qBitController-pr/qBitController-pr/preferences/buil
 > Task :preferences:debugAssetsCopyForAGP NO-SOURCE
 > Task :preferences:generateDebugAssets UP-TO-DATE
 > Task :preferences:mergeDebugAssets
-> Task :preferences:parseDebugLocalResources
 > Task :composeApp:parseFreeDebugLocalResources
 > Task :preferences:generateDebugRFile
-> Task :composeApp:mergeFreeDebugAssets
 > Task :composeApp:mergeFreeDebugResources
+> Task :composeApp:mergeFreeDebugAssets
 > Task :composeApp:compressFreeDebugAssets
-> Task :composeApp:checkFreeDebugDuplicateClasses
 > Task :composeApp:processFreeDebugResources
+> Task :composeApp:checkFreeDebugDuplicateClasses
 > Task :composeApp:mergeFreeDebugJniLibFolders
 > Task :preferences:mergeDebugJniLibFolders
 > Task :preferences:mergeDebugNativeLibs NO-SOURCE
@@ -137,24 +137,24 @@ w: file:///home/runner/work/qBitController-pr/qBitController-pr/preferences/buil
 > Task :composeApp:stripFreeDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
 
+> Task :composeApp:desugarFreeDebugFileDependencies
 > Task :composeApp:validateSigningFreeDebug
 > Task :composeApp:writeFreeDebugAppMetadata
 > Task :composeApp:writeFreeDebugSigningConfigVersions
-> Task :composeApp:desugarFreeDebugFileDependencies
 > Task :composeApp:l8DexDesugarLibFreeDebug
 > Task :preferences:compileDebugKotlinAndroid
 > Task :preferences:compileDebugJavaWithJavac NO-SOURCE
 > Task :composeApp:mergeExtDexFreeDebug
 > Task :preferences:bundleLibCompileToJarDebug
-> Task :preferences:bundleLibRuntimeToJarDebug
 > Task :preferences:processDebugJavaRes
+> Task :preferences:bundleLibRuntimeToJarDebug
 > Task :composeApp:mergeLibDexFreeDebug
 > Task :composeApp:compileFreeDebugKotlinAndroid
 e: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/prowlarr/search/ProwlarrSearchScreen.kt:277:44 Unresolved reference 'height'.
 e: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/prowlarr/search/ProwlarrSearchScreen.kt:316:44 Unresolved reference 'height'.
 
 > Task :composeApp:compileFreeDebugKotlinAndroid FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1786241591547.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1786241703283.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/qBitController-pr/qBitController-pr/build/reports/problems/problems-report.html
 
@@ -177,6 +177,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 6m 34s
+BUILD FAILED in 6m 39s
 69 actionable tasks: 69 executed
 Configuration cache entry stored.
