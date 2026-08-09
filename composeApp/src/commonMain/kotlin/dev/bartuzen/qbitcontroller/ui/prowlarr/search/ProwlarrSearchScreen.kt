@@ -180,6 +180,7 @@ fun ProwlarrSearchScreen(
     EventEffect(viewModel.eventFlow) { event ->
         val message = when (event) {
             is ProwlarrSearchViewModel.Event.SearchError -> getErrorMessage(event.error)
+            is ProwlarrSearchViewModel.Event.IndexersError -> getErrorMessage(event.error)
             is ProwlarrSearchViewModel.Event.Error -> getErrorMessage(event.error)
             ProwlarrSearchViewModel.Event.InvalidTorrentFile -> getString(Res.string.torrent_add_invalid_file)
             ProwlarrSearchViewModel.Event.AddTorrentError -> getString(Res.string.torrent_add_error)
