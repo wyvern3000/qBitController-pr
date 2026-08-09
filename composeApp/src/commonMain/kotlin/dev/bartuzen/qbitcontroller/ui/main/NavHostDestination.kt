@@ -18,4 +18,7 @@ sealed class NavHostDestination {
 
     @Serializable
     data object Settings : NavHostDestination()
+
+    @Serializable
+    data object Prowlarr : NavHostDestination()
 }
