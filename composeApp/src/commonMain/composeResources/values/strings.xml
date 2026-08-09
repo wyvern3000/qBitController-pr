@@ -12,6 +12,7 @@
     <string name="destination_rss">RSS</string>
     <string name="destination_logs">Logs</string>
     <string name="destination_settings">Settings</string>
+    <string name="destination_prowlarr">Prowlarr</string>
 
     <string name="torrent_status_error">Error</string>
     <string name="torrent_status_missing_files">Missing Files</string>
@@ -815,6 +816,14 @@
     <string name="settings_prowlarr_connection_success">Connected to Prowlarr successfully.</string>
     <string name="settings_prowlarr_action_save">Save</string>
     <string name="settings_prowlarr_save_success">Prowlarr configuration has been saved.</string>
+    <string name="settings_prowlarr_show_bottom_nav">Show in bottom navigation bar</string>
+
+    <string name="prowlarr_search_query_hint">Search Prowlarr indexers</string>
+    <string name="prowlarr_search_no_results">No results found.</string>
+    <string name="prowlarr_search_not_configured">Prowlarr isn\'t configured yet.</string>
+    <string name="prowlarr_search_go_to_settings">Go to Settings</string>
+    <string name="prowlarr_search_no_server_selected">Select a server first to add torrents.</string>
+    <string name="prowlarr_search_torrent_added">Torrent added successfully.</string>
 
     <string name="about_description">qBitController allows you to control qBittorrent remotely from any device.\n\nFor more detailed information and source code: %1$s</string>
 

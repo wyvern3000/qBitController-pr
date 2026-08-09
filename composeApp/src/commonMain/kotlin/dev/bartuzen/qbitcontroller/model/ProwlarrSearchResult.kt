@@ -31,17 +31,19 @@ data class ProwlarrSearchResult(
  * same sorting/filtering/download UI used for qBittorrent's own search plugins, without any
  * changes to that UI. See docs/prowlarr-integration-plan.md, section 4.1.
  *
- * [Search.Result.fileUrl] prefers [downloadUrl], then [magnetUrl], then [infoUrl] as a last
- * resort - this mirrors the priority Prowlarr itself uses internally when it needs a single link
- * for a release. Whichever one is picked is handed as-is to qBittorrent's `torrents/add`, which
- * resolves magnet links and fetches .torrent files from an HTTP(S) URL on its own, so no
- * magnet-vs-file branching is needed on this side.
+ * [Search.Result.fileUrl] prefers [downloadUrl], then [magnetUrl]. Unlike the original plan (which
+ * assumed the URL would be handed to qBittorrent as-is and fetched server-side), round 3 has the
+ * client fetch [downloadUrl] itself and upload the bytes, and pass [magnetUrl] straight through as
+ * a link - see ProwlarrSearchViewModel.addTorrent(). [infoUrl] is deliberately not used as a
+ * fallback here even though it sometimes is populated: it points at a results/info page, not a
+ * downloadable file, so fetching it would just return HTML. It's still exposed as
+ * [Search.Result.descriptionLink] for display purposes.
  */
 fun ProwlarrSearchResult.toSearchResult() = Search.Result(
     descriptionLink = infoUrl ?: "",
     fileName = fileName?.takeIf { it.isNotBlank() } ?: title,
     fileSize = size,
-    fileUrl = downloadUrl ?: magnetUrl ?: infoUrl ?: "",
+    fileUrl = downloadUrl ?: magnetUrl ?: "",
     leechers = leechers,
     seeders = seeders,
     siteUrl = indexer ?: "",

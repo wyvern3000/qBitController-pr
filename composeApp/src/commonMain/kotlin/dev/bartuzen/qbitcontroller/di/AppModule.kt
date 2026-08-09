@@ -26,6 +26,7 @@ import dev.bartuzen.qbitcontroller.network.RequestManager
 import dev.bartuzen.qbitcontroller.network.UpdateChecker
 import dev.bartuzen.qbitcontroller.ui.addtorrent.AddTorrentViewModel
 import dev.bartuzen.qbitcontroller.ui.log.LogViewModel
+import dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchViewModel
 import dev.bartuzen.qbitcontroller.ui.rss.articles.RssArticlesViewModel
 import dev.bartuzen.qbitcontroller.ui.rss.editrule.EditRssRuleViewModel
 import dev.bartuzen.qbitcontroller.ui.rss.feeds.RssFeedsViewModel
@@ -118,6 +119,7 @@ val appModule = module {
     viewModelOf(::AppearanceSettingsViewModel)
     viewModelOf(::NetworkSettingsViewModel)
     viewModelOf(::ProwlarrSettingsViewModel)
+    viewModelOf(::ProwlarrSearchViewModel)
 }
 
 expect val platformModule: Module

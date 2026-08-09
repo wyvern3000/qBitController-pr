@@ -41,6 +41,13 @@ class ProwlarrService(
 
     suspend fun getSystemStatus(): Response<ProwlarrSystemStatus> = get("system/status")
 
+    // Used for fetching a .torrent file's raw bytes directly from the client (phone/desktop)
+    // rather than requiring the qBittorrent server to be able to reach Prowlarr - see
+    // ProwlarrSearchRepository.downloadTorrentFile() and docs/prowlarr-integration-plan.md
+    // section 4.7. url is expected to be an absolute URL (Prowlarr's own downloadUrl), not a
+    // path relative to baseUrl.
+    suspend fun downloadFile(url: String): Response<ByteArray> = client.prepareGet(url).execute(::execute)
+
     // indexerIds is a repeated query parameter (?indexerIds=1&indexerIds=2&...), which the generic
     // get(path, parameters: Map<String, Any?>) helper above can't express (one value per key), so
     // this is built directly instead of going through it.
