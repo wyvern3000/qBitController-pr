@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
+import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.Search
 import dev.bartuzen.qbitcontroller.network.RequestResult
 import kotlinx.coroutines.CancellationException
@@ -42,10 +43,21 @@ class ProwlarrSearchViewModel(
     private val _isAdding = MutableStateFlow(false)
     val isAdding = _isAdding.asStateFlow()
 
+    // null means "not loaded yet" (either still loading, or the fetch failed) - distinct from an
+    // empty list, which would mean Prowlarr genuinely has zero indexers configured. Screen code
+    // should treat null as "fall back to an unrestricted search", per ProwlarrRepository.getIndexers
+    // KDoc: a failure here must not block searching.
+    private val _indexers = MutableStateFlow<List<ProwlarrIndexer>?>(null)
+    val indexers = _indexers.asStateFlow()
+
+    private val _isLoadingIndexers = MutableStateFlow(false)
+    val isLoadingIndexers = _isLoadingIndexers.asStateFlow()
+
     private var searchJob: Job? = null
     private var addTorrentJob: Job? = null
+    private var loadIndexersJob: Job? = null
 
-    fun search(query: String) {
+    fun search(query: String, indexerIds: List<Int>? = null) {
         if (query.isBlank()) {
             searchJob?.cancel()
             _results.value = emptyList()
@@ -56,7 +68,7 @@ class ProwlarrSearchViewModel(
 
         _isLoading.value = true
         val job = viewModelScope.launch {
-            when (val result = prowlarrSearchRepository.search(query)) {
+            when (val result = prowlarrSearchRepository.search(query, indexerIds)) {
                 is RequestResult.Success -> _results.value = result.data
                 is RequestResult.Error -> {
                     _results.value = emptyList()
@@ -72,6 +84,33 @@ class ProwlarrSearchViewModel(
             }
         }
         searchJob = job
+    }
+
+    /**
+     * Populates the indexer multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section
+     * 2.1). Safe to call repeatedly (e.g. from a LaunchedEffect keyed on the config becoming
+     * configured) - a call already in flight is not duplicated.
+     */
+    fun loadIndexers() {
+        if (loadIndexersJob != null) {
+            return
+        }
+
+        _isLoadingIndexers.value = true
+        val job = viewModelScope.launch {
+            when (val result = prowlarrRepository.getIndexers()) {
+                is RequestResult.Success -> _indexers.value = result.data
+                is RequestResult.Error -> eventChannel.send(Event.IndexersError(result))
+            }
+        }
+
+        job.invokeOnCompletion { e ->
+            if (e !is CancellationException) {
+                _isLoadingIndexers.value = false
+                loadIndexersJob = null
+            }
+        }
+        loadIndexersJob = job
     }
 
     /**
@@ -157,6 +196,7 @@ class ProwlarrSearchViewModel(
 
     sealed class Event {
         data class SearchError(val error: RequestResult.Error) : Event()
+        data class IndexersError(val error: RequestResult.Error) : Event()
         data class Error(val error: RequestResult.Error) : Event()
         data object InvalidTorrentFile : Event()
         data object AddTorrentError : Event()
