@@ -2,6 +2,7 @@ package dev.bartuzen.qbitcontroller.ui.main
 
 import kotlinx.serialization.Serializable
 
+@Serializable
 sealed class NavHostDestination {
     @Serializable
     data object Torrents : NavHostDestination()
@@ -17,7 +18,4 @@ sealed class NavHostDestination {
 
     @Serializable
     data object Settings : NavHostDestination()
-
-    @Serializable
-    data object Prowlarr : NavHostDestination()
 }
