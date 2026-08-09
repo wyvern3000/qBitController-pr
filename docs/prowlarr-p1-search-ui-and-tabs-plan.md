@@ -432,7 +432,7 @@ commonMain/composeResources/values/strings.xml             # 新增 settings_vis
 - 验收：能看到已配置索引器列表；三态切换（已启用/全部/自选）正确；勾选子集后搜索结果确实只来自
   被勾选的索引器（用真实 Prowlarr 实例实测，至少验证两个不同索引器分别命中不同结果的场景）
 
-**第五步：Prowlarr 分类多选（大类）**
+**第五步：Prowlarr 分类多选（大类+小类）**
 - `search()` 加 `categories` 参数 + UI 8 个大类 chip
 - 验收：勾选"Movies"后结果只包含该分类（用一个同时命中电影和非电影资源的关键词实测对比勾选前后
   结果差异）
@@ -449,7 +449,7 @@ commonMain/composeResources/values/strings.xml             # 新增 settings_vis
 1. `GET /api/v1/indexer` 的真实返回结构（字段名、`capabilities.categories` 是否确实长这样）——
    本沙盒连不上任何 Prowlarr 实例，第 2.1 节的 `ProwlarrIndexer` 模型是按官方文档推测的，开发时
    第一步应该是用真实响应核对字段名，而不是直接假设本文档写的字段名 100% 准确
-2. 分类多选要不要支持子分类（如 `2040 HD`）——本轮先做大类，用户拿到大类版本实测后再反馈是否够用
+2. 分类多选要不要支持子分类（如 `2040 HD`）——需要支持
 3. 索引器/分类的勾选状态要不要跨会话记忆（存到 `SettingsManager`）还是每次进页面重置——本轮先不
    记忆（每次默认"已启用的索引器"+ 不勾分类=全部），减少状态复杂度，如果用户反馈"每次都要重新勾选
    很烦"再考虑加偏好项记忆
