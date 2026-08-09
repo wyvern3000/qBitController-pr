@@ -94,6 +94,8 @@ import qbitcontroller.composeapp.generated.resources.destination_prowlarr
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_all
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_selected
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_site_specific
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_standard
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_all
@@ -680,6 +682,13 @@ private fun buildCategoryGroups(indexers: List<ProwlarrIndexer>): List<CategoryG
     return byId.values.sortedBy { it.id }
 }
 
+// Torznab/Newznab spec reserves ids >= 100000 for indexer-specific ("site-specific") categories,
+// precisely so they don't collide with the ~30 standard categories in 1000-8999 (confirmed against
+// the spec, not guessed - see https://torznab.github.io/spec-1.3-draft and Sonarr's Torznab-indexer
+// wiki page). Used purely as a presentation split (see CategorySelectionSection KDoc) - the actual
+// id sent to search() is unaffected either way.
+private const val SITE_SPECIFIC_CATEGORY_ID_THRESHOLD = 100_000
+
 /**
  * Collapsible category multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.2,
  * and [buildCategoryGroups] for why the grouping itself deviates from that doc). Two-level: each
@@ -688,6 +697,14 @@ private fun buildCategoryGroups(indexers: List<ProwlarrIndexer>): List<CategoryG
  * selector anywhere else in this codebase to mirror (TorrentListScreen's category filter is a flat,
  * single-select list) - only the leaf [CategoryChip] component itself follows an established
  * pattern, the grouping/expand layout here is new.
+ *
+ * Split into "Standard"/"Site-Specific" sections (round 9 fix, reported against a real device):
+ * a flat id-sorted list put e.g. OurBits' standard "Movies" (2000, with a real "Movies/3D"
+ * subcategory) directly next to its own redundant site-specific "Movies" (100401, no subcategories)
+ * with no visual distinction - looked like duplicated/glitched data rather than two different,
+ * intentionally-separate ids. [buildCategoryGroups]' KDoc already called this out as a known
+ * "same name, different id" quirk, but seeing it on a real device made clear a flat list wasn't
+ * good enough - it needed the section split, not just a code comment.
  */
 @Composable
 private fun CategorySelectionSection(
@@ -752,60 +769,124 @@ private fun CategorySelectionSection(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             } else {
+                val (standardGroups, siteSpecificGroups) = categoryGroups.partition {
+                    it.id < SITE_SPECIFIC_CATEGORY_ID_THRESHOLD
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    categoryGroups.forEach { group ->
-                        val groupExpanded = group.id in expandedGroupIds
+                    // Only bother labeling sections when there's actually a second one to
+                    // distinguish from - a lone "Standard" header with nothing else on screen would
+                    // just be noise.
+                    val showSectionLabels = standardGroups.isNotEmpty() && siteSpecificGroups.isNotEmpty()
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (group.subCategories.isNotEmpty()) {
-                                val groupRotation by animateFloatAsState(targetValue = if (groupExpanded) 180f else 0f)
-                                IconButton(
-                                    onClick = { onToggleGroupExpanded(group.id) },
-                                    modifier = Modifier.size(32.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .rotate(groupRotation),
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.size(32.dp))
-                            }
-
-                            CategoryChip(
-                                category = group.name,
-                                isSelected = group.id in selectedTopCategoryIds,
-                                onClick = { onToggleTopCategory(group.id) },
+                    if (standardGroups.isNotEmpty()) {
+                        if (showSectionLabels) {
+                            CategorySectionLabel(text = stringResource(Res.string.prowlarr_search_categories_standard))
+                        }
+                        standardGroups.forEach { group ->
+                            CategoryGroupRow(
+                                group = group,
+                                isExpanded = group.id in expandedGroupIds,
+                                onToggleExpanded = { onToggleGroupExpanded(group.id) },
+                                isTopSelected = group.id in selectedTopCategoryIds,
+                                onToggleTop = { onToggleTopCategory(group.id) },
+                                selectedSubCategoryIds = selectedSubCategoryIds,
+                                onToggleSub = onToggleSubCategory,
                             )
                         }
+                    }
 
-                        if (group.subCategories.isNotEmpty()) {
-                            AnimatedVisibility(visible = groupExpanded) {
-                                FlowRow(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 32.dp, top = 4.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    group.subCategories.forEach { subCategory ->
-                                        CategoryChip(
-                                            category = subCategory.name,
-                                            isSelected = subCategory.id in selectedSubCategoryIds,
-                                            onClick = { onToggleSubCategory(subCategory.id) },
-                                        )
-                                    }
-                                }
-                            }
+                    if (siteSpecificGroups.isNotEmpty()) {
+                        if (showSectionLabels) {
+                            CategorySectionLabel(
+                                text = stringResource(Res.string.prowlarr_search_categories_site_specific),
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
                         }
+                        siteSpecificGroups.forEach { group ->
+                            CategoryGroupRow(
+                                group = group,
+                                isExpanded = group.id in expandedGroupIds,
+                                onToggleExpanded = { onToggleGroupExpanded(group.id) },
+                                isTopSelected = group.id in selectedTopCategoryIds,
+                                onToggleTop = { onToggleTopCategory(group.id) },
+                                selectedSubCategoryIds = selectedSubCategoryIds,
+                                onToggleSub = onToggleSubCategory,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategorySectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(start = 4.dp, bottom = 2.dp),
+    )
+}
+
+/** A single [CategoryGroup] row plus its (optionally expanded) subcategory chips - see [CategorySelectionSection]. */
+@Composable
+private fun CategoryGroupRow(
+    group: CategoryGroup,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    isTopSelected: Boolean,
+    onToggleTop: () -> Unit,
+    selectedSubCategoryIds: List<Int>,
+    onToggleSub: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (group.subCategories.isNotEmpty()) {
+                val groupRotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+                IconButton(onClick = onToggleExpanded, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .rotate(groupRotation),
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.size(32.dp))
+            }
+
+            CategoryChip(
+                category = group.name,
+                isSelected = isTopSelected,
+                onClick = onToggleTop,
+            )
+        }
+
+        if (group.subCategories.isNotEmpty()) {
+            AnimatedVisibility(visible = isExpanded) {
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 32.dp, top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    group.subCategories.forEach { subCategory ->
+                        CategoryChip(
+                            category = subCategory.name,
+                            isSelected = subCategory.id in selectedSubCategoryIds,
+                            onClick = { onToggleSub(subCategory.id) },
+                        )
                     }
                 }
             }

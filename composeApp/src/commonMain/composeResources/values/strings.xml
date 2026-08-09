@@ -830,6 +830,8 @@
     <string name="prowlarr_search_categories">Categories</string>
     <string name="prowlarr_search_categories_all">All Categories</string>
     <string name="prowlarr_search_categories_selected">%1$d selected</string>
+    <string name="prowlarr_search_categories_standard">Standard</string>
+    <string name="prowlarr_search_categories_site_specific">Site-Specific</string>
     <string name="prowlarr_search_no_results">No results found.</string>
     <string name="prowlarr_search_not_configured">Prowlarr isn\'t configured yet.</string>
     <string name="prowlarr_search_go_to_settings">Go to Settings</string>
