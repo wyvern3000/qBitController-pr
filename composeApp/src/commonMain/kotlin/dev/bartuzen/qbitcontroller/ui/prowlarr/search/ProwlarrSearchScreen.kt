@@ -83,8 +83,8 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_error
 import qbitcontroller.composeapp.generated.resources.torrent_add_invalid_file
 
 /**
- * A standalone search screen for Prowlarr, deliberately kept separate from ui/search/* (the
- * qBittorrent-search-plugin feature) so this can be built/iterated on without touching that
+ * A standalone search screen for Prowlarr, deliberately kept separate from the ui.search package
+ * (the qBittorrent-search-plugin feature) so this can be built/iterated on without touching that
  * existing code at all - see docs/prowlarr-integration-plan.md, rounds 3-4.
  *
  * [serverId] is the currently selected qBittorrent server (if any) that a tapped result gets
