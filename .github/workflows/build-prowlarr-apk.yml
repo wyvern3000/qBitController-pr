@@ -32,7 +32,16 @@ jobs:
 
       - name: Build debug APK
         id: build
-        run: ./gradlew assembleFreeDebug 2>&1 | tee build-output.log
+        # `set -o pipefail` is required here: without it, `cmd | tee file` reports tee's exit code
+        # (always 0) as the step's result, not gradlew's - so a real compile failure was silently
+        # recorded as steps.build.outcome == 'success', the log-capture step below never ran, and
+        # the job "passed" with 0 artifacts produced. Confirmed this actually happened on run
+        # 31287174798 (commit 30d72335): "Build debug APK" showed success and ran the full ~5m52s
+        # a failing build takes, but produced zero APK artifacts, and Upload artifact only warned
+        # instead of failing because actions/upload-artifact defaults to if-no-files-found: warn.
+        run: |
+          set -o pipefail
+          ./gradlew assembleFreeDebug 2>&1 | tee build-output.log
         continue-on-error: true
 
       # This sandbox's build feedback loop can't reach GitHub's log storage (Azure Blob Storage,
@@ -67,3 +76,7 @@ jobs:
         with:
           name: qbitcontroller-prowlarr-debug-apk
           path: composeApp/build/outputs/apk/free/debug/*.apk
+          # Belt-and-suspenders alongside the pipefail fix above: if no APK exists, fail loudly
+          # instead of the default "warn" behavior, which is what let the earlier masked failure
+          # look like a clean, successful run.
+          if-no-files-found: error
