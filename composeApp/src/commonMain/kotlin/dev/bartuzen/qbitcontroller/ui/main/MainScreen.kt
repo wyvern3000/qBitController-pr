@@ -33,10 +33,12 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.RssFeed
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.TravelExplore
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,12 +62,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.bartuzen.qbitcontroller.data.ServerManager
+import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.ui.log.LogsNavHost
+import dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchScreen
 import dev.bartuzen.qbitcontroller.ui.rss.RssNavHost
 import dev.bartuzen.qbitcontroller.ui.search.SearchNavHost
 import dev.bartuzen.qbitcontroller.ui.settings.SettingsNavHost
@@ -88,6 +93,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.koinInject
 import qbitcontroller.composeapp.generated.resources.Res
 import qbitcontroller.composeapp.generated.resources.destination_logs
+import qbitcontroller.composeapp.generated.resources.destination_prowlarr
 import qbitcontroller.composeapp.generated.resources.destination_rss
 import qbitcontroller.composeapp.generated.resources.destination_search
 import qbitcontroller.composeapp.generated.resources.destination_settings
@@ -135,53 +141,94 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
             }
         }
 
-        val tabs = remember(currentServer == null) {
-            listOf(
-                BottomNavigationItem(
-                    title = Res.string.destination_torrents,
-                    enabled = true,
-                    unselectedIcon = Icons.AutoMirrored.Outlined.List,
-                    selectedIcon = Icons.AutoMirrored.Filled.List,
-                    destination = NavHostDestination.Torrents,
-                ),
-                BottomNavigationItem(
-                    title = Res.string.destination_search,
-                    enabled = currentServer != null,
-                    unselectedIcon = Icons.Outlined.Search,
-                    selectedIcon = Icons.Filled.Search,
-                    destination = NavHostDestination.Search,
-                ),
-                BottomNavigationItem(
-                    title = Res.string.destination_rss,
-                    enabled = currentServer != null,
-                    unselectedIcon = Icons.Outlined.RssFeed,
-                    selectedIcon = Icons.Filled.RssFeed,
-                    destination = NavHostDestination.Rss,
-                ),
-                BottomNavigationItem(
-                    title = Res.string.destination_logs,
-                    enabled = currentServer != null,
-                    unselectedIcon = Icons.Outlined.Description,
-                    selectedIcon = Icons.Filled.Description,
-                    destination = NavHostDestination.Logs,
-                ),
-                BottomNavigationItem(
-                    title = Res.string.destination_settings,
-                    enabled = true,
-                    unselectedIcon = Icons.Outlined.Settings,
-                    selectedIcon = Icons.Filled.Settings,
-                    destination = NavHostDestination.Settings,
-                ),
-            )
+        val settingsManager = koinInject<SettingsManager>()
+        val showProwlarrTab by settingsManager.showProwlarrTab.flow.collectAsStateWithLifecycle()
+
+        val tabs = remember(currentServer == null, showProwlarrTab) {
+            buildList {
+                add(
+                    BottomNavigationItem(
+                        title = Res.string.destination_torrents,
+                        enabled = true,
+                        unselectedIcon = Icons.AutoMirrored.Outlined.List,
+                        selectedIcon = Icons.AutoMirrored.Filled.List,
+                        destination = NavHostDestination.Torrents,
+                    ),
+                )
+                add(
+                    BottomNavigationItem(
+                        title = Res.string.destination_search,
+                        enabled = currentServer != null,
+                        unselectedIcon = Icons.Outlined.Search,
+                        selectedIcon = Icons.Filled.Search,
+                        destination = NavHostDestination.Search,
+                    ),
+                )
+                add(
+                    BottomNavigationItem(
+                        title = Res.string.destination_rss,
+                        enabled = currentServer != null,
+                        unselectedIcon = Icons.Outlined.RssFeed,
+                        selectedIcon = Icons.Filled.RssFeed,
+                        destination = NavHostDestination.Rss,
+                    ),
+                )
+                add(
+                    BottomNavigationItem(
+                        title = Res.string.destination_logs,
+                        enabled = currentServer != null,
+                        unselectedIcon = Icons.Outlined.Description,
+                        selectedIcon = Icons.Filled.Description,
+                        destination = NavHostDestination.Logs,
+                    ),
+                )
+                add(
+                    BottomNavigationItem(
+                        title = Res.string.destination_settings,
+                        enabled = true,
+                        unselectedIcon = Icons.Outlined.Settings,
+                        selectedIcon = Icons.Filled.Settings,
+                        destination = NavHostDestination.Settings,
+                    ),
+                )
+                // Appended last (rather than inserted alongside the other tabs above) so that none
+                // of the hardcoded tab-index literals elsewhere in this file (e.g. selectedTabIndex
+                // = 4 for the Settings deep link, or onNavigateToRss = { selectedTabIndex = 2 })
+                // need to change when this optional tab is toggled - see
+                // docs/prowlarr-integration-plan.md, round 4.
+                if (showProwlarrTab) {
+                    add(
+                        BottomNavigationItem(
+                            title = Res.string.destination_prowlarr,
+                            enabled = true,
+                            unselectedIcon = Icons.Outlined.TravelExplore,
+                            selectedIcon = Icons.Filled.TravelExplore,
+                            destination = NavHostDestination.Prowlarr,
+                        ),
+                    )
+                }
+            }
         }
 
-        val navigateToStartChannels = remember { List(tabs.size) { Channel<Unit>() } }
+        // Keyed on tabs.size (not just Unit) so this is rebuilt if the optional Prowlarr tab is
+        // toggled on/off at runtime - otherwise this list could end up shorter than tabs, and
+        // navigateToStartChannels[5] below would throw.
+        val navigateToStartChannels = remember(tabs.size) { List(tabs.size) { Channel<Unit>() } }
 
         val navController = rememberNavController()
         var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+        // If the Prowlarr tab was showing, selected, and then gets toggled off (e.g. from the
+        // Settings tab in another window on a larger screen), fall back to the first tab instead
+        // of leaving selectedTabIndex pointing past the end of the now-shorter tabs list.
+        LaunchedEffect(tabs) {
+            if (selectedTabIndex !in tabs.indices) {
+                selectedTabIndex = 0
+            }
+        }
         PersistentLaunchedEffect(selectedTabIndex) {
             try {
-                navController.navigate(tabs[selectedTabIndex].destination) {
+                val index = selectedTabIndex.coerceIn(tabs.indices)
+                navController.navigate(tabs[index].destination) {
                     popUpTo(navController.graph.findStartDestination().id) {
                         saveState = true
                     }
@@ -415,6 +462,20 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                             navigateToStartFlow = navigateToStartChannels[4].receiveAsFlow(),
                             onShowNotificationPermission = { showNotificationPermission = true },
                             settingsDeepLinkFlow = settingsDeepLinkChannel.receiveAsFlow(),
+                        )
+                    }
+
+                    composable<NavHostDestination.Prowlarr> {
+                        BackHandler {
+                            if (currentPlatform != Platform.Mobile.IOS) {
+                                selectedTabIndex = 0
+                            }
+                        }
+
+                        ProwlarrSearchScreen(
+                            serverId = currentServer?.id,
+                            onNavigateToSettings = { selectedTabIndex = 4 },
+                            navigateToStartFlow = navigateToStartChannels[5].receiveAsFlow(),
                         )
                     }
                 }
