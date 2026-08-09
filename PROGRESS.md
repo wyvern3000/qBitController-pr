@@ -19,7 +19,8 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 1. 做成了**完全独立的页面**（`ui/prowlarr/search/`），零侵入 `ui/search/*` 原有搜索功能，可独立回退
 2. 下载改成**客户端直传**：磁力链原样传给 qBit；种子直链由客户端自己下载字节后以文件形式上传给
    qBit，qBit 服务端不需要能访问 Prowlarr
-3. 设置页加了 Prowlarr 连接配置 + "在底部导航栏中显示"开关（`SettingsManager.showProwlarrTab`）
+3. 设置页加了 Prowlarr 连接配置；tab 显隐/顺序管理已在 Round 7 迁移到
+   `SettingsManager.visibleTabs`（见下），不再是单独的 `showProwlarrTab` 开关
 
 ## Rounds 1-4（已完成，功能可用）
 
@@ -32,43 +33,14 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 
 Round 4 推送后触发 CI，编译失败（见下）。
 
-## Round 5（本轮，2026-08-09）：修复编译失败 + CI 自身的一个 bug —— 已构建成功 ✅
+## Round 5（2026-08-09）：修复编译失败 + CI 自身的一个 bug —— 已构建成功 ✅
 
-用户贴了 CI 失败日志，排查后定位到**两个独立问题**，均已修复并推送：
-
-1. **源码 bug #1（真正的编译失败原因之一）**：`ProwlarrSearchScreen.kt` 的 KDoc 里字面写了
-   `ui/search/*` 这段路径。Kotlin 块注释支持嵌套，`/*` 被解析成 KDoc 内部又开了一层嵌套注释，嵌套
-   注释在 KDoc 自己的 `*/` 处提前关闭，但最外层的 `/**` 从此再没闭合——解析器把这之后的全部代码吞
-   成"注释"直到文件末尾。这就是编译器最初报的 `365:1 Unclosed comment`，以及 `MainScreen.kt` 里
-   `Unresolved reference 'ProwlarrSearchScreen'`（符号确实"不存在"，被注释掉了）的根本原因。
-   → commit `d9ff295e`，把 KDoc 改写成不含 `/*` 序列的表述。
-
-2. **CI 脚本 bug（导致"看起来成功"的构建其实是假的）**：`.github/workflows/build-prowlarr-apk.yml`
-   里 `./gradlew ... | tee build-output.log` 没开 `pipefail`，管道最终退出码是 `tee` 的（恒为 0），
-   不是 `gradlew` 真实的失败退出码。核对 Actions 记录发现：commit `30d72335`（只改了 workflow、没改
-   任何源码）那次运行，"Build debug APK" 步骤显示 success、耗时和上一次真实失败的构建几乎一样长
-   （~5分52秒），但 `Upload artifact` 实际上传了 **0 个文件**——真实构建其实还是失败的，只是失败信号
-   被吞掉了，日志兜底机制（失败时把 log 写回仓库那一步）从未真正触发过。
-   → commit `3fdf1307`，加了 `set -o pipefail`，并给 `upload-artifact` 加了
-   `if-no-files-found: error` 作为第二道保险。这个修复本身也已验证生效：修复后的下一次真实失败
-   （见下条 #2）第一次真正把 `build-error.log` 写回了仓库，日志兜底机制现在是可信的。
-
-3. **源码 bug #2（pipefail 修好后，CI 吐出的第一份真实日志揭示的问题）**：
-   `ProwlarrSearchScreen.kt` 里两处 `Spacer(modifier = Modifier.height(...))`，文件只 import 了
-   `androidx.compose.foundation.layout.size`，漏了 `.height`——`height`/`size`/`fillMaxSize` 这些
-   是包级顶层扩展函数，必须显式 import；而同文件里的 `align`/`weight` 之所以没报错，是因为它们是
-   `RowScope`/`ColumnScope` 接口自带的成员扩展函数，不需要 import。已顺带排查了
-   `ProwlarrSettingsScreen.kt` 和 round 4 改的 `MainScreen.kt`，逐个核对每个 `Modifier.xxx` 调用对
-   应的 import，没有发现其他同类问题。
-   → commit `e83b126e`（rebase 到 CI 自动提交的 `build-error.log` 之上后为 `d1d1a16d`），补上
-   `import androidx.compose.foundation.layout.height`。
-
-**最终结果**：CI 运行 [31291122804](https://github.com/wyvern3000/qBitController-pr/actions/runs/31291122804)（commit `d1d1a16d`）**真正构建成功**，产出了 `qbitcontroller-prowlarr-debug-apk`
-artifact（~28.5MB debug APK，free flavor），可以下载装到手机上测试功能了。删除了几次失败构建时 CI
-自动写回仓库的 `build-error.log`（已不需要，问题已解决）。
-
-另外顺便更新了 `docs/prowlarr-integration-plan.md`，加了第 8 节「实施纪要」，记录了跟最初方案的三点
-方向性偏离（见上面"核心结论"）。
+排查出两处源码 bug（KDoc 嵌套注释意外把整个文件注释掉；`Spacer(Modifier.height(...))` 漏了
+`.height` 的 import）和一处 CI 脚本 bug（`tee` 吞掉了 `gradlew` 的真实失败退出码，导致构建失败时
+Actions 却显示 success）。三处都已修复，CI 运行
+[31291122804](https://github.com/wyvern3000/qBitController-pr/actions/runs/31291122804) 真正构建
+成功，产出 debug APK。**完整排查记录（每个 bug 的根因分析、涉及的 commit）已归档到
+`docs/PROGRESS_ARCHIVE.md`**，这里不再重复。
 
 ## Round 6（本轮，2026-08-09）：P0 验收通过，产出 P1 详细方案（纯文档，未动代码）
 
@@ -94,21 +66,46 @@ artifact（~28.5MB debug APK，free flavor），可以下载装到手机上测�
 事项"第 1 条已标注：开工第一步（对应方案第 6 节"第四步"）必须先用真实 `GET /api/v1/indexer` 响应
 核对字段名，不能直接假设文档写的就是对的。
 
+## Round 7（2026-08-09）：P1 前三步已完成，CI 全部验证通过 ✅
+
+用户直接说"按这个文档开始实施"（没有先走 Round 6 计划的"找用户确认第 7 节六条待确认事项"流程）。
+核对后发现第 7 节六条里第 2、3 条其实方案正文已有结论（子分类"需要支持"、记忆勾选状态"本轮先不做"），
+真正阻塞的只有第 1 条（真实索引器字段结构），而且只影响第四步，跟前三步（纯 tab/设置重构，不碰
+Prowlarr API）无关——于是直接按方案第 6 节顺序开工做了前三步，每步单独 commit + push，CI
+（`build-prowlarr-apk.yml`）全部验证通过：
+
+| 步骤 | Commit | 内容 | CI |
+|---|---|---|---|
+| 一 | `83b907ef` | `indexOfDestination()` 替换 `MainScreen.kt` 里 7 处硬编码 tab 下标，行为不变 | ✅ success |
+| 二 | `fc1b1bd5` | `SettingsManager.visibleTabs`（新增 `OptionalTab` 枚举，迁移旧 `showProwlarrTab`）+ 外观设置页新增"Visible tabs"勾选组 + Prowlarr 设置页旧开关换成跳转按钮 | ✅ success |
+| 三 | `c45c91d7` | `buildList{}` 里 Prowlarr 插入位置从末尾移到 Search 之后，默认顺序变为 Torrents/Search/Prowlarr/Rss/Logs/Settings | ✅ success |
+
+**顺带修了方案 3.3 节的 `selectedTabIndex` 错位 bug**，但没有按方案原计划放在第三步——这个 bug 其实
+在第二步（任意可选 tab 可独立隐藏，不只是 Prowlarr 一个）就已经会触发（例如隐藏 RSS 时若当前选中
+Logs，原先只做越界检查的 `LaunchedEffect(tabs)` 会让下标错误指向 Settings），不是非要等到第三步
+Prowlarr 移位才暴露，所以提前在第二步一并修掉：把持久化状态从 `selectedTabIndex: Int` 换成
+`selectedDestination: NavHostDestination`（`rememberSaveable` + `jsonSaver()`），`selectedTabIndex`
+变成 `tabs.indexOfDestination(selectedDestination)` 派生的只读值，tab 被隐藏后自动退回 Torrents，
+不会再指错。第三步因此不需要额外处理这个问题，diff 纯粹是一处 if 块搬家。
+
+沙盒依然没有 Gradle 本地编译能力（无 Maven/Google 仓库访问），三步都是手动核对 API 签名（`Preference`
+的 getter/setter、`PaddingValues`、`Settings.hasKey()` 等）后推送，靠 CI 远程验证——三次运行都是
+`success`，没有出现过编译错误。
+
 ## 下一轮接手时先做什么
 
-1. **先找用户确认方案**（`docs/prowlarr-p1-search-ui-and-tabs-plan.md` 第 7 节六条待确认事项，尤其
-   第 1 条字段结构、第 2/3 条要不要做子分类/记忆勾选状态），确认后再按方案第 6 节的六步顺序开工，
-   每步单独 commit + push（第一步"tab 下标去字面量化"和第二步"visibleTabs + 外观设置勾选组"是后续
-   步骤的地基，务必按顺序做，不要跳步）
-2. P0 验收（APK 实机测试，见 `docs/prowlarr-integration-plan.md` 第 6 节）如果这轮还没做完，优先级
-   高于本轮新方案的编码——先确认 P0 稳定，再叠加 P1 改动，避免两层未验证的改动叠在一起排查困难
-3. 功能验证通过后，`build-prowlarr-apk.yml` 上标注了"临时工作流，分支合并/废弃后可删"，可以考虑清
-   掉这个文件，改用仓库里已有的正式 build workflow
-4. `build-prowlarr-apk.yml` 现在的 `set -o pipefail` 修复是 round 5 才加上的，之前所有轮次报告的
-   "CI 成功"（round 4 之前）都没有这层保险，理论上也可能有被掩盖的失败，但已经用真实构建结果
-   （round 5）覆盖验证过一遍最新代码，不需要往回查
-5. 完成 P1 方案后，按 `docs/prowlarr-p1-search-ui-and-tabs-plan.md` 第 8 节的建议，把本文档结论合并
-   进 `docs/prowlarr-integration-plan.md` 的"实施纪要"一节，避免两份方案文档长期并存
+1. **第四步开工前必须先拿到真实 Prowlarr `GET /api/v1/indexer` 响应样本**——问用户要一份脱敏后的
+   JSON，核对方案里 `ProwlarrIndexer`/`ProwlarrIndexerCapabilities` 的字段名是否跟真实响应一致，
+   这是唯一真正阻塞性的前置条件，不能直接假设方案文档写的字段名是对的
+2. 确认字段结构后按方案第 6 节继续：第四步（索引器多选）→ 第五步（分类多选）→ 第六步（排序/过滤），
+   每步单独 commit + push + 等 CI 跑绿再进下一步
+3. 方案第 2.4 节讨论的"下载目的地重新设计"（直链 vs 客户端直传、批量下载）**没有被列进第 6 节的
+   六步实施顺序**——如果这部分也要做，需要先跟用户确认要不要补一个"第七步"，不要假设它已经包含在
+   当前六步范围内
+4. P0 验收（APK 实机测试）如果还没做完，参见 `docs/prowlarr-integration-plan.md` 第 6 节，优先级
+   高于继续往下做 P1 新步骤
+5. 完成 P1 全部步骤后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
+   "实施纪要"一节，避免两份方案文档长期并存
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
