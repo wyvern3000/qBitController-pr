@@ -261,7 +261,7 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         torrentsDeepLinkChannel.send(destination)
                     }
                     DeepLinkDestination.Settings -> {
-                        selectedTabIndex = 4
+                        selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Settings)
                         settingsDeepLinkChannel.send(destination)
                     }
                 }
@@ -403,11 +403,15 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                     composable<NavHostDestination.Torrents> {
                         TorrentsNavHost(
                             currentServer = currentServer,
-                            navigateToStartFlow = navigateToStartChannels[0].receiveAsFlow(),
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Torrents),
+                            ].receiveAsFlow(),
                             torrentsDeepLinkFlow = torrentsDeepLinkChannel.receiveAsFlow(),
                             onSelectServer = { currentServer = serverManager.getServer(it) },
-                            onNavigateToRss = { selectedTabIndex = 2 },
-                            onNavigateToSearch = { selectedTabIndex = 1 },
+                            onNavigateToRss = { selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Rss) },
+                            onNavigateToSearch = {
+                                selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Search)
+                            },
                             onShowNotificationPermission = { showNotificationPermission = true },
                         )
                     }
@@ -421,7 +425,9 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
 
                         SearchNavHost(
                             serverConfig = currentServer,
-                            navigateToStartFlow = navigateToStartChannels[1].receiveAsFlow(),
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Search),
+                            ].receiveAsFlow(),
                         )
                     }
 
@@ -434,7 +440,9 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
 
                         RssNavHost(
                             serverConfig = currentServer,
-                            navigateToStartFlow = navigateToStartChannels[2].receiveAsFlow(),
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Rss),
+                            ].receiveAsFlow(),
                         )
                     }
 
@@ -447,7 +455,9 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
 
                         LogsNavHost(
                             serverConfig = currentServer,
-                            navigateToStartFlow = navigateToStartChannels[3].receiveAsFlow(),
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Logs),
+                            ].receiveAsFlow(),
                         )
                     }
 
@@ -459,7 +469,9 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
                         }
 
                         SettingsNavHost(
-                            navigateToStartFlow = navigateToStartChannels[4].receiveAsFlow(),
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Settings),
+                            ].receiveAsFlow(),
                             onShowNotificationPermission = { showNotificationPermission = true },
                             settingsDeepLinkFlow = settingsDeepLinkChannel.receiveAsFlow(),
                         )
@@ -474,8 +486,12 @@ fun MainScreen(navigationFlow: Flow<DeepLinkDestination>? = null) {
 
                         ProwlarrSearchScreen(
                             serverId = currentServer?.id,
-                            onNavigateToSettings = { selectedTabIndex = 4 },
-                            navigateToStartFlow = navigateToStartChannels[5].receiveAsFlow(),
+                            onNavigateToSettings = {
+                                selectedTabIndex = tabs.indexOfDestination(NavHostDestination.Settings)
+                            },
+                            navigateToStartFlow = navigateToStartChannels[
+                                tabs.indexOfDestination(NavHostDestination.Prowlarr),
+                            ].receiveAsFlow(),
                         )
                     }
                 }
@@ -491,3 +507,10 @@ private data class BottomNavigationItem(
     val selectedIcon: ImageVector,
     val destination: NavHostDestination,
 )
+
+// Looks up a tab's index by its destination instead of relying on hardcoded literals, so tabs can
+// be reordered or hidden (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 3) without every
+// selectedTabIndex/navigateToStartChannels[...] call site needing to be updated by hand. Falls back
+// to index 0 (Torrents, always present) if the destination isn't currently in the tab list.
+private fun List<BottomNavigationItem>.indexOfDestination(destination: NavHostDestination): Int =
+    indexOfFirst { it.destination == destination }.takeIf { it != -1 } ?: 0
