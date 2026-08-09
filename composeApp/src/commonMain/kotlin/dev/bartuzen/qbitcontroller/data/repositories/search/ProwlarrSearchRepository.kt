@@ -17,7 +17,11 @@ import dev.bartuzen.qbitcontroller.network.catchRequestError
 class ProwlarrSearchRepository(
     private val prowlarrRepository: ProwlarrRepository,
 ) {
-    suspend fun search(query: String, indexerIds: List<Int>? = null): RequestResult<List<Search.Result>> {
+    suspend fun search(
+        query: String,
+        indexerIds: List<Int>? = null,
+        categories: List<Int>? = null,
+    ): RequestResult<List<Search.Result>> {
         val config = prowlarrRepository.getConfig()
         if (!config.isConfigured) {
             return RequestResult.Error.RequestError.Unknown("Prowlarr is not configured")
@@ -26,7 +30,7 @@ class ProwlarrSearchRepository(
         return catchRequestError(
             block = {
                 val service = prowlarrRepository.buildService(config)
-                val response = service.search(query, indexerIds)
+                val response = service.search(query, indexerIds, categories)
                 val results = response.body
 
                 if (response.code in 200..<300 && results != null) {

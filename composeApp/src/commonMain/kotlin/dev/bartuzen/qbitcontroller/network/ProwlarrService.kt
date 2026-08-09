@@ -51,16 +51,26 @@ class ProwlarrService(
     // path relative to baseUrl.
     suspend fun downloadFile(url: String): Response<ByteArray> = client.prepareGet(url).execute(::execute)
 
-    // indexerIds is a repeated query parameter (?indexerIds=1&indexerIds=2&...), which the generic
-    // get(path, parameters: Map<String, Any?>) helper above can't express (one value per key), so
-    // this is built directly instead of going through it.
-    suspend fun search(query: String, indexerIds: List<Int>? = null): Response<List<ProwlarrSearchResult>> =
+    // indexerIds/categories are repeated query parameters (?indexerIds=1&indexerIds=2&...,
+    // ?categories=2000&categories=2060&...), which the generic get(path, parameters: Map<String,
+    // Any?>) helper above can't express (one value per key), so this is built directly instead of
+    // going through it. Prowlarr doesn't distinguish top-level vs sub-category ids here - both are
+    // just entries in the same categories list (see ProwlarrSearchScreen's category picker, which
+    // sends both together).
+    suspend fun search(
+        query: String,
+        indexerIds: List<Int>? = null,
+        categories: List<Int>? = null,
+    ): Response<List<ProwlarrSearchResult>> =
         client.prepareGet {
             url.takeFrom(baseUrl).appendEncodedPathSegments("api/v1/search")
             url.parameters.append("query", query)
             url.parameters.append("type", "search")
             indexerIds?.forEach { id ->
                 url.parameters.append("indexerIds", id.toString())
+            }
+            categories?.forEach { id ->
+                url.parameters.append("categories", id.toString())
             }
         }.execute(::execute)
 }
