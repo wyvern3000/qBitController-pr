@@ -84,6 +84,7 @@ import qbitcontroller.composeapp.generated.resources.settings_prowlarr_api_key
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_connection_success
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_enable
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_save_success
+import qbitcontroller.composeapp.generated.resources.settings_prowlarr_show_bottom_nav
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_test_connection
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_url
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_url_hint
@@ -330,6 +331,15 @@ fun ProwlarrSettingsScreen(
                     )
                     Text(text = stringResource(Res.string.settings_prowlarr_test_connection))
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val showProwlarrTab by viewModel.showProwlarrTab.flow.collectAsStateWithLifecycle()
+                SwitchPreference(
+                    value = showProwlarrTab,
+                    onValueChange = { viewModel.showProwlarrTab.value = it },
+                    title = { Text(text = stringResource(Res.string.settings_prowlarr_show_bottom_nav)) },
+                )
 
                 Spacer(
                     modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing),

@@ -45,6 +45,11 @@ open class SettingsManager(
     // qBittorrent server - see docs/prowlarr-integration-plan.md section 4.3.
     val prowlarrConfig = jsonPreference(settings, "prowlarrConfig", ProwlarrConfig())
 
+    // Controls an optional extra "Prowlarr" tab in the bottom navigation bar. Kept separate from
+    // prowlarrConfig.isEnabled so that configuring Prowlarr doesn't silently rearrange the user's
+    // navigation bar - see docs/prowlarr-integration-plan.md, round 3/4.
+    val showProwlarrTab = preference(settings, "showProwlarrTab", false)
+
     val checkUpdates = preference(settings, "checkUpdates", true)
 }
 
