@@ -17,6 +17,12 @@
 3. 设置页"外观"菜单下方，新增"页签显示"勾选：默认全选，可以去掉"搜索"、"RSS"、"日志"这几个 tab，
    "种子"和"设置"必须保留（不可隐藏）
 
+> **追加讨论（同一天，方案初稿写完后）**：用户追问"搜到种子点下载，最终发到哪台 qBit 服务器"这个交互
+> 该怎么设计（App 支持配置多台服务器），讨论过程中确认 Prowlarr 的 `downloadUrl`/`magnetUrl` 可以直接
+> 作为 URL 交给下载器（不必强制客户端先下载字节），进而扩展出"下载方式"（服务端直连 URL / 客户端直传
+> 字节）、单条下载交互、批量下载三块新设计，一并归入本文档第 2.4 节。分类多选也在这轮讨论中从"只做
+> 大类"改为"要做子分类"，第 2.2 节已同步更新。
+
 ---
 
 ## 1. 现状代码基线（写方案前对照的真实代码，避免脱离实际）
@@ -117,13 +123,21 @@ Prowlarr 走 Torznab/Newznab 标准分类体系，大类固定 8 个（数值是
 | 7000 | Books |
 | 8000 | Other |
 
-**P1 范围**：只做**大类**多选（8 个 `FilterChip`，样式复用 2.1 节同一套 chip 列表交互），不做子分类
-（如 `2040 HD`、`5070 Anime` 这类三级分类）。理由：
-- 子分类粒度因 indexer 而异，不同站点子分类定义不完全一致，做"通用子分类 UI"需要先把
-  2.1 节里 `ProwlarrIndexerCapabilities.categories` 和当前已勾选的 indexer 集合联动过滤，
-  复杂度和收益不成正比
-- 大类已经能覆盖用户最常见的"我只想搜电影/只想搜剧集"这类需求
-- 子分类留作 P2，等大类版本用户实测反馈后再决定要不要做
+**P1 范围（改定）**：原方案初稿建议 P1 只做大类、子分类留 P2，讨论后用户明确要求 **P1 就做子分类**
+（如 `2040 HD`、`5070 Anime` 这类三级分类），一并纳入本轮，不再拆到 P2。这意味着 2.1 节里原本只是
+占位、"P1 先不做这层联动"的 `ProwlarrIndexerCapabilities.categories` 字段，**现在要真正用起来**：
+
+- **UI 改成两级勾选**：8 个大类作为可展开的分组（点击展开/收起，而不是像 2.1 节 indexer chip 那样一
+  个平铺列表），展开后显示该大类下的子分类 `FilterChip`。勾选大类本身也是一个独立的可选项（对应
+  Torznab 惯例：直接搜大类分类号，语义上通常已经覆盖其全部子分类，具体行为仍需第 7 节待确认）
+- **子分类列表是动态的**：不同 indexer 支持的子分类集合不一样（有的站点没有 `2060 3D`，有的没有
+  `6000 XXX` 大类），所以子分类候选集要跟随 2.1 节"已勾选的索引器集合"联动重新计算——从选中的每个
+  indexer 的 `capabilities.categories` 里取并集，勾选索引器变化时子分类列表要重新刷新，之前勾选的
+  子分类如果不再属于并集范围要自动去掉勾选（避免选中一个已经不存在的分类导致搜索行为不可预期）
+- **数据结构不用改**，`ProwlarrIndexer`/`ProwlarrIndexerCapabilities`/`ProwlarrCategory`（2.1 节已经
+  设计好）本来就是为这层联动准备的，只是这次要真正接上，不是占位
+- 这块 UI 复杂度确实比最初"8 个大类平铺 chip"的方案高一截（两级展开 + 跟索引器选择动态联动），第 6
+  节的实施步骤顺序不变，但第五步的工作量预期要相应上调
 
 **接口改动**：`ProwlarrService.search()` 追加 `categories: List<Int>? = null`，用和 `indexerIds`
 一样的重复 query 参数方式追加（`url.parameters.append("categories", id.toString())`）。不勾选任何分类
@@ -161,6 +175,73 @@ Prowlarr 走 Torznab/Newznab 标准分类体系，大类固定 8 个（数值是
 val prowlarrSearchSort = preference(settings, "prowlarrSearchSort", SearchSort.NAME)
 val isReverseProwlarrSearchSort = preference(settings, "isReverseProwlarrSearchSort", false)
 ```
+
+### 2.4 下载目标：单条下载走 `AddTorrentScreen`、下载方式（直连/直传）、批量下载
+
+这三块是方案初稿写完后追加讨论出来的，起因是"App 配置了多台 qBit 服务器时，Prowlarr 下载该发到哪
+台"这个问题——现状 P0 是隐式用 `currentServer?.id`（也就是种子列表 tab 当前选中的那台），配置多台
+服务器时用户很容易在没意识到的情况下发错服务器。
+
+**现状代码基线**：`AddTorrentScreen.kt`/`AddTorrentViewModel.kt` 已经解决过一次同样的问题——
+`initialServerId == null && servers.size > 1` 时会显示一个服务器下拉选择器（默认选中第一台），qBit
+自带搜索点下载就是跳到这个屏（`onNavigateToAddTorrent(fileUrl)`，`fileUrl` 可以是磁力链也可以是
+种子文件的 HTTP 直链，qBittorrent 服务端自己抓取），Prowlarr 页面 P0 阶段没有复用这条路，是自己写的
+一套"固定默认参数、不跳转、直接调 `addTorrentRepository.addTorrent()`"的快速逻辑。
+
+**关键澄清（这轮讨论调研出来的事实，不是猜测）**：Prowlarr 的 `downloadUrl` 对大多数 indexer 而言
+是 **Prowlarr 自己的下载代理端点**，形如
+`http://<prowlarr-host>:9696/{indexerId}/download?apikey=xxx&link=<token>&file=xxx.torrent`，
+**apikey 已经内嵌在 URL 的 query string 里**，不需要额外带 `X-Api-Key` 请求头去抓取。这意味着可以
+把这个 URL 原样交给 qBittorrent 服务端抓取（走 `torrents/add` 的 `links` 参数，跟 qBit 自带搜索现在
+的机制完全一致），**不需要 P0 那套"客户端先把字节下下来再以文件形式上传"的方案**，也不需要为了走
+`AddTorrentScreen` 而新增"字节转临时文件"的跨平台工程（`AddTorrentScreen` 本来就有
+`torrentUrl: String?` 参数，直接传这个 URL 即可）。
+
+但服务端直连有两个真实存在的坑（Prowlarr 官方 GitHub issue tracker 里有实测反馈，不是猜测）：
+1. **网络可达性**：`downloadUrl` 的主机名/端口必须从"发起下载抓取的那一端"（这里是 qBit 服务端）
+   连得通。Prowlarr 部署在反代/Docker 后面时，`downloadUrl` 里的主机名可能是 `127.0.0.1` 或内部
+   Docker 服务名，qBit 服务端如果和 Prowlarr 不在同一台机器/同一网络，会直接抓取失败——这正是 P0
+   round 2→3 当初改成"客户端直传"的原因
+2. **部分 indexer 只提供磁力链**：这种情况下 Prowlarr 的下载代理会返回 HTTP 301 跳转到 `magnet:`
+   URI 而不是真的 `.torrent` 字节流，qBittorrent 自己的抓取器（基于 libtorrent，本来就是为 BT
+   场景设计的）大概率能正确处理，但没有在真实环境验证过
+
+**结论与决定（讨论后拍板）**：
+
+- **下载方式做成可切换的开关，放在 `ui/settings/prowlarr/ProwlarrSettingsScreen.kt`**："服务端直连
+  URL" / "客户端直传字节"（P0 现状逻辑原样保留，作为兜底选项），**默认服务端直连**
+- **单条下载点击后一律跳转 `AddTorrentScreen`**（不再是 P0 那套"固定默认参数直接提交"的快速逻辑），
+  `Destination.AddTorrent(initialServerId = null, torrentUrl = result.fileUrl)`——`initialServerId`
+  显式传 `null` 而不是 `currentServer?.id`，让"配置了多台服务器时是否弹选择器"这件事交给
+  `AddTorrentScreen` 已有的逻辑去处理，不再由 Prowlarr 页面自己隐式决定目标服务器。这样做的好处：
+  - 跟 qBit 自带搜索的下载体验完全对齐（这条本来就是本 App 里"搜索结果点下载"的统一约定，Prowlarr
+    P0 阶段是唯一的例外）
+  - 白嫖到 `AddTorrentScreen` 已有的存储路径/分类/标签选择器，P0 备注里提到的"这轮没有这些选项"的
+    缺口一并补上
+  - "服务端直连"模式下 `torrentUrl` 直接是 `result.fileUrl`；"客户端直传"模式下磁力链同样直接传
+    `torrentUrl`（磁力链不受直连/直传开关影响，两种模式下都是直接传 link，无需下载字节），非磁力
+    直链则需要 `AddTorrentViewModel` 提交前先把字节下载好、转成 `files` 参数——这部分复用 P0 已有
+    的 `ProwlarrSearchRepository.downloadTorrentFile()` 逻辑，只是调用方从
+    `ProwlarrSearchViewModel.addTorrent()` 挪到 `AddTorrentViewModel` 的提交路径上，具体挪法留到
+    编码阶段设计（`AddTorrentViewModel` 目前是 `ui/addtorrent` 包内的通用组件，不感知 Prowlarr，
+    这里需要一个不侵入原有 addtorrent 逻辑的接入方式，比如提交前的一个可选"来源是 Prowlarr 直链，
+    先转字节"步骤，仅在 Prowlarr 入口触发时启用）
+- **服务端直连失败的检测与兜底**：提交后轮询种子列表几秒，超时判定为"大概率失败"（qBittorrent 的
+  `torrents/add` 用 URL 添加时接口本身通常立刻返回成功，真正的抓取是异步的，无法从提交请求的响应里
+  直接拿到"抓取失败"这个信号，只能靠事后观察种子列表有没有出现来推断——这个探测机制本身的可靠性
+  仍是本轮的技术不确定项，见第 7 节），超时后在界面上给一个"改用客户端直传重试"的按钮，**不做静默
+  自动重试**，同时允许用户直接取消操作
+- **批量下载**：结果列表加多选模式（长按进入，其余条目左侧出现勾选框），顶部显示"已选 N 项"+
+  "添加"按钮；点击后如果配置了多台服务器，弹一次服务器选择（一次选择应用到本次全部已选项，不逐条
+  问），选定后用固定默认参数批量提交——批量场景不可能让用户对每条种子都过一遍 `AddTorrentScreen`
+  的完整表单，所以批量走的是和 P0 时期类似的"快速提交"逻辑，跟"单条下载走 `AddTorrentScreen`"是两
+  条并存的路径，这是刻意的设计取舍，不是遗漏
+  - **服务端直连模式下**，批量提交可以一次 API 调用搞定：qBittorrent 的 `torrents/add` 本来就支持
+    `urls` 参数一次传多行（一行一个 URL），把已选结果的 `fileUrl` 拼成一份多行文本传过去即可，
+    效率很高
+  - **客户端直传模式下**，无法这样批量：非磁力的直链种子需要逐条下载字节、逐条上传，UI 要做成"按条
+    显示下载/上传进度"的列表，而不是一次性提交；如果批量选择里全部是磁力链结果，两种模式下行为其实
+    是一样的（磁力链本来就不受直连/直传开关影响）
 
 ---
 
