@@ -228,6 +228,16 @@ class ProwlarrSearchViewModel(
      * (which holds the indexer name for Prowlarr-sourced results) case-insensitively, split on
      * spaces with +/- term exclusion - same syntax as the existing free-text result filter.
      *
+     * [keyword] matches against the release title ([Search.Result.fileName]) - same split/+-
+     * syntax as [indexerQuery] and as the qBit result screen's own free-text filter
+     * ([dev.bartuzen.qbitcontroller.ui.search.result.SearchResultViewModel]'s `filterQuery`).
+     * Deliberately title-only, **not** "title and description/synopsis" despite that being how
+     * this was first requested: checked Prowlarr's actual `/api/v1/search` response schema (both
+     * the official docs and several third-party client libraries' field lists) and it doesn't
+     * return a synopsis/description text field at all - Torznab/Newznab search results never have
+     * one, only a title. The qBit-plugin result screen's equivalent filter is title-only for the
+     * same reason, so this isn't a gap specific to the Prowlarr integration.
+     *
      * Declared here (rather than only inline in the Composable) purely so the type is discoverable
      * alongside the rest of this screen's domain concepts, even though actual instances of it live
      * as Composable-level `rememberSaveable` state, not anything this ViewModel reads or writes -
@@ -243,6 +253,7 @@ class ProwlarrSearchViewModel(
         val sizeMinUnit: Int = 2,
         val sizeMaxUnit: Int = 2,
         val indexerQuery: String = "",
+        val keyword: String = "",
     ) {
         private fun Int.pow(x: Int): Long {
             var number = 1L
