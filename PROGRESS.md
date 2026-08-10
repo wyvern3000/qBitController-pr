@@ -42,55 +42,20 @@ Actions 却显示 success）。三处都已修复，CI 运行
 成功，产出 debug APK。**完整排查记录（每个 bug 的根因分析、涉及的 commit）已归档到
 `docs/PROGRESS_ARCHIVE.md`**，这里不再重复。
 
-## Round 6（本轮，2026-08-09）：P0 验收通过，产出 P1 详细方案（纯文档，未动代码）
+## Round 6（2026-08-09）：产出 P1 详细方案（纯文档，未动代码）
 
-用户确认 P0 已验收成功，提出三个新需求，均已写入
-`docs/prowlarr-p1-search-ui-and-tabs-plan.md`（该文档待第 4 节引用的字段核实后即可按第 6 节的六步
-顺序开工，本轮**只设计、不编码**）：
+用户确认 P0 验收通过后提出三个新需求（结果排序/过滤+索引器/分类多选、Prowlarr tab 移到 Search
+之后、新增可显隐 tab 设置），写入 `docs/prowlarr-p1-search-ui-and-tabs-plan.md`（本轮只设计不编码）。
+完整讨论内容（`selectedTabIndex` 下标错位隐患、`ProwlarrIndexer` 字段待真实核实等）已归档到
+`docs/PROGRESS_ARCHIVE.md`。
 
-1. Prowlarr 搜索页参照 Prowlarr 自身界面重做：索引器多选、分类多选（Torznab 大类）、结果排序/过滤
-2. Prowlarr 底部导航 tab 从"追加在最后"改为"排在搜索 tab 之后"——这要求先把 `MainScreen.kt` 里
-   round 4 故意写死的 7 处 tab 下标字面量重构成按 `NavHostDestination` 运行时查找（原来"追加在末
-   尾"就是为了避免这层重构，见方案第 3.1 节）
-3. 外观设置新增"页签显示"勾选组（默认全选，可隐藏 搜索/RSS/日志，种子/设置强制常显）——需要新增
-   `SettingsManager.visibleTabs`，并把现有 `showProwlarrTab` 迁移并入（方案第 4.3 节），避免两处
-   分别维护 Prowlarr tab 显隐状态
+## Round 7（2026-08-09）：P1 前三步（tab 重构/可显隐/移位）完成，CI 全部验证通过 ✅
 
-方案文档里第 3.3 节额外发现一个现有代码没处理过的边界情况：`selectedTabIndex` 靠
-`rememberSaveable` 跨重启保存的是**下标**而不是**具体 tab**，一旦 tabs 顺序/显隐组合发生变化，可能
-出现"下标没越界、但指向了另一个 tab"的隐蔽错位，现有 `LaunchedEffect(tabs)` 的越界检查覆盖不到这
-种情况，第 3.3 节给出了修复方向（改成按 destination 比对）。
-
-方案第 2.1 节的 `ProwlarrIndexer`/`ProwlarrIndexerCapabilities` 数据模型是根据 Prowlarr 官方文档
-推测的字段结构，**没有**真实 Prowlarr 实例可以核对（沙盒连不上外网 Prowlarr 服务），第 7 节"待确认
-事项"第 1 条已标注：开工第一步（对应方案第 6 节"第四步"）必须先用真实 `GET /api/v1/indexer` 响应
-核对字段名，不能直接假设文档写的就是对的。
-
-## Round 7（2026-08-09）：P1 前三步已完成，CI 全部验证通过 ✅
-
-用户直接说"按这个文档开始实施"（没有先走 Round 6 计划的"找用户确认第 7 节六条待确认事项"流程）。
-核对后发现第 7 节六条里第 2、3 条其实方案正文已有结论（子分类"需要支持"、记忆勾选状态"本轮先不做"），
-真正阻塞的只有第 1 条（真实索引器字段结构），而且只影响第四步，跟前三步（纯 tab/设置重构，不碰
-Prowlarr API）无关——于是直接按方案第 6 节顺序开工做了前三步，每步单独 commit + push，CI
-（`build-prowlarr-apk.yml`）全部验证通过：
-
-| 步骤 | Commit | 内容 | CI |
-|---|---|---|---|
-| 一 | `83b907ef` | `indexOfDestination()` 替换 `MainScreen.kt` 里 7 处硬编码 tab 下标，行为不变 | ✅ success |
-| 二 | `fc1b1bd5` | `SettingsManager.visibleTabs`（新增 `OptionalTab` 枚举，迁移旧 `showProwlarrTab`）+ 外观设置页新增"Visible tabs"勾选组 + Prowlarr 设置页旧开关换成跳转按钮 | ✅ success |
-| 三 | `c45c91d7` | `buildList{}` 里 Prowlarr 插入位置从末尾移到 Search 之后，默认顺序变为 Torrents/Search/Prowlarr/Rss/Logs/Settings | ✅ success |
-
-**顺带修了方案 3.3 节的 `selectedTabIndex` 错位 bug**，但没有按方案原计划放在第三步——这个 bug 其实
-在第二步（任意可选 tab 可独立隐藏，不只是 Prowlarr 一个）就已经会触发（例如隐藏 RSS 时若当前选中
-Logs，原先只做越界检查的 `LaunchedEffect(tabs)` 会让下标错误指向 Settings），不是非要等到第三步
-Prowlarr 移位才暴露，所以提前在第二步一并修掉：把持久化状态从 `selectedTabIndex: Int` 换成
-`selectedDestination: NavHostDestination`（`rememberSaveable` + `jsonSaver()`），`selectedTabIndex`
-变成 `tabs.indexOfDestination(selectedDestination)` 派生的只读值，tab 被隐藏后自动退回 Torrents，
-不会再指错。第三步因此不需要额外处理这个问题，diff 纯粹是一处 if 块搬家。
-
-沙盒依然没有 Gradle 本地编译能力（无 Maven/Google 仓库访问），三步都是手动核对 API 签名（`Preference`
-的 getter/setter、`PaddingValues`、`Settings.hasKey()` 等）后推送，靠 CI 远程验证——三次运行都是
-`success`，没有出现过编译错误。
+按方案第 6 节顺序做了前三步——`indexOfDestination()` 替换硬编码 tab 下标（`83b907ef`）、新增
+`SettingsManager.visibleTabs`（`fc1b1bd5`）、Prowlarr tab 移到 Search 之后（`c45c91d7`），顺带在
+第二步一并修了 `selectedTabIndex` 因 tab 显隐组合变化可能错指到另一个 tab 的 bug（改成按
+`NavHostDestination` 比对而非下标）。三次 CI 均 `success`。完整讨论内容已归档到
+`docs/PROGRESS_ARCHIVE.md`。
 
 ## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 ✅
 
@@ -161,19 +126,25 @@ feature/prowlarr-connection`，或用仓库 Contents API 之外的 Actions API �
 
 ## 下一轮接手时先做什么
 
-1. 按方案第 6 节继续：**第六步（排序/过滤）**，完成后手动 dispatch 一次 `build-prowlarr-apk.yml`
-   验证（不要每个中间 commit 都触发构建，见 Round 8）
-2. 索引器多选（第四步）和分类多选（第五步）都还没有真正意义上的"搜索结果确实被过滤对了"的实机验证——
-   Round 9 的截图只验证了 UI 渲染本身（勾选、展开、显示分组），没有验证"只勾 OurBits + 只选 Movies
-   分类后，搜出来的结果确实只来自 OurBits 的电影分类"这条功能性验收标准，需要用户实测一遍
-3. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
+1. **P1 六步已全部完成**（第六步排序/过滤见 Round 10）。索引器多选（第四步）、分类多选（第五步）、
+   排序/过滤（第六步）都还没有真正意义上的"功能确实生效"的实机验证——目前为止的截图/CI 只验证了
+   UI 渲染和编译通过，没有验证过"只勾 OurBits + 只选 Movies 分类后，搜出来的结果确实只来自 OurBits
+   的电影分类"“按 Seeders 排序后顺序真的对”"填了 seeds min=10 后确实过滤掉了做种数<10 的结果"这类
+   功能性验收标准，需要用户实测一遍——**优先级高于继续往下做新步骤**
+2. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
    Torznab 大类名（Movies/TV/Audio/...）都还是硬编码英文，没有走 strings.xml 之外的本地化路径——
    目前判断这是合理的（协议层面的分类名，不是面向用户的文案，参照 indexer.name 本身也不本地化），
    但如果用户觉得别扭需要反馈
-4. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
-5. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
-6. 完成 P1 全部步骤后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
-   "实施纪要"一节，避免两份方案文档长期并存
+3. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
+4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
+5. P1 全部步骤（含第六步）都完成后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md`
+   的"实施纪要"一节，避免两份方案文档长期并存
+6. **写 KDoc/注释时如果要提到形如 `xxx/*` 这样以 `/*` 结尾的路径或通配符，务必改写措辞避开字面的
+   `/*` 序列**——Kotlin 块注释支持嵌套，写在注释里的字面 `/*` 会被解析成新的嵌套层，导致注释自己的
+   `*/` 只关闭了这个意外嵌套层，外层注释从此不再闭合、把后面所有代码吞成注释直到文件末尾。这个坑
+   Round 5（`ui/search/*`）和 Round 10（`ui/search/*`，同一措辞，不同注释里又写了一次）各踩了一次，
+   本轮已改写措辞规避，但下一轮新写注释时如果又不小心引用类似路径，还是可能再踩——写完之后可以用
+   一个简单脚本统计整份文件 `/*`/`*/` 出现次数是否配平（深度归零）来自查，别只靠肉眼扫。
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
