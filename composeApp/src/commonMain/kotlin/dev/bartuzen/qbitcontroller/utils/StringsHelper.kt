@@ -24,6 +24,7 @@ import qbitcontroller.composeapp.generated.resources.date_seconds_ago
 import qbitcontroller.composeapp.generated.resources.date_weeks_ago
 import qbitcontroller.composeapp.generated.resources.date_years_ago
 import qbitcontroller.composeapp.generated.resources.error_api
+import qbitcontroller.composeapp.generated.resources.error_api_detail
 import qbitcontroller.composeapp.generated.resources.error_banned
 import qbitcontroller.composeapp.generated.resources.error_cannot_connect
 import qbitcontroller.composeapp.generated.resources.error_invalid_credentials
