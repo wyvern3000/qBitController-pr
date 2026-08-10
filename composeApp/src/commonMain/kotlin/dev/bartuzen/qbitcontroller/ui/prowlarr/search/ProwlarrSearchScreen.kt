@@ -79,6 +79,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -128,6 +129,7 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_all
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_enabled
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_select
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_detail_link
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_results
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_server_selected
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_not_configured
@@ -145,6 +147,7 @@ import qbitcontroller.composeapp.generated.resources.search_result_filter_min
 import qbitcontroller.composeapp.generated.resources.search_result_filter_reset
 import qbitcontroller.composeapp.generated.resources.search_result_filter_seeds
 import qbitcontroller.composeapp.generated.resources.search_result_filter_size
+import qbitcontroller.composeapp.generated.resources.search_result_no_browser
 import qbitcontroller.composeapp.generated.resources.size_bytes
 import qbitcontroller.composeapp.generated.resources.size_exbibytes
 import qbitcontroller.composeapp.generated.resources.size_gibibytes
@@ -173,6 +176,7 @@ fun ProwlarrSearchScreen(
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val uriHandler = LocalUriHandler.current
 
     val config by viewModel.configFlow.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -550,6 +554,27 @@ fun ProwlarrSearchScreen(
                                             }
                                         }
                                     },
+                                    onOpenDescription = {
+                                        if (result.descriptionLink.isBlank()) {
+                                            scope.launch {
+                                                snackbarHostState.currentSnackbarData?.dismiss()
+                                                snackbarHostState.showSnackbar(
+                                                    getString(Res.string.prowlarr_search_no_detail_link),
+                                                )
+                                            }
+                                        } else {
+                                            try {
+                                                uriHandler.openUri(result.descriptionLink)
+                                            } catch (_: IllegalArgumentException) {
+                                                scope.launch {
+                                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                                    snackbarHostState.showSnackbar(
+                                                        getString(Res.string.search_result_no_browser),
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
                                 )
                             }
                         }
@@ -560,14 +585,27 @@ fun ProwlarrSearchScreen(
     }
 }
 
+/**
+ * [onOpenDescription] opens [searchResult]'s originating tracker page (`infoUrl`, mapped onto
+ * [Search.Result.descriptionLink]) in the system browser - mirrors
+ * [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultScreen]'s existing "Details" dialog
+ * action, just triggered directly by tapping the card instead of going through an intermediate
+ * dialog - this screen doesn't have one, and the download button is the only other action a card
+ * needs. Uses Material3's clickable-card overload rather than a bare `Modifier.clickable` so it
+ * gets the standard ripple/touch-target semantics for free; the trailing download [IconButton]
+ * still handles its own tap independently - a single tap on it only triggers [onDownloadClick],
+ * not both.
+ */
 @Composable
 private fun ProwlarrSearchResultItem(
     searchResult: Search.Result,
     isAddEnabled: Boolean,
     onDownloadClick: () -> Unit,
+    onOpenDescription: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
+        onClick = onOpenDescription,
         colors = CardDefaults.elevatedCardColors(),
         modifier = modifier,
     ) {

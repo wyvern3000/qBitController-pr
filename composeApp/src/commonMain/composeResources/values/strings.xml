@@ -841,6 +841,7 @@
     <string name="prowlarr_search_indexer">Indexer</string>
     <string name="prowlarr_search_filter_keyword">Keyword</string>
     <string name="prowlarr_search_filter_keyword_hint">Matches release title, e.g. 1985</string>
+    <string name="prowlarr_search_no_detail_link">This result has no detail page.</string>
 
     <string name="about_description">qBitController allows you to control qBittorrent remotely from any device.\n\nFor more detailed information and source code: %1$s</string>
 
