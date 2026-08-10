@@ -47,7 +47,7 @@ class ProwlarrSearchRepository(
 
                     RequestResult.Success(torrentResults)
                 } else {
-                    RequestResult.Error.ApiError(response.code)
+                    RequestResult.Error.ApiError(response.code, response.errorMessage)
                 }
             },
         )
@@ -79,7 +79,7 @@ class ProwlarrSearchRepository(
                 if (response.code in 200..<300 && response.body != null) {
                     RequestResult.Success(response.body)
                 } else {
-                    RequestResult.Error.ApiError(response.code)
+                    RequestResult.Error.ApiError(response.code, response.errorMessage)
                 }
             },
         )

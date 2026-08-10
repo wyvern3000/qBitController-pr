@@ -96,6 +96,7 @@
     <string name="error_unknown_login_response">Unknown login response: %1$s</string>
     <string name="error_unknown">Unknown error: %1$s</string>
     <string name="error_api">API returned an error: %1$d</string>
+    <string name="error_api_detail">API returned an error: %1$d - %2$s</string>
 
     <string name="error_required_field">This field is required.</string>
     <string name="error_invalid_interval">Must be between %1$d and %2$d.</string>

@@ -68,7 +68,7 @@ class ProwlarrRepository(
             // error string can be added later if this needs to read better.
             when {
                 response.code in 200..<300 && response.body != null -> RequestResult.Success(Unit)
-                else -> RequestResult.Error.ApiError(response.code)
+                else -> RequestResult.Error.ApiError(response.code, response.errorMessage)
             }
         },
     )
@@ -94,7 +94,7 @@ class ProwlarrRepository(
                 if (response.code in 200..<300 && indexers != null) {
                     RequestResult.Success(indexers)
                 } else {
-                    RequestResult.Error.ApiError(response.code)
+                    RequestResult.Error.ApiError(response.code, response.errorMessage)
                 }
             },
         )

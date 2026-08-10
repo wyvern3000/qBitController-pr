@@ -264,7 +264,11 @@ sealed class RequestResult<out T : Any?> {
             data class Unknown(val message: String) : RequestError()
         }
 
-        data class ApiError(val code: Int) : Error()
+        // message is currently only ever populated by Prowlarr-side calls (see
+        // ProwlarrService.execute / Response.errorMessage KDoc) - qBittorrent-side ApiError(code)
+        // call sites are unaffected since the parameter defaults to null and every existing
+        // `is ApiError if result.code == X` match only ever reads .code.
+        data class ApiError(val code: Int, val message: String? = null) : Error()
     }
 }
 
