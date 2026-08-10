@@ -1127,7 +1127,8 @@ private fun sortAndFilterProwlarrResults(
 /**
  * Simplified copy of [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultScreen]'s private
  * `FilterDialog`, kept independent per docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.3 -
- * this screen must stay free-standing so it can be reverted without touching `ui/search/*`. Adds one
+ * this screen must stay free-standing so it can be reverted without touching any file under
+ * `ui/search`. Adds one
  * section the original doesn't have: a keyword filter against the originating indexer (see
  * [ProwlarrSearchViewModel.Filter] KDoc for why that dimension matters more here than on the qBit
  * plugin result screen).
