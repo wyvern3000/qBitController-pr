@@ -2,6 +2,8 @@ package dev.bartuzen.qbitcontroller.ui.prowlarr.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.bartuzen.qbitcontroller.data.SearchSort
+import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 /**
  * Drives the standalone Prowlarr search screen (see docs/prowlarr-integration-plan.md, round 3).
@@ -28,6 +31,7 @@ class ProwlarrSearchViewModel(
     private val prowlarrRepository: ProwlarrRepository,
     private val prowlarrSearchRepository: ProwlarrSearchRepository,
     private val addTorrentRepository: AddTorrentRepository,
+    private val settingsManager: SettingsManager,
 ) : ViewModel() {
     private val eventChannel = Channel<Event>()
     val eventFlow = eventChannel.receiveAsFlow()
@@ -39,6 +43,15 @@ class ProwlarrSearchViewModel(
 
     private val _results = MutableStateFlow<List<Search.Result>>(emptyList())
     val results = _results.asStateFlow()
+
+    // Independent from SettingsManager.searchSort/isReverseSearchSorting (the qBit-plugin result
+    // screen's own preferences) - see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.3.
+    // Sort order is the only piece of Prowlarr result state that's a persisted user setting rather
+    // than session-only screen state - the min/seed/size/indexer Filter below is intentionally kept
+    // at the Composable level (rememberSaveable) instead, since it only needs to survive this
+    // search session, not persist across app restarts.
+    val searchSort = settingsManager.prowlarrSearchSort.flow
+    val isReverseSearchSort = settingsManager.isReverseProwlarrSearchSort.flow
 
     private val _isAdding = MutableStateFlow(false)
     val isAdding = _isAdding.asStateFlow()
@@ -172,6 +185,14 @@ class ProwlarrSearchViewModel(
         addTorrentJob = job
     }
 
+    fun setSearchSort(searchSort: SearchSort) {
+        settingsManager.prowlarrSearchSort.value = searchSort
+    }
+
+    fun changeReverseSorting() {
+        settingsManager.isReverseProwlarrSearchSort.value = !isReverseSearchSort.value
+    }
+
     private suspend fun addTorrent(serverId: Int, links: List<String>?, files: List<Pair<String, ByteArray>>?) =
         addTorrentRepository.addTorrent(
             serverId = serverId,
@@ -193,6 +214,56 @@ class ProwlarrSearchViewModel(
             isSequentialDownloadEnabled = false,
             isFirstLastPiecePrioritized = false,
         )
+
+    /**
+     * Result filter for [ProwlarrSearchScreen] (deliberately a
+     * separate type from [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultViewModel.Filter]
+     * rather than a shared one - see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.3 - the
+     * seeds/size min/max comparison logic below is copied from there, not reused).
+     *
+     * [indexerQuery] is the one filter dimension the qBit result screen doesn't have: a single
+     * Prowlarr search can span dozens of different indexers (unlike a qBit plugin search's more
+     * limited notion of "source"), so filtering results down to a keyword match against the
+     * originating indexer is useful here specifically. Matched against [Search.Result.siteUrl]
+     * (which holds the indexer name for Prowlarr-sourced results) case-insensitively, split on
+     * spaces with +/- term exclusion - same syntax as the existing free-text result filter.
+     *
+     * Declared here (rather than only inline in the Composable) purely so the type is discoverable
+     * alongside the rest of this screen's domain concepts, even though actual instances of it live
+     * as Composable-level `rememberSaveable` state, not anything this ViewModel reads or writes -
+     * unlike [searchSort]/[isReverseSearchSort] above, filter values are session-only and don't need
+     * to survive an app restart.
+     */
+    @Serializable
+    data class Filter(
+        val seedsMin: Int? = null,
+        val seedsMax: Int? = null,
+        val sizeMin: Long? = null,
+        val sizeMax: Long? = null,
+        val sizeMinUnit: Int = 2,
+        val sizeMaxUnit: Int = 2,
+        val indexerQuery: String = "",
+    ) {
+        private fun Int.pow(x: Int): Long {
+            var number = 1L
+            repeat(x) {
+                number *= this
+            }
+            return number
+        }
+
+        val sizeMinBytes = if (sizeMin != null) {
+            sizeMin * 1024.pow(sizeMinUnit)
+        } else {
+            null
+        }
+
+        val sizeMaxBytes = if (sizeMax != null) {
+            sizeMax * 1024.pow(sizeMaxUnit)
+        } else {
+            null
+        }
+    }
 
     sealed class Event {
         data class SearchError(val error: RequestResult.Error) : Event()

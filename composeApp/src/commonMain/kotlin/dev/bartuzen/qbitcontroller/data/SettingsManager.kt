@@ -53,6 +53,12 @@ open class SettingsManager(
     val searchSort = preference(settings, "searchSort", SearchSort.NAME)
     val isReverseSearchSorting = preference(settings, "isReverseSearchSort", false)
 
+    // Deliberately separate keys from searchSort/isReverseSearchSorting above (same SearchSort
+    // enum, independent preference) so switching sort order on one search screen doesn't affect
+    // the other - see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.3.
+    val prowlarrSearchSort = preference(settings, "prowlarrSearchSort", SearchSort.NAME)
+    val isReverseProwlarrSearchSort = preference(settings, "isReverseProwlarrSearchSort", false)
+
     // Global Prowlarr connection config. A single instance is stored (as opposed to a list like
     // ServerManager's ServerConfigs) since Prowlarr aggregates indexers independently of any one
     // qBittorrent server - see docs/prowlarr-integration-plan.md section 4.3.

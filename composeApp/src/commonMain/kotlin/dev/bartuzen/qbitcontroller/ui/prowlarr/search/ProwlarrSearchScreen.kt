@@ -21,15 +21,20 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TravelExplore
@@ -37,14 +42,22 @@ import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -53,6 +66,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,14 +78,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.bartuzen.qbitcontroller.data.SearchSort
 import dev.bartuzen.qbitcontroller.model.ProwlarrCategory
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.Search
+import dev.bartuzen.qbitcontroller.ui.components.ActionMenuItem
+import dev.bartuzen.qbitcontroller.ui.components.AppBarActions
 import dev.bartuzen.qbitcontroller.ui.components.CategoryChip
+import dev.bartuzen.qbitcontroller.ui.components.Dialog
+import dev.bartuzen.qbitcontroller.ui.components.DropdownMenuItem
 import dev.bartuzen.qbitcontroller.ui.components.EmptyListMessage
 import dev.bartuzen.qbitcontroller.ui.components.RadioButtonWithLabel
 import dev.bartuzen.qbitcontroller.ui.components.SwipeableSnackbarHost
@@ -82,6 +102,8 @@ import dev.bartuzen.qbitcontroller.utils.formatBytes
 import dev.bartuzen.qbitcontroller.utils.formatUri
 import dev.bartuzen.qbitcontroller.utils.getErrorMessage
 import dev.bartuzen.qbitcontroller.utils.getString
+import dev.bartuzen.qbitcontroller.utils.jsonSaver
+import dev.bartuzen.qbitcontroller.utils.measureTextWidth
 import dev.bartuzen.qbitcontroller.utils.stateListSaver
 import dev.bartuzen.qbitcontroller.utils.stringResource
 import kotlinx.coroutines.flow.Flow
@@ -91,12 +113,15 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import qbitcontroller.composeapp.generated.resources.Res
 import qbitcontroller.composeapp.generated.resources.destination_prowlarr
+import qbitcontroller.composeapp.generated.resources.dialog_cancel
+import qbitcontroller.composeapp.generated.resources.dialog_ok
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_all
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_selected
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_site_specific
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_standard
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexer
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_all
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_enabled
@@ -106,6 +131,25 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_server_s
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_not_configured
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_query_hint
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_torrent_added
+import qbitcontroller.composeapp.generated.resources.search_result_action_filter
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort_leechers
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort_name
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort_reverse
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort_seeders
+import qbitcontroller.composeapp.generated.resources.search_result_action_sort_size
+import qbitcontroller.composeapp.generated.resources.search_result_filter_max
+import qbitcontroller.composeapp.generated.resources.search_result_filter_min
+import qbitcontroller.composeapp.generated.resources.search_result_filter_reset
+import qbitcontroller.composeapp.generated.resources.search_result_filter_seeds
+import qbitcontroller.composeapp.generated.resources.search_result_filter_size
+import qbitcontroller.composeapp.generated.resources.size_bytes
+import qbitcontroller.composeapp.generated.resources.size_exbibytes
+import qbitcontroller.composeapp.generated.resources.size_gibibytes
+import qbitcontroller.composeapp.generated.resources.size_kibibytes
+import qbitcontroller.composeapp.generated.resources.size_mebibytes
+import qbitcontroller.composeapp.generated.resources.size_pebibytes
+import qbitcontroller.composeapp.generated.resources.size_tebibytes
 import qbitcontroller.composeapp.generated.resources.torrent_add_error
 import qbitcontroller.composeapp.generated.resources.torrent_add_invalid_file
 
@@ -131,12 +175,23 @@ fun ProwlarrSearchScreen(
     val config by viewModel.configFlow.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isAdding by viewModel.isAdding.collectAsStateWithLifecycle()
-    val results by viewModel.results.collectAsStateWithLifecycle()
+    val rawResults by viewModel.results.collectAsStateWithLifecycle()
     val indexers by viewModel.indexers.collectAsStateWithLifecycle()
     val isLoadingIndexers by viewModel.isLoadingIndexers.collectAsStateWithLifecycle()
+    val currentSorting by viewModel.searchSort.collectAsStateWithLifecycle()
+    val isReverseSorting by viewModel.isReverseSearchSort.collectAsStateWithLifecycle()
 
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
     var hasSearched by rememberSaveable { mutableStateOf(false) }
+
+    var filter by rememberSaveable(stateSaver = jsonSaver<ProwlarrSearchViewModel.Filter>()) {
+        mutableStateOf(ProwlarrSearchViewModel.Filter())
+    }
+    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
+
+    val results = remember(rawResults, currentSorting, isReverseSorting, filter) {
+        sortAndFilterProwlarrResults(rawResults, currentSorting, isReverseSorting, filter)
+    }
 
     var indexerSectionExpanded by rememberSaveable { mutableStateOf(false) }
     var selectedIndexerOption by rememberSaveable { mutableStateOf(IndexerSelection.Enabled) }
@@ -233,6 +288,21 @@ fun ProwlarrSearchScreen(
         }
     }
 
+    if (showFilterDialog) {
+        ProwlarrFilterDialog(
+            filter = filter,
+            onDismiss = { showFilterDialog = false },
+            onConfirm = { newFilter ->
+                filter = newFilter
+                showFilterDialog = false
+            },
+            onReset = {
+                filter = ProwlarrSearchViewModel.Filter()
+                showFilterDialog = false
+            },
+        )
+    }
+
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -244,6 +314,101 @@ fun ProwlarrSearchScreen(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                },
+                actions = {
+                    var showSortMenu by rememberSaveable { mutableStateOf(false) }
+                    val actionMenuItems = listOf(
+                        ActionMenuItem(
+                            title = stringResource(Res.string.search_result_action_filter),
+                            icon = Icons.Filled.FilterList,
+                            onClick = { showFilterDialog = true },
+                            showAsAction = true,
+                        ),
+                        ActionMenuItem(
+                            title = stringResource(Res.string.search_result_action_sort),
+                            icon = Icons.AutoMirrored.Filled.Sort,
+                            onClick = { showSortMenu = true },
+                            showAsAction = true,
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowRight,
+                                    contentDescription = null,
+                                )
+                            },
+                            dropdownMenu = {
+                                val scrollState = rememberScrollState()
+                                LaunchedEffect(showSortMenu) {
+                                    if (showSortMenu) {
+                                        scrollState.scrollTo(0)
+                                    }
+                                }
+
+                                DropdownMenu(
+                                    expanded = showSortMenu,
+                                    onDismissRequest = { showSortMenu = false },
+                                    scrollState = scrollState,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.search_result_action_sort),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    )
+
+                                    val sortOptions = remember {
+                                        listOf(
+                                            Res.string.search_result_action_sort_name to SearchSort.NAME,
+                                            Res.string.search_result_action_sort_size to SearchSort.SIZE,
+                                            Res.string.search_result_action_sort_seeders to SearchSort.SEEDERS,
+                                            Res.string.search_result_action_sort_leechers to SearchSort.LEECHERS,
+                                            Res.string.prowlarr_search_indexer to SearchSort.SEARCH_ENGINE,
+                                        )
+                                    }
+                                    sortOptions.forEach { (stringId, searchSort) ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                ) {
+                                                    RadioButton(
+                                                        selected = currentSorting == searchSort,
+                                                        onClick = null,
+                                                    )
+                                                    Text(text = stringResource(stringId))
+                                                }
+                                            },
+                                            onClick = {
+                                                viewModel.setSearchSort(searchSort)
+                                                showSortMenu = false
+                                            },
+                                        )
+                                    }
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                Checkbox(
+                                                    checked = isReverseSorting,
+                                                    onCheckedChange = null,
+                                                )
+                                                Text(text = stringResource(Res.string.search_result_action_sort_reverse))
+                                            }
+                                        },
+                                        onClick = {
+                                            viewModel.changeReverseSorting()
+                                            showSortMenu = false
+                                        },
+                                    )
+                                }
+                            },
+                        ),
+                    )
+
+                    AppBarActions(items = actionMenuItems)
                 },
             )
         },
@@ -892,4 +1057,390 @@ private fun CategoryGroupRow(
             }
         }
     }
+}
+
+/**
+ * Pure sort + filter step for the Prowlarr results list (see docs/prowlarr-p1-search-ui-and-tabs-plan.md,
+ * section 2.3). Deliberately a plain function rather than ViewModel/StateFlow machinery: [sort] and
+ * [isReverse] are the only pieces of state here that come from the ViewModel (as persisted settings),
+ * while [filter] is Composable-owned `rememberSaveable` state - a top-level function taking all of it
+ * as parameters is the simplest way to combine the two without forcing either one to own the other.
+ *
+ * Comparator logic mirrors [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultViewModel]'s
+ * `sortedResults`; the [SearchSort.SEARCH_ENGINE] case is reused as-is to mean "indexer" here since
+ * [Search.Result.siteUrl] holds the indexer name for Prowlarr-sourced results - see the "Indexer" sort
+ * label added alongside it in the screen's sort menu.
+ */
+private fun sortAndFilterProwlarrResults(
+    results: List<Search.Result>,
+    sort: SearchSort,
+    isReverse: Boolean,
+    filter: ProwlarrSearchViewModel.Filter,
+): List<Search.Result> {
+    val comparator = when (sort) {
+        SearchSort.NAME -> compareBy(String.CASE_INSENSITIVE_ORDER, Search.Result::fileName)
+        SearchSort.SIZE -> compareBy(Search.Result::fileSize).thenBy(String.CASE_INSENSITIVE_ORDER, Search.Result::fileName)
+        SearchSort.SEEDERS -> compareBy(Search.Result::seeders).thenBy(String.CASE_INSENSITIVE_ORDER, Search.Result::fileName)
+        SearchSort.LEECHERS -> compareBy(Search.Result::leechers).thenBy(String.CASE_INSENSITIVE_ORDER, Search.Result::fileName)
+        SearchSort.SEARCH_ENGINE ->
+            compareBy(String.CASE_INSENSITIVE_ORDER, Search.Result::siteUrl)
+                .thenBy(String.CASE_INSENSITIVE_ORDER, Search.Result::fileName)
+    }
+
+    val sorted = results.sortedWith(comparator).let { if (isReverse) it.reversed() else it }
+
+    return sorted.filter { result ->
+        if (filter.indexerQuery.isNotEmpty()) {
+            val matchesIndexerQuery = filter.indexerQuery
+                .split(" ")
+                .filter { it.isNotEmpty() && it != "-" }
+                .all { term ->
+                    val isExclusion = term.startsWith("-")
+                    val cleanTerm = term.removePrefix("-")
+                    val containsTerm = result.siteUrl.contains(cleanTerm, ignoreCase = true)
+
+                    if (isExclusion) !containsTerm else containsTerm
+                }
+            if (!matchesIndexerQuery) {
+                return@filter false
+            }
+        }
+
+        if (filter.seedsMin != null && (result.seeders ?: -1) < filter.seedsMin) {
+            return@filter false
+        }
+        if (filter.seedsMax != null && (result.seeders ?: Int.MAX_VALUE) > filter.seedsMax) {
+            return@filter false
+        }
+
+        if (filter.sizeMinBytes != null && (result.fileSize ?: -1) < filter.sizeMinBytes) {
+            return@filter false
+        }
+        if (filter.sizeMaxBytes != null && (result.fileSize ?: Long.MAX_VALUE) > filter.sizeMaxBytes) {
+            return@filter false
+        }
+
+        true
+    }
+}
+
+/**
+ * Simplified copy of [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultScreen]'s private
+ * `FilterDialog`, kept independent per docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.3 -
+ * this screen must stay free-standing so it can be reverted without touching `ui/search/*`. Adds one
+ * section the original doesn't have: a keyword filter against the originating indexer (see
+ * [ProwlarrSearchViewModel.Filter] KDoc for why that dimension matters more here than on the qBit
+ * plugin result screen).
+ */
+@Composable
+private fun ProwlarrFilterDialog(
+    filter: ProwlarrSearchViewModel.Filter,
+    onDismiss: () -> Unit,
+    onConfirm: (filter: ProwlarrSearchViewModel.Filter) -> Unit,
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var indexerQuery by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.indexerQuery))
+    }
+    var seedsMin by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.seedsMin?.toString() ?: ""))
+    }
+    var seedsMax by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.seedsMax?.toString() ?: ""))
+    }
+    var sizeMin by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.sizeMin?.toString() ?: ""))
+    }
+    var sizeMax by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.sizeMax?.toString() ?: ""))
+    }
+    var sizeMinUnit by rememberSaveable { mutableIntStateOf(filter.sizeMinUnit) }
+    var sizeMaxUnit by rememberSaveable { mutableIntStateOf(filter.sizeMaxUnit) }
+
+    val sizeUnits = remember {
+        listOf(
+            Res.string.size_bytes,
+            Res.string.size_kibibytes,
+            Res.string.size_mebibytes,
+            Res.string.size_gibibytes,
+            Res.string.size_tebibytes,
+            Res.string.size_pebibytes,
+            Res.string.size_exbibytes,
+        )
+    }
+
+    Dialog(
+        modifier = modifier,
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(Res.string.search_result_action_filter)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Language,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.prowlarr_search_indexer),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                OutlinedTextField(
+                    value = indexerQuery,
+                    onValueChange = { indexerQuery = it },
+                    label = {
+                        Text(
+                            text = stringResource(Res.string.prowlarr_search_indexer),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ArrowUpward,
+                        contentDescription = null,
+                        tint = LocalCustomColors.current.seederColor,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.search_result_filter_seeds),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = LocalCustomColors.current.seederColor,
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = seedsMin,
+                        onValueChange = {
+                            if (it.text.all { it.isDigit() }) {
+                                seedsMin = it
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(Res.string.search_result_filter_min),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    OutlinedTextField(
+                        value = seedsMax,
+                        onValueChange = {
+                            if (it.text.all { it.isDigit() }) {
+                                seedsMax = it
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(Res.string.search_result_filter_max),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Storage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.search_result_filter_size),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                val speedUnitDropdownWidth = sizeUnits.maxOf { measureTextWidth(stringResource(it)) } + 72.dp
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = sizeMin,
+                        onValueChange = {
+                            if (it.text.all { it.isDigit() }) {
+                                sizeMin = it
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(Res.string.search_result_filter_min),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    var expanded by rememberSaveable { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
+                        modifier = Modifier
+                            .width(speedUnitDropdownWidth)
+                            .padding(top = 8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = stringResource(sizeUnits[sizeMinUnit]),
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            sizeUnits.forEachIndexed { sizeUnit, stringId ->
+                                DropdownMenuItem(
+                                    text = { Text(text = stringResource(stringId)) },
+                                    onClick = {
+                                        sizeMinUnit = sizeUnit
+                                        expanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = sizeMax,
+                        onValueChange = {
+                            if (it.text.all { it.isDigit() }) {
+                                sizeMax = it
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(Res.string.search_result_filter_max),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    var expanded by rememberSaveable { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
+                        modifier = Modifier
+                            .width(speedUnitDropdownWidth)
+                            .padding(top = 8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = stringResource(sizeUnits[sizeMaxUnit]),
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            sizeUnits.forEachIndexed { sizeUnit, stringId ->
+                                DropdownMenuItem(
+                                    text = { Text(text = stringResource(stringId)) },
+                                    onClick = {
+                                        sizeMaxUnit = sizeUnit
+                                        expanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onReset) {
+                    Text(text = stringResource(Res.string.search_result_filter_reset))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                TextButton(onClick = onDismiss) {
+                    Text(text = stringResource(Res.string.dialog_cancel))
+                }
+
+                Button(
+                    onClick = {
+                        val newFilter = ProwlarrSearchViewModel.Filter(
+                            seedsMin = seedsMin.text.toIntOrNull(),
+                            seedsMax = seedsMax.text.toIntOrNull(),
+                            sizeMin = sizeMin.text.toLongOrNull(),
+                            sizeMax = sizeMax.text.toLongOrNull(),
+                            sizeMinUnit = sizeMinUnit,
+                            sizeMaxUnit = sizeMaxUnit,
+                            indexerQuery = indexerQuery.text,
+                        )
+                        onConfirm(newFilter)
+                    },
+                ) {
+                    Text(text = stringResource(Res.string.dialog_ok))
+                }
+            }
+        },
+    )
 }
