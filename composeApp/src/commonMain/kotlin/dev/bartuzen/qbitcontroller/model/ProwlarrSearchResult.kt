@@ -24,6 +24,10 @@ data class ProwlarrSearchResult(
     val downloadUrl: String? = null,
     val magnetUrl: String? = null,
     val infoUrl: String? = null,
+    // Torznab/Newznab category ids for this specific result (confirmed present in the real API
+    // response - docs/prowlarr-integration-plan.md section 2 - but never wired into this model
+    // until docs/prowlarr-download-defaults-plan.md needed it for category-based download routing).
+    val categories: List<Int>? = null,
 )
 
 /**
@@ -47,4 +51,5 @@ fun ProwlarrSearchResult.toSearchResult() = Search.Result(
     leechers = leechers,
     seeders = seeders,
     siteUrl = indexer ?: "",
+    categories = categories ?: emptyList(),
 )

@@ -7,6 +7,8 @@ import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
+import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.Search
 import dev.bartuzen.qbitcontroller.network.RequestResult
@@ -127,9 +129,13 @@ class ProwlarrSearchViewModel(
     }
 
     /**
-     * Adds [searchResult] to the server identified by [serverId] using fixed defaults (server's
-     * default save path/category, no tags, not paused) - there is no save-path/category picker in
-     * this round, see docs/prowlarr-integration-plan.md, round 3 notes.
+     * Adds [searchResult] to the server identified by [serverId] using the user's configured
+     * Prowlarr download defaults/category routes (`SettingsManager.prowlarrDownloadDefaults`/
+     * `prowlarrCategoryRoutes`) - no per-download popup, see docs/prowlarr-download-defaults-plan.md
+     * (this replaces the fixed-empty-defaults behavior from docs/prowlarr-integration-plan.md,
+     * round 3, and formally supersedes the never-implemented "jump to AddTorrentScreen every
+     * download" direction from docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.4, which
+     * directly conflicted with "no popup per download").
      *
      * Magnet links are passed straight through as a link. Everything else is assumed to be a
      * direct .torrent file link and is downloaded by this device first, then uploaded to
@@ -143,14 +149,24 @@ class ProwlarrSearchViewModel(
         _isAdding.value = true
         val job = viewModelScope.launch {
             val result = if (searchResult.fileUrl.startsWith("magnet:", ignoreCase = true)) {
-                addTorrent(serverId, links = listOf(searchResult.fileUrl), files = null)
+                addTorrent(
+                    serverId,
+                    links = listOf(searchResult.fileUrl),
+                    files = null,
+                    categories = searchResult.categories,
+                )
             } else {
                 when (val fileResult = prowlarrSearchRepository.downloadTorrentFile(searchResult.fileUrl)) {
                     is RequestResult.Success -> {
                         val fileName = searchResult.fileName.let {
                             if (it.endsWith(".torrent", ignoreCase = true)) it else "$it.torrent"
                         }
-                        addTorrent(serverId, links = null, files = listOf(fileName to fileResult.data))
+                        addTorrent(
+                            serverId,
+                            links = null,
+                            files = listOf(fileName to fileResult.data),
+                            categories = searchResult.categories,
+                        )
                     }
                     is RequestResult.Error -> fileResult
                 }
@@ -193,27 +209,37 @@ class ProwlarrSearchViewModel(
         settingsManager.isReverseProwlarrSearchSort.value = !isReverseSearchSort.value
     }
 
-    private suspend fun addTorrent(serverId: Int, links: List<String>?, files: List<Pair<String, ByteArray>>?) =
-        addTorrentRepository.addTorrent(
+    private suspend fun addTorrent(
+        serverId: Int,
+        links: List<String>?,
+        files: List<Pair<String, ByteArray>>?,
+        categories: List<Int>,
+    ): RequestResult<String> {
+        val defaults = settingsManager.prowlarrDownloadDefaults.value
+        val routes = settingsManager.prowlarrCategoryRoutes.value
+        val (savePath, category, tags) = resolveProwlarrDownloadRouting(categories, routes, defaults)
+
+        return addTorrentRepository.addTorrent(
             serverId = serverId,
             links = links,
             files = files,
-            savePath = null,
-            category = null,
-            tags = emptyList(),
-            stopCondition = null,
-            contentLayout = null,
+            savePath = savePath,
+            category = category,
+            tags = tags,
+            stopCondition = defaults.stopCondition,
+            contentLayout = defaults.contentLayout,
             torrentName = null,
-            downloadSpeedLimit = null,
-            uploadSpeedLimit = null,
-            ratioLimit = null,
-            seedingTimeLimit = null,
-            isPaused = false,
-            skipHashChecking = false,
-            isAutoTorrentManagementEnabled = null,
-            isSequentialDownloadEnabled = false,
-            isFirstLastPiecePrioritized = false,
+            downloadSpeedLimit = defaults.downloadSpeedLimit,
+            uploadSpeedLimit = defaults.uploadSpeedLimit,
+            ratioLimit = defaults.ratioLimit,
+            seedingTimeLimit = defaults.seedingTimeLimit,
+            isPaused = defaults.isPaused,
+            skipHashChecking = defaults.skipHashChecking,
+            isAutoTorrentManagementEnabled = defaults.isAutoTorrentManagementEnabled,
+            isSequentialDownloadEnabled = defaults.isSequentialDownloadEnabled,
+            isFirstLastPiecePrioritized = defaults.isFirstLastPiecePrioritized,
         )
+    }
 
     /**
      * Result filter for [ProwlarrSearchScreen] (deliberately a
@@ -283,5 +309,37 @@ class ProwlarrSearchViewModel(
         data object InvalidTorrentFile : Event()
         data object AddTorrentError : Event()
         data object AddTorrentSuccess : Event()
+    }
+}
+
+/**
+ * Resolves the save path/category/tags to actually submit for a Prowlarr result, given its
+ * Torznab [resultCategoryIds] - see docs/prowlarr-download-defaults-plan.md, sections 2.2/3.
+ *
+ * The first entry in [routes] (user-controlled priority via list order, not "most specific match"
+ * or any other automatic ranking) whose [ProwlarrCategoryRoute.categoryIds] intersects
+ * [resultCategoryIds] wins. A matched route's own `null`/empty field falls back to [defaults] for
+ * that field individually - e.g. a route can override just `savePath` and still inherit the global
+ * default `category`/`tags` - rather than being all-or-nothing. No route matching (including when
+ * [resultCategoryIds] is empty, e.g. an indexer that doesn't report categories) falls straight back
+ * to [defaults] for all three.
+ *
+ * Pure function, no ViewModel/state dependency, so it's usable from [ProwlarrSearchViewModel]
+ * without needing test doubles for anything beyond plain data.
+ */
+internal fun resolveProwlarrDownloadRouting(
+    resultCategoryIds: List<Int>,
+    routes: List<ProwlarrCategoryRoute>,
+    defaults: ProwlarrDownloadDefaults,
+): Triple<String?, String?, List<String>> {
+    val route = routes.firstOrNull { route -> route.categoryIds.any { it in resultCategoryIds } }
+    return if (route == null) {
+        Triple(defaults.savePath, defaults.category, defaults.tags)
+    } else {
+        Triple(
+            route.savePath ?: defaults.savePath,
+            route.category ?: defaults.category,
+            route.tags.ifEmpty { defaults.tags },
+        )
     }
 }

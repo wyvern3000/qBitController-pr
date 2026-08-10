@@ -3,7 +3,9 @@ package dev.bartuzen.qbitcontroller.data
 import androidx.compose.ui.graphics.Color
 import com.materialkolor.PaletteStyle
 import com.russhwolf.settings.Settings
+import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
 import dev.bartuzen.qbitcontroller.ui.theme.defaultPrimaryColor
 import dev.bartuzen.qbitcontroller.ui.torrentlist.TorrentFilter
 
@@ -63,6 +65,15 @@ open class SettingsManager(
     // ServerManager's ServerConfigs) since Prowlarr aggregates indexers independently of any one
     // qBittorrent server - see docs/prowlarr-integration-plan.md section 4.3.
     val prowlarrConfig = jsonPreference(settings, "prowlarrConfig", ProwlarrConfig())
+
+    // Always-applied fallback download params for a Prowlarr result's "Download" tap, and an
+    // ordered list of per-category save-path/category/tags overrides - see
+    // docs/prowlarr-download-defaults-plan.md. Same jsonPreference mechanism as prowlarrConfig
+    // above; two separate keys (rather than one combined object) since the defaults are always
+    // exactly one value while the routes are a list managed independently (add/edit/delete/reorder)
+    // in the settings screen.
+    val prowlarrDownloadDefaults = jsonPreference(settings, "prowlarrDownloadDefaults", ProwlarrDownloadDefaults())
+    val prowlarrCategoryRoutes = jsonPreference(settings, "prowlarrCategoryRoutes", emptyList<ProwlarrCategoryRoute>())
 
     // Superseded by visibleTabs below (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section
     // 4.3). Kept declared - but no longer written to - purely so the one-time migration below can
