@@ -120,6 +120,8 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_selected
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_site_specific
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_standard
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword_hint
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexer
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
@@ -1090,6 +1092,22 @@ private fun sortAndFilterProwlarrResults(
     val sorted = results.sortedWith(comparator).let { if (isReverse) it.reversed() else it }
 
     return sorted.filter { result ->
+        if (filter.keyword.isNotEmpty()) {
+            val matchesKeyword = filter.keyword
+                .split(" ")
+                .filter { it.isNotEmpty() && it != "-" }
+                .all { term ->
+                    val isExclusion = term.startsWith("-")
+                    val cleanTerm = term.removePrefix("-")
+                    val containsTerm = result.fileName.contains(cleanTerm, ignoreCase = true)
+
+                    if (isExclusion) !containsTerm else containsTerm
+                }
+            if (!matchesKeyword) {
+                return@filter false
+            }
+        }
+
         if (filter.indexerQuery.isNotEmpty()) {
             val matchesIndexerQuery = filter.indexerQuery
                 .split(" ")
@@ -1128,10 +1146,12 @@ private fun sortAndFilterProwlarrResults(
  * Simplified copy of [dev.bartuzen.qbitcontroller.ui.search.result.SearchResultScreen]'s private
  * `FilterDialog`, kept independent per docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.3 -
  * this screen must stay free-standing so it can be reverted without touching any file under
- * `ui/search`. Adds one
- * section the original doesn't have: a keyword filter against the originating indexer (see
- * [ProwlarrSearchViewModel.Filter] KDoc for why that dimension matters more here than on the qBit
- * plugin result screen).
+ * `ui/search`. Two sections the original doesn't have: a title keyword filter (top of the dialog,
+ * mirroring the qBit result screen's separate search-mode free-text filter, which lives in that
+ * screen's top bar instead of its filter dialog - there's no equivalent search-mode toggle here,
+ * so it's a dialog field instead) and a keyword filter against the originating indexer (see
+ * [ProwlarrSearchViewModel.Filter] KDoc for why that second dimension matters more here than on
+ * the qBit plugin result screen).
  */
 @Composable
 private fun ProwlarrFilterDialog(
@@ -1141,6 +1161,9 @@ private fun ProwlarrFilterDialog(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var keyword by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(filter.keyword))
+    }
     var indexerQuery by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(filter.indexerQuery))
     }
@@ -1177,6 +1200,48 @@ private fun ProwlarrFilterDialog(
         title = { Text(text = stringResource(Res.string.search_result_action_filter)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.prowlarr_search_filter_keyword),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                OutlinedTextField(
+                    value = keyword,
+                    onValueChange = { keyword = it },
+                    label = {
+                        Text(
+                            text = stringResource(Res.string.prowlarr_search_filter_keyword),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(Res.string.prowlarr_search_filter_keyword_hint),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1435,6 +1500,7 @@ private fun ProwlarrFilterDialog(
                             sizeMinUnit = sizeMinUnit,
                             sizeMaxUnit = sizeMaxUnit,
                             indexerQuery = indexerQuery.text,
+                            keyword = keyword.text,
                         )
                         onConfirm(newFilter)
                     },
