@@ -40,3 +40,70 @@ artifact（~28.5MB debug APK，free flavor），可以下载装到手机上测�
 
 另外顺便更新了 `docs/prowlarr-integration-plan.md`，加了第 8 节「实施纪要」，记录了跟最初方案的三点
 方向性偏离（做成独立页面零侵入原搜索功能、下载改客户端直传、设置页加连接配置+显示开关）。
+
+## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 —— 完整记录
+
+**CI 触发方式改动**：用户要求"编译先改为按需编译，不要每次改动一点都编译"——`build-prowlarr-apk.yml`
+原来 `push` 到本分支就自动触发（配合协作规范"每个 commit 后立即 push"，导致每个已经验证过的小 commit
+都触发一次 ~6 分钟构建）。改成只保留 `workflow_dispatch`，push 频率不变（继续遵守"及时同步防丢失"），
+但构建验证只在有意义的检查点手动触发（`gh workflow run build-prowlarr-apk.yml --ref
+feature/prowlarr-connection`，或用仓库 Contents API 之外的 Actions API 直接 POST
+`.../actions/workflows/build-prowlarr-apk.yml/dispatches`）。已确认改动生效：改动本身的 push 没有
+触发自动构建，随后手动 dispatch 两次都正常跑起来了。
+
+**第四步：索引器多选**（`83b907ef`→`c536ddc1` 之后，commit `735b7441` + 修复 `8b3d4508`）——
+
+用户提供了一份真实（但未脱敏）的 `GET /api/v1/indexer` 响应样本，核对后发现：`id`/`name`/`enable`
+字段名跟方案文档 2.1 节的猜测一致，但 `capabilities.categories` 是**递归**结构（子分类嵌套在父分类的
+`subCategories` 里，不是平铺列表），这是原方案没预料到的。样本里还带着真实站点的 session cookie/JWT，
+已在对话里提醒用户轮换，代码/文档里没有落地任何一个真实凭证。
+
+改动：
+- 新增 `model/ProwlarrIndexer.kt`：`ProwlarrIndexer` / `ProwlarrIndexerCapabilities` /
+  `ProwlarrCategory`（`subCategories: List<ProwlarrCategory>` 递归建模，为第五步分类多选直接复用）
+- `ProwlarrService.getIndexers()` + `ProwlarrRepository.getIndexers()` 转发（失败不阻塞搜索，退化为
+  不传 `indexerIds`）
+- `ProwlarrSearchViewModel`：`indexers`/`isLoadingIndexers` 状态，`loadIndexers()`，`search()` 加
+  `indexerIds: List<Int>?` 参数
+- `ProwlarrSearchScreen`：可折叠的三态选择器（已启用/全部/自选），复用
+  `SearchStartScreen.kt` 的 `RadioButtonWithLabel` 三态模式。**偏离了方案文档一处**：方案写的是
+  "FilterChip"，但核对代码发现这个 Material3 组件在本项目里从来没用过，实际的 chip 组件是
+  `TagChip`/`CategoryChip`（`TorrentOverviewTab.kt` 的标签选择器在用）——改用后者，跟"核对真实 API
+  而不是照抄文档猜测"是同一个原则的延伸
+
+**踩的一个坑**：第一次推送后手动 dispatch 构建，`compileFreeDebugKotlinAndroid` 报错——新增的
+`Event.IndexersError` 没有加进 `ProwlarrSearchScreen.kt` 里 `EventEffect` 那个穷尽 `when` 分支，
+漏了编译器要求的 exhaustive check。单独一个 commit（`8b3d4508`）修掉，重新 dispatch 构建，
+[run 31316463719](https://github.com/wyvern3000/qBitController-pr/actions/runs/31316463719)
+`success`。`build-error.log` 已清理。
+
+**用户手动修复的一处 bug**（`cc9fe525` + `29d6e0f4`，非本轮 Claude 改的，特此记录）：
+`NavHostDestination.kt` 的 `sealed class NavHostDestination` 本身缺了 `@Serializable` 注解
+（每个 `data object` 子类单独标了，但密封类自己没标），会影响 `NavHost` 类型安全导航的多态序列化。
+用户本地修正、重新编译、实机验证功能正常后推送。下一轮如果要碰导航相关代码，注意这个类现在的
+正确写法是密封类和每个子类都要有 `@Serializable`。
+
+## Round 9（2026-08-09）：P1 第五步（分类多选）完成，真机反馈后修了分类分组的显示 bug —— 完整记录
+
+**第五步：分类多选**（commit `3d229c87`，CI
+[31321894534](https://github.com/wyvern3000/qBitController-pr/actions/runs/31321894534) success）——
+`ProwlarrService.search()` / `ProwlarrSearchRepository.search()` / `ProwlarrSearchViewModel.search()`
+加了 `categories: List<Int>?` 参数，用法跟 `indexerIds` 一样（重复 query 参数，不传 = 查全部分类，
+解决了下面"待确认事项"里"categories 参数没接"那条）。`ProwlarrSearchScreen` 新增第二个可折叠区块，
+两级展开：大类本身直接可勾选（`CategoryChip`），有子分类时旁边才出现展开箭头。
+
+**偏离方案文档一处**（跟 Round 8 索引器多选那次同一个原则——核对真实数据，不照抄文档）：方案 2.2 节
+写的是固定 8 个 Torznab 标准大类（1000 Console ... 8000 Other）作为唯一顶层分组。核对 Round 7 那份
+真实索引器样本后发现这样会让 OpenCD（中文音乐站）的分类选择器基本没用——它的音乐流派
+（华语流行/古典音乐/...）全挂在 100000+ 的自定义分类号下，不属于任何标准大类。改成从"当前生效的
+索引器集合实际上报了什么"动态构建顶层分组（`buildCategoryGroups`），按 id 升序排列。
+
+**真机测试发现的 bug**（用户截图反馈"分类出现错乱了"）：按 id 排序的扁平列表，把 OurBits 的标准
+"Movies"（2000，真的有 "Movies/3D" 子分类）跟它自己重复注册的 site-specific "Movies"（100401，
+没有子分类）挨在一起显示，样式完全一样——用户看到两个同名 "Movies" chip 中间隔着 "Audio"/"TV"，
+以为是渲染错乱了。查了 Torznab/Newznab 规范确认：**id ≥ 100000 就是规范预留给站点自定义分类的范围**
+（跟标准 1000-8999 分开就是为了不冲突，不是瞎猜的）。据此把分类列表拆成 "Standard"/"Site-Specific"
+两个带标签的分组（`7df171a7`，CI
+[31341337943](https://github.com/wyvern3000/qBitController-pr/actions/runs/31341337943) success）——
+只是展示层面的分组，实际传给 `search()` 的分类号不变。`CategoryGroupRow` 抽出来复用，两个分组渲染
+逻辑不重复。

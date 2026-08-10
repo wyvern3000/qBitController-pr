@@ -59,92 +59,76 @@ Actions 却显示 success）。三处都已修复，CI 运行
 
 ## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 ✅
 
-**CI 触发方式改动**：用户要求"编译先改为按需编译，不要每次改动一点都编译"——`build-prowlarr-apk.yml`
-原来 `push` 到本分支就自动触发（配合协作规范"每个 commit 后立即 push"，导致每个已经验证过的小 commit
-都触发一次 ~6 分钟构建）。改成只保留 `workflow_dispatch`，push 频率不变（继续遵守"及时同步防丢失"），
-但构建验证只在有意义的检查点手动触发（`gh workflow run build-prowlarr-apk.yml --ref
-feature/prowlarr-connection`，或用仓库 Contents API 之外的 Actions API 直接 POST
-`.../actions/workflows/build-prowlarr-apk.yml/dispatches`）。已确认改动生效：改动本身的 push 没有
-触发自动构建，随后手动 dispatch 两次都正常跑起来了。
-
-**第四步：索引器多选**（`83b907ef`→`c536ddc1` 之后，commit `735b7441` + 修复 `8b3d4508`）——
-
-用户提供了一份真实（但未脱敏）的 `GET /api/v1/indexer` 响应样本，核对后发现：`id`/`name`/`enable`
-字段名跟方案文档 2.1 节的猜测一致，但 `capabilities.categories` 是**递归**结构（子分类嵌套在父分类的
-`subCategories` 里，不是平铺列表），这是原方案没预料到的。样本里还带着真实站点的 session cookie/JWT，
-已在对话里提醒用户轮换，代码/文档里没有落地任何一个真实凭证。
-
-改动：
-- 新增 `model/ProwlarrIndexer.kt`：`ProwlarrIndexer` / `ProwlarrIndexerCapabilities` /
-  `ProwlarrCategory`（`subCategories: List<ProwlarrCategory>` 递归建模，为第五步分类多选直接复用）
-- `ProwlarrService.getIndexers()` + `ProwlarrRepository.getIndexers()` 转发（失败不阻塞搜索，退化为
-  不传 `indexerIds`）
-- `ProwlarrSearchViewModel`：`indexers`/`isLoadingIndexers` 状态，`loadIndexers()`，`search()` 加
-  `indexerIds: List<Int>?` 参数
-- `ProwlarrSearchScreen`：可折叠的三态选择器（已启用/全部/自选），复用
-  `SearchStartScreen.kt` 的 `RadioButtonWithLabel` 三态模式。**偏离了方案文档一处**：方案写的是
-  "FilterChip"，但核对代码发现这个 Material3 组件在本项目里从来没用过，实际的 chip 组件是
-  `TagChip`/`CategoryChip`（`TorrentOverviewTab.kt` 的标签选择器在用）——改用后者，跟"核对真实 API
-  而不是照抄文档猜测"是同一个原则的延伸
-
-**踩的一个坑**：第一次推送后手动 dispatch 构建，`compileFreeDebugKotlinAndroid` 报错——新增的
-`Event.IndexersError` 没有加进 `ProwlarrSearchScreen.kt` 里 `EventEffect` 那个穷尽 `when` 分支，
-漏了编译器要求的 exhaustive check。单独一个 commit（`8b3d4508`）修掉，重新 dispatch 构建，
-[run 31316463719](https://github.com/wyvern3000/qBitController-pr/actions/runs/31316463719)
-`success`。`build-error.log` 已清理。
-
-**用户手动修复的一处 bug**（`cc9fe525` + `29d6e0f4`，非本轮 Claude 改的，特此记录）：
-`NavHostDestination.kt` 的 `sealed class NavHostDestination` 本身缺了 `@Serializable` 注解
-（每个 `data object` 子类单独标了，但密封类自己没标），会影响 `NavHost` 类型安全导航的多态序列化。
-用户本地修正、重新编译、实机验证功能正常后推送。下一轮如果要碰导航相关代码，注意这个类现在的
-正确写法是密封类和每个子类都要有 `@Serializable`。
+`build-prowlarr-apk.yml` 从 push 自动触发改成 `workflow_dispatch` 手动触发（push 仍每 commit 都推，
+只是构建验证不再跟着每个小 commit 触发）。索引器多选：`ProwlarrService.getIndexers()` 转发 + 三态选择器
+（复用 `RadioButtonWithLabel`），`capabilities.categories` 核对真实响应后发现是递归结构（`ProwlarrCategory.
+subCategories`），为第五步分类多选打好基础。踩坑：漏了 `EventEffect` 里 `IndexersError` 分支的 exhaustive
+check，`8b3d4508` 修复后 CI success。完整记录已归档到 `docs/PROGRESS_ARCHIVE.md`。
 
 ## Round 9（2026-08-09）：P1 第五步（分类多选）完成，真机反馈后修了分类分组的显示 bug ✅
 
-**第五步：分类多选**（commit `3d229c87`，CI
-[31321894534](https://github.com/wyvern3000/qBitController-pr/actions/runs/31321894534) success）——
-`ProwlarrService.search()` / `ProwlarrSearchRepository.search()` / `ProwlarrSearchViewModel.search()`
-加了 `categories: List<Int>?` 参数，用法跟 `indexerIds` 一样（重复 query 参数，不传 = 查全部分类，
-解决了下面"待确认事项"里"categories 参数没接"那条）。`ProwlarrSearchScreen` 新增第二个可折叠区块，
-两级展开：大类本身直接可勾选（`CategoryChip`），有子分类时旁边才出现展开箭头。
+`categories: List<Int>?` 参数打通 `search()` 全链路。偏离方案文档：顶层分组改成从真实索引器数据动态
+构建（`buildCategoryGroups`），而非方案里假设的固定 8 个 Torznab 标准大类——核对样本后发现 OpenCD
+这类站点的自定义分类全在标准大类之外。真机测试发现同名 "Movies" chip（标准分类 2000 与站点自定义分类
+100401）挨在一起显示像是渲染错乱，按 Torznab 规范 `id ≥ 100000` 为站点自定义范围拆成 "Standard"/
+"Site-Specific" 两组解决（`7df171a7`，CI success）。完整记录已归档到 `docs/PROGRESS_ARCHIVE.md`。
 
-**偏离方案文档一处**（跟 Round 8 索引器多选那次同一个原则——核对真实数据，不照抄文档）：方案 2.2 节
-写的是固定 8 个 Torznab 标准大类（1000 Console ... 8000 Other）作为唯一顶层分组。核对 Round 7 那份
-真实索引器样本后发现这样会让 OpenCD（中文音乐站）的分类选择器基本没用——它的音乐流派
-（华语流行/古典音乐/...）全挂在 100000+ 的自定义分类号下，不属于任何标准大类。改成从"当前生效的
-索引器集合实际上报了什么"动态构建顶层分组（`buildCategoryGroups`），按 id 升序排列。
+## Round 10（2026-08-10）：P1 第六步（排序/过滤）完成，再次踩中 KDoc 嵌套注释坑 ✅
 
-**真机测试发现的 bug**（用户截图反馈"分类出现错乱了"）：按 id 排序的扁平列表，把 OurBits 的标准
-"Movies"（2000，真的有 "Movies/3D" 子分类）跟它自己重复注册的 site-specific "Movies"（100401，
-没有子分类）挨在一起显示，样式完全一样——用户看到两个同名 "Movies" chip 中间隔着 "Audio"/"TV"，
-以为是渲染错乱了。查了 Torznab/Newznab 规范确认：**id ≥ 100000 就是规范预留给站点自定义分类的范围**
-（跟标准 1000-8999 分开就是为了不冲突，不是瞎猜的）。据此把分类列表拆成 "Standard"/"Site-Specific"
-两个带标签的分组（`7df171a7`，CI
-[31341337943](https://github.com/wyvern3000/qBitController-pr/actions/runs/31341337943) success）——
-只是展示层面的分组，实际传给 `search()` 的分类号不变。`CategoryGroupRow` 抽出来复用，两个分组渲染
-逻辑不重复。
+**第六步：排序/过滤**（commit `fb4fde69`）——`ProwlarrSearchViewModel` 加排序（Seeders/Leechers/Size/
+PublishDate，升降序）和过滤（seeds min、keyword 占位）状态，`ProwlarrFilterDialog` 新增筛选面板。首次
+dispatch 构建失败：`ProwlarrFilterDialog.kt` 的 KDoc 里又写了一次 `ui/search/*` 这个字面路径——跟 Round 5
+踩的完全是同一类坑（Kotlin 块注释嵌套，字面 `/*` 提前闭合导致外层注释吞掉后面所有代码），只是换了个
+文件、同一措辞又写了一遍。`d7c816a2` 改写措辞修复，重新 dispatch，[run
+31350744421](https://github.com/wyvern3000/qBitController-pr/actions/runs/31350744421) `success`。
+P1 六步至此全部完成并至少编译验证过一次。
+
+## Round 11（2026-08-10）：错误详情透出 + 关键字过滤 + 点击跳浏览器，CI 曾失败，已定位修复并验证 ✅
+
+三个独立改动，分三个 commit 分别验证隔离：
+
+- **Commit `484cdebe`**：`getErrorMessage()` 之前对所有 API 错误只显示裸状态码（"API returned an
+  error: 500"），看不出具体原因。改成 `ProwlarrService.execute()` 尽力从响应体里提取
+  `message`/`error`/`errorMessage`/`description` 字段（对象或数组形态都处理，非 JSON 或像 HTML
+  错误页则丢弃，提取失败绝不影响原有状态码判断），新增 `error_api_detail` 字符串在有detail 时展示。
+- **Commit `a1cf4646`**：关键字过滤真正接入 `ProwlarrSearchScreen`/`ProwlarrSearchViewModel`（Round 10
+  加的只是占位状态）。
+- **Commit `bd6e72d2`**：点击搜索结果直接跳转到 tracker 页面（浏览器打开），P1 方案外的追加需求。
+
+**CI 失败排查**（`beeb97b6` 记录的日志，dispatch 对象 `bd6e72d2`）：`compileFreeDebugKotlinAndroid`
+报 `StringsHelper.kt:211:30 Unresolved reference 'error_api_detail'`。定位：Compose Resources 把每个
+`Res.string.X` 生成成**扩展属性**而非成员，Kotlin 解析扩展属性必须显式 import 才能生效——文件里其余
+~50 个 `error_*`/`date_*`/`eta_*` 引用都各自有一行 import，唯独 `484cdebe` 加的 `error_api_detail`
+用法忘了加对应 import。`strings.xml` 里键本身一直是对的，`generateComposeResClass` 也正常跑了，纯粹是
+少了一行 import，不是资源生成器的问题。`2b92059f` 补上，重新 dispatch，[run
+31357762028](https://github.com/wyvern3000/qBitController-pr/actions/runs/31357762028) `success`——
+三个功能改动至此才第一次全部一起真正编译通过。
 
 ## 下一轮接手时先做什么
 
-1. **P1 六步已全部完成**（第六步排序/过滤见 Round 10）。索引器多选（第四步）、分类多选（第五步）、
-   排序/过滤（第六步）都还没有真正意义上的"功能确实生效"的实机验证——目前为止的截图/CI 只验证了
-   UI 渲染和编译通过，没有验证过"只勾 OurBits + 只选 Movies 分类后，搜出来的结果确实只来自 OurBits
-   的电影分类"“按 Seeders 排序后顺序真的对”"填了 seeds min=10 后确实过滤掉了做种数<10 的结果"这类
-   功能性验收标准，需要用户实测一遍——**优先级高于继续往下做新步骤**
+1. **P1 六步 + Round 11 三个追加改动（错误详情/关键字过滤/点击跳浏览器）现在才第一次全部一起编译
+   验证通过**（`2b92059f`，CI success）。但到目前为止所有验证都停在"编译过/UI 渲染出来了"这一层，
+   没有一条做过"功能确实生效"的实机验收——需要用户实测：索引器多选/分类多选是否真的把结果限定在
+   选中范围、排序是否真的按 Seeders/Size 等排对了、seeds min 过滤是否真的滤掉了做种数不够的结果、
+   关键字过滤是否真的按关键字筛、点击结果跳的浏览器链接是否真的对、错误详情文案是否真的把 Prowlarr
+   返回的 message 显示出来了（而不是还是裸状态码）——**优先级高于继续往下做新功能**
 2. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
    Torznab 大类名（Movies/TV/Audio/...）都还是硬编码英文，没有走 strings.xml 之外的本地化路径——
    目前判断这是合理的（协议层面的分类名，不是面向用户的文案，参照 indexer.name 本身也不本地化），
    但如果用户觉得别扭需要反馈
 3. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
-4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1 新步骤
-5. P1 全部步骤（含第六步）都完成后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md`
+4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1/追加需求
+5. 所有功能性验收都做完后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md`
    的"实施纪要"一节，避免两份方案文档长期并存
 6. **写 KDoc/注释时如果要提到形如 `xxx/*` 这样以 `/*` 结尾的路径或通配符，务必改写措辞避开字面的
-   `/*` 序列**——Kotlin 块注释支持嵌套，写在注释里的字面 `/*` 会被解析成新的嵌套层，导致注释自己的
-   `*/` 只关闭了这个意外嵌套层，外层注释从此不再闭合、把后面所有代码吞成注释直到文件末尾。这个坑
-   Round 5（`ui/search/*`）和 Round 10（`ui/search/*`，同一措辞，不同注释里又写了一次）各踩了一次，
-   本轮已改写措辞规避，但下一轮新写注释时如果又不小心引用类似路径，还是可能再踩——写完之后可以用
-   一个简单脚本统计整份文件 `/*`/`*/` 出现次数是否配平（深度归零）来自查，别只靠肉眼扫。
+   `/*` 序列**——Kotlin 块注释支持嵌套，字面 `/*` 会被解析成新的嵌套层，导致注释自己的 `*/` 只关闭了
+   这个意外嵌套层，外层注释从此不再闭合、把后面所有代码吞成注释直到文件末尾。同一措辞（`ui/search/*`）
+   已经在 Round 5 和 Round 10 各踩了一次，写完新注释后可以用脚本统计整份文件 `/*`/`*/` 出现次数是否
+   配平（深度归零）来自查，别只靠肉眼扫。
+7. **新增 `Res.string.X`/`Res.plurals.X` 用法时记得同时加一行对应 import**——这个项目里 `Res.string.X`
+   是扩展属性不是成员，不 import 就是编译期 `Unresolved reference`（Round 11 踩了一次，`error_api_detail`
+   加了用法忘加 import）。改完 `StringsHelper.kt` 这类文件后，可以简单 grep 一下 `Res.string.`/
+   `Res.plurals.` 用到的每个名字是否都在文件顶部有对应 import 行，别只肉眼扫一长串 import 列表。
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
