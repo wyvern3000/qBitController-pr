@@ -104,31 +104,68 @@ P1 六步至此全部完成并至少编译验证过一次。
 31357762028](https://github.com/wyvern3000/qBitController-pr/actions/runs/31357762028) `success`——
 三个功能改动至此才第一次全部一起真正编译通过。
 
+## Round 12（2026-08-10）：下载默认参数 + 分类专属路由——方案先审批后实施，CI 验证通过 ✅
+
+用户追加需求：Prowlarr 下载目前全部走服务端默认（保存路径/顺序下载/首尾优先/做种策略等全部不传），
+不想每次弹窗配置，至少要有设置页默认参数，理想情况按分类分流（movie 去一处，music 去另一处）。
+
+**设计先行**：写了 `docs/prowlarr-download-defaults-plan.md`，用户审批确定两点范围（分类路由只覆盖
+保存路径/分类/标签，不覆盖限速/做种策略等全部字段；设置页用纯文本框，不做按服务器自动补全）。这也
+正式废弃了 P1 方案文档 2.4 节"点下载跳转 AddTorrentScreen"的方向（跟"不想弹窗"直接冲突，从未实施）。
+
+**实施（4 个 commit）**：
+- 重构（`fc2ef04a`，纯移动零行为变化）：把搜索页的分类多选 UI（`CategoryGroup`/`buildCategoryGroups`/
+  `CategorySelectionSection` 等）提取到 `ui/prowlarr/ProwlarrCategoryPicker.kt`，供设置页复用
+- 数据层（`0a57797a`）：新模型 `ProwlarrDownloadDefaults`（全局默认，字段照抄
+  `AddTorrentRepository.addTorrent()` 参数列表）+ `ProwlarrCategoryRoute`（名字+分类 id 列表+可选
+  覆盖保存路径/分类/标签）、`SettingsManager` 两个新 `jsonPreference`、`Search.Result`/
+  `ProwlarrSearchResult` 补上 `categories` 字段（真实 API 一直有这个字段，之前没接进模型）、
+  `ProwlarrSearchViewModel.addTorrent()` 改成用 `resolveProwlarrDownloadRouting()` 解析出的参数，
+  替换掉原来全部硬编码 null/false
+- 设置页 UI（`402d7b0a`）：新增 `ProwlarrDownloadDefaultsScreen`，"默认参数"表单（全部字段）+"分类
+  专属路由"列表（增/删/改/上下移动排序，分类多选复用上面提取的组件），从 Prowlarr 设置页加了个入口
+  按钮
+- 修复（`0dab06f1`）：CI 报 `Unresolved reference 'ExposedDropdownMenu'`——这次反过来，是我自己加了
+  一行不存在的 import。`ExposedDropdownMenu` 在这个 Material3 版本里不是顶层 composable，是
+  `ExposedDropdownMenuBoxScope` 的成员函数，在 `ExposedDropdownMenuBox { ... }` 的 trailing lambda
+  里直接调用靠隐式 receiver 解析，完全不需要 import（跟 `.menuAnchor(...)` 是同一类特例，
+  AddTorrentScreen 调用四次 `.menuAnchor` 全都没有对应 import）。删掉这行多余的 import 即可，
+  `EnumDropdown` 的调用结构本身跟 AddTorrentScreen 已有的四处用法完全一致。重新 dispatch，[run
+  31464305653](https://github.com/wyvern3000/qBitController-pr/actions/runs/31464305653) `success`。
+
 ## 下一轮接手时先做什么
 
-1. **P1 六步 + Round 11 三个追加改动（错误详情/关键字过滤/点击跳浏览器）现在才第一次全部一起编译
-   验证通过**（`2b92059f`，CI success）。但到目前为止所有验证都停在"编译过/UI 渲染出来了"这一层，
-   没有一条做过"功能确实生效"的实机验收——需要用户实测：索引器多选/分类多选是否真的把结果限定在
-   选中范围、排序是否真的按 Seeders/Size 等排对了、seeds min 过滤是否真的滤掉了做种数不够的结果、
-   关键字过滤是否真的按关键字筛、点击结果跳的浏览器链接是否真的对、错误详情文案是否真的把 Prowlarr
-   返回的 message 显示出来了（而不是还是裸状态码）——**优先级高于继续往下做新功能**
+1. **P1 六步 + Round 11/12 所有追加改动（错误详情/关键字过滤/点击跳浏览器/下载默认参数/分类路由）
+   现在才第一次全部一起编译验证通过**（`0dab06f1`，CI success）。但到目前为止所有验证都停在"编译
+   过/UI 渲染出来了"这一层，没有一条做过"功能确实生效"的实机验收——需要用户实测：索引器多选/分类
+   多选是否真的把结果限定在选中范围、排序是否真的按 Seeders/Size 等排对了、seeds min 过滤是否真的
+   滤掉了做种数不够的结果、关键字过滤是否真的按关键字筛、点击结果跳的浏览器链接是否真的对、错误
+   详情文案是否真的把 Prowlarr 返回的 message 显示出来了、**下载默认参数是否真的套用到了实际下载
+   请求上、分类路由是否真的按分类命中并覆盖了保存路径/分类/标签、路由优先级（列表顺序）是否符合
+   预期**——**优先级高于继续往下做新功能**
 2. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
    Torznab 大类名（Movies/TV/Audio/...）都还是硬编码英文，没有走 strings.xml 之外的本地化路径——
    目前判断这是合理的（协议层面的分类名，不是面向用户的文案，参照 indexer.name 本身也不本地化），
    但如果用户觉得别扭需要反馈
-3. 方案第 2.4 节"下载目的地重新设计"仍然**没有**列进第 6 节六步，是否要补第七步，需要用户确认
-4. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1/追加需求
-5. 所有功能性验收都做完后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md`
-   的"实施纪要"一节，避免两份方案文档长期并存
-6. **写 KDoc/注释时如果要提到形如 `xxx/*` 这样以 `/*` 结尾的路径或通配符，务必改写措辞避开字面的
+3. P0 验收（APK 实机测试）如果还没做完，优先级高于继续往下做 P1/追加需求
+4. 所有功能性验收都做完后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md`
+   的"实施纪要"一节，避免文档长期并存（现在是三份：P0 主方案、P1 方案、下载默认参数方案）
+5. **写 KDoc/注释时如果要提到形如 `xxx/*` 这样以 `/*` 结尾的路径或通配符，务必改写措辞避开字面的
    `/*` 序列**——Kotlin 块注释支持嵌套，字面 `/*` 会被解析成新的嵌套层，导致注释自己的 `*/` 只关闭了
    这个意外嵌套层，外层注释从此不再闭合、把后面所有代码吞成注释直到文件末尾。同一措辞（`ui/search/*`）
    已经在 Round 5 和 Round 10 各踩了一次，写完新注释后可以用脚本统计整份文件 `/*`/`*/` 出现次数是否
    配平（深度归零）来自查，别只靠肉眼扫。
-7. **新增 `Res.string.X`/`Res.plurals.X` 用法时记得同时加一行对应 import**——这个项目里 `Res.string.X`
+6. **新增 `Res.string.X`/`Res.plurals.X` 用法时记得同时加一行对应 import**——这个项目里 `Res.string.X`
    是扩展属性不是成员，不 import 就是编译期 `Unresolved reference`（Round 11 踩了一次，`error_api_detail`
    加了用法忘加 import）。改完 `StringsHelper.kt` 这类文件后，可以简单 grep 一下 `Res.string.`/
    `Res.plurals.` 用到的每个名字是否都在文件顶部有对应 import 行，别只肉眼扫一长串 import 列表。
+7. **反过来的坑：`ExposedDropdownMenuBoxScope`（`ExposedDropdownMenu`、`.menuAnchor(...)` 等）是
+   receiver 成员函数，不是顶层 composable，不需要也不能 import**——只在直接嵌套于
+   `ExposedDropdownMenuBox { ... }` lambda 内调用时才通过隐式 receiver 解析，Round 12 因为多加了一行
+   不存在的 `import androidx.compose.material3.ExposedDropdownMenu` 而编译失败。跟第 6 条正好相反：
+   不是"用了忘 import"，而是"不该 import 的东西手动加了 import"。写新的
+   `ExposedDropdownMenuBox`/`ExposedDropdownMenu` 用法前，直接照抄 `AddTorrentScreen.kt` 里现成的四处
+   写法，不要凭直觉补 import。
 
 ## 待确认事项（继承自原方案第 7 节，尚未处理）
 
