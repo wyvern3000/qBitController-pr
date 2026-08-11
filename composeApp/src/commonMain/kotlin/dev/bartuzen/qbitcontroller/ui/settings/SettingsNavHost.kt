@@ -22,6 +22,7 @@ import dev.bartuzen.qbitcontroller.ui.settings.appearance.AppearanceSettingsScre
 import dev.bartuzen.qbitcontroller.ui.settings.general.GeneralSettingsScreen
 import dev.bartuzen.qbitcontroller.ui.settings.network.NetworkSettingsScreen
 import dev.bartuzen.qbitcontroller.ui.settings.prowlarr.ProwlarrSettingsScreen
+import dev.bartuzen.qbitcontroller.ui.settings.prowlarr.download.ProwlarrDownloadDefaultsScreen
 import dev.bartuzen.qbitcontroller.ui.settings.servers.ServersScreen
 import dev.bartuzen.qbitcontroller.utils.DefaultTransitions
 import dev.bartuzen.qbitcontroller.utils.getSerializable
@@ -193,6 +194,15 @@ fun SettingsNavHost(
                 onNavigateToAppearanceSettings = {
                     navController.navigateWithLifecycle(Destination.Settings.Appearance)
                 },
+                onNavigateToDownloadDefaults = {
+                    navController.navigateWithLifecycle(Destination.Settings.ProwlarrDownloadDefaults)
+                },
+            )
+        }
+
+        composable<Destination.Settings.ProwlarrDownloadDefaults> {
+            ProwlarrDownloadDefaultsScreen(
+                onNavigateBack = { navController.navigateUp() },
             )
         }
     }

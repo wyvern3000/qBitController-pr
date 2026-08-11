@@ -39,6 +39,7 @@ import dev.bartuzen.qbitcontroller.ui.settings.appearance.AppearanceSettingsView
 import dev.bartuzen.qbitcontroller.ui.settings.general.GeneralSettingsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.network.NetworkSettingsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.prowlarr.ProwlarrSettingsViewModel
+import dev.bartuzen.qbitcontroller.ui.settings.prowlarr.download.ProwlarrDownloadDefaultsViewModel
 import dev.bartuzen.qbitcontroller.ui.settings.servers.ServersViewModel
 import dev.bartuzen.qbitcontroller.ui.torrent.tabs.files.TorrentFilesViewModel
 import dev.bartuzen.qbitcontroller.ui.torrent.tabs.overview.TorrentOverviewViewModel
@@ -119,6 +120,7 @@ val appModule = module {
     viewModelOf(::AppearanceSettingsViewModel)
     viewModelOf(::NetworkSettingsViewModel)
     viewModelOf(::ProwlarrSettingsViewModel)
+    viewModelOf(::ProwlarrDownloadDefaultsViewModel)
     viewModelOf(::ProwlarrSearchViewModel)
 }
 

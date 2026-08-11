@@ -822,6 +822,23 @@
     <string name="settings_prowlarr_show_bottom_nav">Show in bottom navigation bar</string>
     <string name="settings_prowlarr_tab_visibility_moved">Whether the Prowlarr tab is shown in the bottom navigation bar is now managed together with the other tabs in Appearance settings.</string>
     <string name="settings_prowlarr_go_to_appearance_settings">Go to Appearance settings</string>
+    <string name="settings_prowlarr_go_to_download_defaults">Configure download defaults</string>
+
+    <string name="prowlarr_download_defaults_title">Prowlarr Download Defaults</string>
+    <string name="prowlarr_download_defaults_section_default">Default Parameters</string>
+    <string name="prowlarr_download_defaults_section_routes">Category Routes</string>
+    <string name="prowlarr_download_defaults_paused">Pause After Adding</string>
+    <string name="prowlarr_download_defaults_add_route">Add Route</string>
+    <string name="prowlarr_download_defaults_route_name">Name</string>
+    <string name="prowlarr_download_defaults_route_dialog_add">Add Category Route</string>
+    <string name="prowlarr_download_defaults_route_dialog_edit">Edit Category Route</string>
+    <string name="prowlarr_download_defaults_route_field_hint">Leave blank to use the default</string>
+    <string name="prowlarr_download_defaults_no_routes">No category routes yet. Results are downloaded using the default parameters above.</string>
+    <string name="prowlarr_download_defaults_save_success">Download defaults have been saved.</string>
+    <string name="prowlarr_download_defaults_route_categories_required">Select at least one category.</string>
+    <string name="prowlarr_download_defaults_delete_route">Delete route</string>
+    <string name="prowlarr_download_defaults_move_route_up">Move up</string>
+    <string name="prowlarr_download_defaults_move_route_down">Move down</string>
 
     <string name="prowlarr_search_query_hint">Search Prowlarr indexers</string>
     <string name="prowlarr_search_indexers">Indexers</string>

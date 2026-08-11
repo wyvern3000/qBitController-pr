@@ -86,6 +86,7 @@ import qbitcontroller.composeapp.generated.resources.settings_prowlarr_api_key
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_connection_success
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_enable
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_go_to_appearance_settings
+import qbitcontroller.composeapp.generated.resources.settings_prowlarr_go_to_download_defaults
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_save_success
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_tab_visibility_moved
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_test_connection
@@ -98,6 +99,7 @@ import qbitcontroller.composeapp.generated.resources.settings_server_trust_self_
 fun ProwlarrSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAppearanceSettings: () -> Unit,
+    onNavigateToDownloadDefaults: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProwlarrSettingsViewModel = koinViewModel(),
 ) {
@@ -348,6 +350,15 @@ fun ProwlarrSettingsScreen(
                     modifier = Modifier.align(Alignment.End),
                 ) {
                     Text(text = stringResource(Res.string.settings_prowlarr_go_to_appearance_settings))
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                TextButton(
+                    onClick = onNavigateToDownloadDefaults,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(text = stringResource(Res.string.settings_prowlarr_go_to_download_defaults))
                 }
 
                 Spacer(
