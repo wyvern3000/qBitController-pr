@@ -84,9 +84,7 @@ import qbitcontroller.composeapp.generated.resources.settings_category_prowlarr
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_action_save
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_api_key
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_connection_success
-import qbitcontroller.composeapp.generated.resources.settings_prowlarr_enable
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_go_to_appearance_settings
-import qbitcontroller.composeapp.generated.resources.settings_prowlarr_go_to_download_defaults
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_save_success
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_tab_visibility_moved
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_test_connection
@@ -99,7 +97,6 @@ import qbitcontroller.composeapp.generated.resources.settings_server_trust_self_
 fun ProwlarrSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAppearanceSettings: () -> Unit,
-    onNavigateToDownloadDefaults: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProwlarrSettingsViewModel = koinViewModel(),
 ) {
@@ -115,7 +112,6 @@ fun ProwlarrSettingsScreen(
     var apiKey by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(config.apiKey))
     }
-    var isEnabled by rememberSaveable { mutableStateOf(config.isEnabled) }
     var trustSelfSignedCertificates by rememberSaveable { mutableStateOf(config.trustSelfSignedCertificates) }
 
     var urlError by rememberSaveable(
@@ -139,7 +135,6 @@ fun ProwlarrSettingsScreen(
         return ProwlarrConfig(
             url = url.text,
             apiKey = apiKey.text,
-            isEnabled = isEnabled,
             trustSelfSignedCertificates = trustSelfSignedCertificates,
         )
     }
@@ -307,12 +302,6 @@ fun ProwlarrSettingsScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                SwitchPreference(
-                    value = isEnabled,
-                    onValueChange = { isEnabled = it },
-                    title = { Text(text = stringResource(Res.string.settings_prowlarr_enable)) },
-                )
-
                 if (supportsSelfSignedCertificates()) {
                     SwitchPreference(
                         value = trustSelfSignedCertificates,
@@ -350,15 +339,6 @@ fun ProwlarrSettingsScreen(
                     modifier = Modifier.align(Alignment.End),
                 ) {
                     Text(text = stringResource(Res.string.settings_prowlarr_go_to_appearance_settings))
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                TextButton(
-                    onClick = onNavigateToDownloadDefaults,
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Text(text = stringResource(Res.string.settings_prowlarr_go_to_download_defaults))
                 }
 
                 Spacer(

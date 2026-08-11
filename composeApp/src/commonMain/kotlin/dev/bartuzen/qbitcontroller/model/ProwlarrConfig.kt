@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 data class ProwlarrConfig(
     val url: String = "",
     val apiKey: String = "",
-    val isEnabled: Boolean = false,
     val trustSelfSignedCertificates: Boolean = false,
 ) {
     val requestUrl = buildString {
