@@ -28,12 +28,28 @@ data class ProwlarrSearchResult(
     // response (docs/prowlarr-integration-plan.md section 2), but the assumption in
     // docs/prowlarr-download-defaults-plan.md that this was a flat List<Int> was wrong - a real
     // device search (round 13) hit a JsonConvertException, "Expected numeric literal at path:
-    // $[0].categories[0]", because the actual shape is a list of *objects* (`{"id": 3000, ...}`),
-    // matching ProwlarrIndexerCapabilities.categories/ProwlarrCategory, not bare ids. Reusing
-    // ProwlarrCategory here rather than a separate type - ignoreUnknownKeys is on globally
-    // (RequestManager.json), so any extra fields on the result-level category object beyond
-    // id/name/subCategories are simply dropped, no new model needed.
-    val categories: List<ProwlarrCategory>? = null,
+    // $[0].categories[0]", because the actual shape is a list of *objects* (`{"id": 3000, ...}`).
+    // The first fix reused ProwlarrCategory (same shape as ProwlarrIndexerCapabilities.categories),
+    // but a second real device test immediately hit a *different* JsonConvertException on the same
+    // field, "Field 'name' is required ... missing at path: $[0].categories[1]" - unlike capabilities
+    // categories (confirmed to always carry name in round 7), individual search-result category
+    // entries can apparently omit name entirely. Since toSearchResult() below only ever extracts
+    // [id], this now uses the dedicated minimal [ProwlarrResultCategory] instead of ProwlarrCategory
+    // - declaring only id sidesteps any future surprises about which other fields are/aren't always
+    // present on this specific endpoint's category objects (ignoreUnknownKeys drops the rest).
+    val categories: List<ProwlarrResultCategory>? = null,
+)
+
+/**
+ * Torznab/Newznab category as it appears nested inside an individual `/api/v1/search` result item
+ * (see [ProwlarrSearchResult.categories]). Deliberately *not* the same type as [ProwlarrCategory]
+ * (which models `/api/v1/indexer`'s `capabilities.categories`) - the two endpoints don't return the
+ * same shape, and round 13 confirmed via two separate real-device JsonConvertExceptions that this
+ * endpoint's category objects can't be relied on to carry anything beyond [id].
+ */
+@Serializable
+data class ProwlarrResultCategory(
+    val id: Int,
 )
 
 /**
