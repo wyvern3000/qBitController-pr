@@ -24,10 +24,16 @@ data class ProwlarrSearchResult(
     val downloadUrl: String? = null,
     val magnetUrl: String? = null,
     val infoUrl: String? = null,
-    // Torznab/Newznab category ids for this specific result (confirmed present in the real API
-    // response - docs/prowlarr-integration-plan.md section 2 - but never wired into this model
-    // until docs/prowlarr-download-defaults-plan.md needed it for category-based download routing).
-    val categories: List<Int>? = null,
+    // Torznab/Newznab categories for this specific result. Confirmed present in the real API
+    // response (docs/prowlarr-integration-plan.md section 2), but the assumption in
+    // docs/prowlarr-download-defaults-plan.md that this was a flat List<Int> was wrong - a real
+    // device search (round 13) hit a JsonConvertException, "Expected numeric literal at path:
+    // $[0].categories[0]", because the actual shape is a list of *objects* (`{"id": 3000, ...}`),
+    // matching ProwlarrIndexerCapabilities.categories/ProwlarrCategory, not bare ids. Reusing
+    // ProwlarrCategory here rather than a separate type - ignoreUnknownKeys is on globally
+    // (RequestManager.json), so any extra fields on the result-level category object beyond
+    // id/name/subCategories are simply dropped, no new model needed.
+    val categories: List<ProwlarrCategory>? = null,
 )
 
 /**
@@ -51,5 +57,5 @@ fun ProwlarrSearchResult.toSearchResult() = Search.Result(
     leechers = leechers,
     seeders = seeders,
     siteUrl = indexer ?: "",
-    categories = categories ?: emptyList(),
+    categories = categories?.map { it.id } ?: emptyList(),
 )
