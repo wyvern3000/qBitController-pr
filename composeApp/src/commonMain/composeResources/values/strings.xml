@@ -814,7 +814,6 @@
     <string name="settings_prowlarr_url">Server URL</string>
     <string name="settings_prowlarr_url_hint">e.g. http://192.168.1.10:9696</string>
     <string name="settings_prowlarr_api_key">API Key</string>
-    <string name="settings_prowlarr_enable">Enable Prowlarr Search</string>
     <string name="settings_prowlarr_test_connection">Test Connection</string>
     <string name="settings_prowlarr_connection_success">Connected to Prowlarr successfully.</string>
     <string name="settings_prowlarr_action_save">Save</string>
@@ -822,7 +821,7 @@
     <string name="settings_prowlarr_show_bottom_nav">Show in bottom navigation bar</string>
     <string name="settings_prowlarr_tab_visibility_moved">Whether the Prowlarr tab is shown in the bottom navigation bar is now managed together with the other tabs in Appearance settings.</string>
     <string name="settings_prowlarr_go_to_appearance_settings">Go to Appearance settings</string>
-    <string name="settings_prowlarr_go_to_download_defaults">Configure download defaults</string>
+    <string name="settings_category_prowlarr_download_defaults">Prowlarr Download Defaults</string>
 
     <string name="prowlarr_download_defaults_title">Prowlarr Download Defaults</string>
     <string name="prowlarr_download_defaults_section_default">Default Parameters</string>

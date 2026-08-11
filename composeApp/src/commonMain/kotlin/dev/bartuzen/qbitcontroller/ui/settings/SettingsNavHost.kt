@@ -93,6 +93,9 @@ fun SettingsNavHost(
                 onNavigateToProwlarrSettings = {
                     navController.navigateWithLifecycle(Destination.Settings.Prowlarr)
                 },
+                onNavigateToProwlarrDownloadDefaults = {
+                    navController.navigateWithLifecycle(Destination.Settings.ProwlarrDownloadDefaults)
+                },
             )
         }
 
@@ -193,9 +196,6 @@ fun SettingsNavHost(
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToAppearanceSettings = {
                     navController.navigateWithLifecycle(Destination.Settings.Appearance)
-                },
-                onNavigateToDownloadDefaults = {
-                    navController.navigateWithLifecycle(Destination.Settings.ProwlarrDownloadDefaults)
                 },
             )
         }
