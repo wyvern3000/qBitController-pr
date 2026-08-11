@@ -41,6 +41,21 @@ artifact（~28.5MB debug APK，free flavor），可以下载装到手机上测�
 另外顺便更新了 `docs/prowlarr-integration-plan.md`，加了第 8 节「实施纪要」，记录了跟最初方案的三点
 方向性偏离（做成独立页面零侵入原搜索功能、下载改客户端直传、设置页加连接配置+显示开关）。
 
+## Round 6（2026-08-09）：产出 P1 详细方案（纯文档，未动代码）—— 完整记录
+
+用户确认 P0 验收通过后提出三个新需求（结果排序/过滤+索引器/分类多选、Prowlarr tab 移到 Search
+之后、新增可显隐 tab 设置），写入 `docs/prowlarr-p1-search-ui-and-tabs-plan.md`（本轮只设计不编码）。
+讨论中记录的两处待办：`selectedTabIndex` 目前是硬编码下标，tab 显隐/移位后可能错指到另一个 tab（Round
+7 第二步已修复）；`ProwlarrIndexer` 的 `capabilities.categories` 字段形状当时仅凭第三方文档猜测，
+未核实过真实响应（Round 7/8 期间陆续核实，见下）。
+
+## Round 7（2026-08-09）：P1 前三步（tab 重构/可显隐/移位）完成，CI 全部验证通过 —— 完整记录
+
+按方案第 6 节顺序做了前三步——`indexOfDestination()` 替换硬编码 tab 下标（`83b907ef`）、新增
+`SettingsManager.visibleTabs`（`fc1b1bd5`）、Prowlarr tab 移到 Search 之后（`c45c91d7`），顺带在
+第二步一并修了 `selectedTabIndex` 因 tab 显隐组合变化可能错指到另一个 tab 的 bug（改成按
+`NavHostDestination` 比对而非下标，即 Round 6 记录的待办）。三次 CI 均 `success`。
+
 ## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 —— 完整记录
 
 **CI 触发方式改动**：用户要求"编译先改为按需编译，不要每次改动一点都编译"——`build-prowlarr-apk.yml`

@@ -33,45 +33,15 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 
 Round 4 推送后触发 CI，编译失败（见下）。
 
-## Round 5（2026-08-09）：修复编译失败 + CI 自身的一个 bug —— 已构建成功 ✅
+## Rounds 5-9（2026-08-09，已完成，完整记录见 `docs/PROGRESS_ARCHIVE.md`）
 
-排查出两处源码 bug（KDoc 嵌套注释意外把整个文件注释掉；`Spacer(Modifier.height(...))` 漏了
-`.height` 的 import）和一处 CI 脚本 bug（`tee` 吞掉了 `gradlew` 的真实失败退出码，导致构建失败时
-Actions 却显示 success）。三处都已修复，CI 运行
-[31291122804](https://github.com/wyvern3000/qBitController-pr/actions/runs/31291122804) 真正构建
-成功，产出 debug APK。**完整排查记录（每个 bug 的根因分析、涉及的 commit）已归档到
-`docs/PROGRESS_ARCHIVE.md`**，这里不再重复。
-
-## Round 6（2026-08-09）：产出 P1 详细方案（纯文档，未动代码）
-
-用户确认 P0 验收通过后提出三个新需求（结果排序/过滤+索引器/分类多选、Prowlarr tab 移到 Search
-之后、新增可显隐 tab 设置），写入 `docs/prowlarr-p1-search-ui-and-tabs-plan.md`（本轮只设计不编码）。
-完整讨论内容（`selectedTabIndex` 下标错位隐患、`ProwlarrIndexer` 字段待真实核实等）已归档到
-`docs/PROGRESS_ARCHIVE.md`。
-
-## Round 7（2026-08-09）：P1 前三步（tab 重构/可显隐/移位）完成，CI 全部验证通过 ✅
-
-按方案第 6 节顺序做了前三步——`indexOfDestination()` 替换硬编码 tab 下标（`83b907ef`）、新增
-`SettingsManager.visibleTabs`（`fc1b1bd5`）、Prowlarr tab 移到 Search 之后（`c45c91d7`），顺带在
-第二步一并修了 `selectedTabIndex` 因 tab 显隐组合变化可能错指到另一个 tab 的 bug（改成按
-`NavHostDestination` 比对而非下标）。三次 CI 均 `success`。完整讨论内容已归档到
-`docs/PROGRESS_ARCHIVE.md`。
-
-## Round 8（2026-08-09）：CI 改为按需构建 + P1 第四步（索引器多选）完成 ✅
-
-`build-prowlarr-apk.yml` 从 push 自动触发改成 `workflow_dispatch` 手动触发（push 仍每 commit 都推，
-只是构建验证不再跟着每个小 commit 触发）。索引器多选：`ProwlarrService.getIndexers()` 转发 + 三态选择器
-（复用 `RadioButtonWithLabel`），`capabilities.categories` 核对真实响应后发现是递归结构（`ProwlarrCategory.
-subCategories`），为第五步分类多选打好基础。踩坑：漏了 `EventEffect` 里 `IndexersError` 分支的 exhaustive
-check，`8b3d4508` 修复后 CI success。完整记录已归档到 `docs/PROGRESS_ARCHIVE.md`。
-
-## Round 9（2026-08-09）：P1 第五步（分类多选）完成，真机反馈后修了分类分组的显示 bug ✅
-
-`categories: List<Int>?` 参数打通 `search()` 全链路。偏离方案文档：顶层分组改成从真实索引器数据动态
-构建（`buildCategoryGroups`），而非方案里假设的固定 8 个 Torznab 标准大类——核对样本后发现 OpenCD
-这类站点的自定义分类全在标准大类之外。真机测试发现同名 "Movies" chip（标准分类 2000 与站点自定义分类
-100401）挨在一起显示像是渲染错乱，按 Torznab 规范 `id ≥ 100000` 为站点自定义范围拆成 "Standard"/
-"Site-Specific" 两组解决（`7df171a7`，CI success）。完整记录已归档到 `docs/PROGRESS_ARCHIVE.md`。
+| Round | 内容 | 关键 commit |
+|---|---|---|
+| 5 | 修 KDoc 嵌套注释吞文件 + 漏 import 两处编译错误，以及 CI `tee` 吞掉真实退出码的脚本 bug；CI 首次真正构建成功 | 见归档 |
+| 6 | P1 方案文档（排序/过滤+索引器/分类多选、tab 移位、tab 可显隐），纯文档未动代码 | — |
+| 7 | P1 前三步：tab 下标硬编码改按 `NavHostDestination` 比对、`visibleTabs` 设置、tab 移到 Search 之后 | `83b907ef` `fc1b1bd5` `c45c91d7` |
+| 8 | CI 改手动 dispatch；P1 第四步索引器多选，核实 `capabilities.categories` 是递归结构 | `8b3d4508` |
+| 9 | P1 第五步分类多选；真机反馈分类分组渲染像错乱，按 Torznab 规范 id≥100000 拆 Standard/Site-Specific 两组修复 | `7df171a7` |
 
 ## Round 10（2026-08-10）：P1 第六步（排序/过滤）完成，再次踩中 KDoc 嵌套注释坑 ✅
 
@@ -133,16 +103,39 @@ P1 六步至此全部完成并至少编译验证过一次。
   `EnumDropdown` 的调用结构本身跟 AddTorrentScreen 已有的四处用法完全一致。重新 dispatch，[run
   31464305653](https://github.com/wyvern3000/qBitController-pr/actions/runs/31464305653) `success`。
 
+## Round 13（2026-08-11）：真机搜索首次实测，连续两次 categories 字段解析崩溃，已修复 ✅
+
+Round 12 编译通过后用户第一次真机实测搜索功能（此前所有 CI 验证都只到"编译过/UI 渲染出来了"，从没
+真正跑过一次搜索），连续暴露两层同一个字段的解析错误：
+
+- **第一次**（`1a753cf9`，非本轮对话内完成，上一轮已修）：`search()` 返回体的 `categories` 是对象数组
+  `{"id": 3000, ...}`，不是方案文档假设的 `List<Int>`，`JsonConvertException: Expected numeric
+  literal`。改成复用 `ProwlarrCategory`（跟 `capabilities.categories` 同构）。CI
+  [31467904289](https://github.com/wyvern3000/qBitController-pr/actions/runs/31467904289) `success`，
+  但用户马上真机复测又炸了——第二次。
+- **第二次**（本轮，`1086baed`）：复用 `ProwlarrCategory` 假设每个分类对象都有 `name`（`capabilities.
+  categories` 里 Round 7 确认过确实一直有），但搜索结果里的分类对象不是——`JsonConvertException: Field
+  'name' is required ... missing at path: $[0].categories[1]`（用户截图）。说明这两个端点返回的
+  "categories" 字段虽然字段名一样，形状并不完全一致，不能假设结果端的分类对象一定携带 `name`。改成
+  新增一个只声明 `id` 的最小类型 `ProwlarrResultCategory`，不再复用 `ProwlarrCategory`——`toSearchResult()`
+  本来就只取 `.id` 用于分类路由，不需要 `name`/`subCategories`，`ignoreUnknownKeys` 会丢掉其余字段。
+  CI [31469128530](https://github.com/wyvern3000/qBitController-pr/actions/runs/31469128530)
+  `success`，Artifacts API 确认产出了真实 30MB APK。
+
+**教训**：`capabilities.categories`（`/api/v1/indexer`）和搜索结果里的 `categories`
+（`/api/v1/search`）虽然字段名相同、单个分类对象的基本形状也相似，但**不能假设两个不同端点返回的
+"同名字段"结构完全一致**——这次连续两轮真机测试才把搜索结果这边的真实形状摸清楚（先是发现是对象不是
+纯 id，再发现对象里 `name` 不保证存在）。以后遇到"名字相同、大概率结构类似"的字段，优先直接找一份该
+**具体端点**的真实响应样本核对，而不是复用另一个端点已核实过的模型。
+
 ## 下一轮接手时先做什么
 
-1. **P1 六步 + Round 11/12 所有追加改动（错误详情/关键字过滤/点击跳浏览器/下载默认参数/分类路由）
-   现在才第一次全部一起编译验证通过**（`0dab06f1`，CI success）。但到目前为止所有验证都停在"编译
-   过/UI 渲染出来了"这一层，没有一条做过"功能确实生效"的实机验收——需要用户实测：索引器多选/分类
-   多选是否真的把结果限定在选中范围、排序是否真的按 Seeders/Size 等排对了、seeds min 过滤是否真的
-   滤掉了做种数不够的结果、关键字过滤是否真的按关键字筛、点击结果跳的浏览器链接是否真的对、错误
-   详情文案是否真的把 Prowlarr 返回的 message 显示出来了、**下载默认参数是否真的套用到了实际下载
-   请求上、分类路由是否真的按分类命中并覆盖了保存路径/分类/标签、路由优先级（列表顺序）是否符合
-   预期**——**优先级高于继续往下做新功能**
+1. **Round 13 修的是"搜索直接崩溃"（categories 字段解析），不是功能性验收**——现在搜索至少能真的
+   跑出结果列表了（此前从未成功跑过一次），但索引器多选/分类多选/排序/seeds min 过滤/关键字过滤/
+   点击跳浏览器/错误详情文案/下载默认参数/分类路由这些具体功能是否真的按预期生效，仍然一条都没
+   实机验证过——**优先级高于继续往下做新功能**。另外 Round 13 改了 `ProwlarrSearchResult.categories`
+   的解析方式（现在只取 `id`），下载分类路由（`resolveProwlarrDownloadRouting()`）吃的就是这批 id，
+   值得重点复核一遍分类路由是否还能正确命中
 2. 分类选择器目前对着 CJK 短标签测试过，但"Standard"/"Site-Specific" 这两个分组标题以及 8 个标准
    Torznab 大类名（Movies/TV/Audio/...）都还是硬编码英文，没有走 strings.xml 之外的本地化路径——
    目前判断这是合理的（协议层面的分类名，不是面向用户的文案，参照 indexer.name 本身也不本地化），
