@@ -41,6 +41,12 @@ data class Search(
         // ProwlarrSearchViewModel.addTorrent() to pick a matching ProwlarrCategoryRoute - see
         // docs/prowlarr-download-defaults-plan.md, section 2.3.
         val categories: List<Int> = emptyList(),
+
+        // Torznab/Newznab "indexer flags" - site-specific promo tags (Freeleech/Halfleech/etc,
+        // see docs/prowlarr-p2-feedback-round1-plan.md section 4). Same rationale as [categories]
+        // above: always empty for qBittorrent's own search plugin results, no @SerialName since
+        // it's not part of that wire format, only Prowlarr results populate it.
+        val indexerFlags: List<String> = emptyList(),
     )
 
     enum class Status {
