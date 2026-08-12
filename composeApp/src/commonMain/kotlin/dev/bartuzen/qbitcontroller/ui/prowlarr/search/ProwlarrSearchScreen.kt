@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -54,7 +56,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -76,6 +78,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -122,11 +125,13 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flag
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword_hint
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_download
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexer
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_all
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_enabled
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexers_select
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_manual_download
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_detail_link
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_results
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_no_server_selected
@@ -196,6 +201,12 @@ fun ProwlarrSearchScreen(
         mutableStateOf(ProwlarrSearchViewModel.Filter())
     }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
+
+    // P2 feedback round 1 item 5 (docs/prowlarr-p2-feedback-round1-plan.md section 5): result
+    // currently open in ProwlarrManualAddDialog, or null if it's not showing.
+    var manualAddTarget by rememberSaveable(stateSaver = jsonSaver()) {
+        mutableStateOf<Search.Result?>(null)
+    }
 
     val results = remember(rawResults, currentSorting, isReverseSorting, filter) {
         sortAndFilterProwlarrResults(rawResults, currentSorting, isReverseSorting, filter)
@@ -552,6 +563,9 @@ fun ProwlarrSearchScreen(
                                     onDownloadClick = {
                                         viewModel.addTorrent(serverId, result)
                                     },
+                                    onManualDownloadClick = {
+                                        manualAddTarget = result
+                                    },
                                     onOpenDescription = {
                                         if (result.descriptionLink.isBlank()) {
                                             scope.launch {
@@ -599,6 +613,10 @@ private fun ProwlarrSearchResultItem(
     searchResult: Search.Result,
     isAddEnabled: Boolean,
     onDownloadClick: () -> Unit,
+    // Long-press on the download button - P2 feedback round 1 item 5, see
+    // docs/prowlarr-p2-feedback-round1-plan.md section 5: opens ProwlarrManualAddDialog instead of
+    // downloading with resolved defaults straight away.
+    onManualDownloadClick: () -> Unit,
     onOpenDescription: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -716,8 +734,31 @@ private fun ProwlarrSearchResultItem(
                 }
             }
 
-            IconButton(onClick = onDownloadClick, enabled = isAddEnabled) {
-                Icon(imageVector = Icons.Filled.Download, contentDescription = null)
+            // IconButton doesn't support onLongClick, so this is hand-rolled to match its visuals
+            // (48dp touch target, ripple, disabled content alpha) - same combinedClickable
+            // long-press pattern already used in SearchResultScreen.kt (there, for entering
+            // multi-select mode).
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .combinedClickable(
+                        enabled = isAddEnabled,
+                        onClick = onDownloadClick,
+                        onLongClick = onManualDownloadClick,
+                        onLongClickLabel = stringResource(Res.string.prowlarr_search_manual_download),
+                    ),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Download,
+                    contentDescription = stringResource(Res.string.prowlarr_search_download),
+                    tint = if (isAddEnabled) {
+                        LocalContentColor.current
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
+                )
             }
         }
     }

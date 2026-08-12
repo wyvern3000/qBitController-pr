@@ -3,10 +3,12 @@ package dev.bartuzen.qbitcontroller.ui.prowlarr.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.bartuzen.qbitcontroller.data.SearchSort
+import dev.bartuzen.qbitcontroller.data.ServerManager
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
+import dev.bartuzen.qbitcontroller.model.Category
 import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
@@ -14,6 +16,7 @@ import dev.bartuzen.qbitcontroller.model.Search
 import dev.bartuzen.qbitcontroller.network.RequestResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,11 +37,33 @@ class ProwlarrSearchViewModel(
     private val prowlarrSearchRepository: ProwlarrSearchRepository,
     private val addTorrentRepository: AddTorrentRepository,
     private val settingsManager: SettingsManager,
+    serverManager: ServerManager,
 ) : ViewModel() {
     private val eventChannel = Channel<Event>()
     val eventFlow = eventChannel.receiveAsFlow()
 
     val configFlow = prowlarrRepository.configFlow
+
+    // For ProwlarrManualAddDialog's server picker - P2 feedback round 1 item 5, see
+    // docs/prowlarr-p2-feedback-round1-plan.md section 5.
+    val servers = serverManager.serversFlow
+
+    // Non-reactive snapshot, matching how ProwlarrDownloadDefaultsViewModel/addTorrent() already
+    // read this - a settings change mid-search-session isn't expected to update an already-open
+    // manual dialog live.
+    val downloadDefaults get() = settingsManager.prowlarrDownloadDefaults.value
+
+    /**
+     * Same resolution [addTorrent] uses internally, exposed so
+     * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrManualAddDialog] can pre-fill its
+     * fields with the same starting point the auto path would use - see
+     * docs/prowlarr-p2-feedback-round1-plan.md section 5.
+     */
+    fun resolveDownloadRouting(resultCategoryIds: List<Int>): ProwlarrResolvedDownloadRouting {
+        val defaults = settingsManager.prowlarrDownloadDefaults.value
+        val routes = settingsManager.prowlarrCategoryRoutes.value
+        return resolveProwlarrDownloadRouting(resultCategoryIds, routes, defaults)
+    }
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -68,9 +93,23 @@ class ProwlarrSearchViewModel(
     private val _isLoadingIndexers = MutableStateFlow(false)
     val isLoadingIndexers = _isLoadingIndexers.asStateFlow()
 
+    // Categories/tags/default save path for whichever server is currently picked in
+    // ProwlarrManualAddDialog - null means "not loaded (yet)". Reloaded from scratch on every
+    // server switch, same shape as AddTorrentViewModel.ServerData but session-only (no
+    // SavedStateHandle persistence): a config-change-only cache isn't worth the complexity here,
+    // unlike AddTorrentScreen which is a whole navigation destination. Directory-suggestion
+    // autocomplete (AddTorrentViewModel.directorySuggestions) is deliberately not replicated - see
+    // docs/prowlarr-p2-feedback-round1-plan.md section 5's explicit scope cut.
+    private val _manualAddServerData = MutableStateFlow<ManualAddServerData?>(null)
+    val manualAddServerData = _manualAddServerData.asStateFlow()
+
+    private val _isLoadingManualAddServerData = MutableStateFlow(false)
+    val isLoadingManualAddServerData = _isLoadingManualAddServerData.asStateFlow()
+
     private var searchJob: Job? = null
     private var addTorrentJob: Job? = null
     private var loadIndexersJob: Job? = null
+    private var loadManualAddServerDataJob: Job? = null
 
     fun search(query: String, indexerIds: List<Int>? = null, categories: List<Int>? = null) {
         if (query.isBlank()) {
@@ -126,6 +165,65 @@ class ProwlarrSearchViewModel(
             }
         }
         loadIndexersJob = job
+    }
+
+    /**
+     * Loads categories/tags/default save path for [serverId] - see [manualAddServerData] KDoc.
+     * Safe to call repeatedly (e.g. every time the manual dialog's server picker changes); a call
+     * already in flight for a previous server is cancelled first, since only the latest selection
+     * matters.
+     */
+    fun loadManualAddServerData(serverId: Int) {
+        loadManualAddServerDataJob?.cancel()
+        _manualAddServerData.value = null
+
+        _isLoadingManualAddServerData.value = true
+        val job = viewModelScope.launch {
+            val categoriesDeferred = async {
+                when (val result = addTorrentRepository.getCategories(serverId)) {
+                    is RequestResult.Success -> result.data.values.toList().sortedWith(Category.comparator)
+                    is RequestResult.Error -> {
+                        eventChannel.send(Event.Error(result))
+                        throw CancellationException()
+                    }
+                }
+            }
+            val tagsDeferred = async {
+                when (val result = addTorrentRepository.getTags(serverId)) {
+                    is RequestResult.Success -> result.data.sorted()
+                    is RequestResult.Error -> {
+                        eventChannel.send(Event.Error(result))
+                        throw CancellationException()
+                    }
+                }
+            }
+            val defaultSavePathDeferred = async {
+                when (val result = addTorrentRepository.getDefaultSavePath(serverId)) {
+                    is RequestResult.Success -> result.data
+                    is RequestResult.Error -> {
+                        eventChannel.send(Event.Error(result))
+                        throw CancellationException()
+                    }
+                }
+            }
+
+            try {
+                _manualAddServerData.value = ManualAddServerData(
+                    categories = categoriesDeferred.await(),
+                    tags = tagsDeferred.await(),
+                    defaultSavePath = defaultSavePathDeferred.await(),
+                )
+            } catch (_: CancellationException) {
+            }
+        }
+
+        job.invokeOnCompletion { e ->
+            if (e !is CancellationException) {
+                _isLoadingManualAddServerData.value = false
+                loadManualAddServerDataJob = null
+            }
+        }
+        loadManualAddServerDataJob = job
     }
 
     /**
@@ -366,6 +464,20 @@ class ProwlarrSearchViewModel(
         val isAutoTorrentManagementEnabled: Boolean?,
         val isSequentialDownloadEnabled: Boolean,
         val isFirstLastPiecePrioritized: Boolean,
+    )
+
+    /**
+     * Loaded per selected server in [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrManualAddDialog]
+     * - see [manualAddServerData] KDoc. Same shape as
+     * [dev.bartuzen.qbitcontroller.ui.addtorrent.ServerData] but declared separately rather than
+     * reused directly: that type lives in the `addtorrent` package and is really about that
+     * screen's own [androidx.lifecycle.SavedStateHandle]-backed persistence, which this doesn't
+     * need or want.
+     */
+    data class ManualAddServerData(
+        val categories: List<Category>,
+        val tags: List<String>,
+        val defaultSavePath: String,
     )
 
     /**
