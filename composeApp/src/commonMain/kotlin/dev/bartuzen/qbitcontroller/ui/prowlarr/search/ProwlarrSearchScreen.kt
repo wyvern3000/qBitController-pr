@@ -158,8 +158,12 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_invalid_file
  * (the qBittorrent-search-plugin feature) so this can be built/iterated on without touching that
  * existing code at all - see docs/prowlarr-integration-plan.md, rounds 3-4.
  *
- * [serverId] is the currently selected qBittorrent server (if any) that a tapped result gets
- * added to. Search itself doesn't need one, since it only talks to Prowlarr.
+ * [serverId] is the currently selected qBittorrent server (if any), used as a fallback when
+ * downloading a result: Prowlarr download defaults/category routes (see
+ * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.resolveProwlarrDownloadRouting]) can each pin
+ * their own server, and only fall back to this one when neither configures one - see P2 feedback
+ * round 1, docs/prowlarr-p2-feedback-round1-plan.md section 3. Search itself doesn't need one,
+ * since it only talks to Prowlarr.
  */
 @Composable
 fun ProwlarrSearchScreen(
@@ -281,6 +285,7 @@ fun ProwlarrSearchScreen(
             ProwlarrSearchViewModel.Event.InvalidTorrentFile -> getString(Res.string.torrent_add_invalid_file)
             ProwlarrSearchViewModel.Event.AddTorrentError -> getString(Res.string.torrent_add_error)
             ProwlarrSearchViewModel.Event.AddTorrentSuccess -> getString(Res.string.prowlarr_search_torrent_added)
+            ProwlarrSearchViewModel.Event.NoServerAvailable -> getString(Res.string.prowlarr_search_no_server_selected)
         }
 
         snackbarHostState.currentSnackbarData?.dismiss()
@@ -536,18 +541,9 @@ fun ProwlarrSearchScreen(
                             items(results, key = { it.fileUrl }) { result ->
                                 ProwlarrSearchResultItem(
                                     searchResult = result,
-                                    isAddEnabled = serverId != null && !isAdding,
+                                    isAddEnabled = !isAdding,
                                     onDownloadClick = {
-                                        if (serverId != null) {
-                                            viewModel.addTorrent(serverId, result)
-                                        } else {
-                                            scope.launch {
-                                                snackbarHostState.currentSnackbarData?.dismiss()
-                                                snackbarHostState.showSnackbar(
-                                                    getString(Res.string.prowlarr_search_no_server_selected),
-                                                )
-                                            }
-                                        }
+                                        viewModel.addTorrent(serverId, result)
                                     },
                                     onOpenDescription = {
                                         if (result.descriptionLink.isBlank()) {

@@ -19,6 +19,15 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class ProwlarrDownloadDefaults(
+    // The qBittorrent server (see dev.bartuzen.qbitcontroller.model.ServerConfig.id) results get
+    // added to when no ProwlarrCategoryRoute overrides it either - see
+    // dev.bartuzen.qbitcontroller.ui.prowlarr.search.resolveProwlarrDownloadRouting. null means "not
+    // set", which falls back to whichever server is currently active elsewhere in the app (the same
+    // single-server behavior this had before P2 feedback round 1 added multi-server awareness here -
+    // see docs/prowlarr-p2-feedback-round1-plan.md, section 3). Added because a user managing several
+    // qBittorrent servers has no other way to say which one Prowlarr downloads should land on by
+    // default.
+    val serverId: Int? = null,
     val savePath: String? = null,
     val category: String? = null,
     val tags: List<String> = emptyList(),
