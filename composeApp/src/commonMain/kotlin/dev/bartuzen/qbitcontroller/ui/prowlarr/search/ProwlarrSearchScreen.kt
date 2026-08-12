@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material.icons.outlined.ArrowDownward
@@ -116,6 +117,8 @@ import qbitcontroller.composeapp.generated.resources.Res
 import qbitcontroller.composeapp.generated.resources.destination_prowlarr
 import qbitcontroller.composeapp.generated.resources.dialog_cancel
 import qbitcontroller.composeapp.generated.resources.dialog_ok
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flags
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flags_none
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword_hint
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
@@ -295,8 +298,12 @@ fun ProwlarrSearchScreen(
     }
 
     if (showFilterDialog) {
+        val availableFlags = remember(rawResults) {
+            rawResults.flatMap { it.indexerFlags }.distinct().sorted()
+        }
         ProwlarrFilterDialog(
             filter = filter,
+            availableFlags = availableFlags,
             onDismiss = { showFilterDialog = false },
             onConfirm = { newFilter ->
                 filter = newFilter
@@ -694,6 +701,19 @@ private fun ProwlarrSearchResultItem(
                         )
                     }
                 }
+
+                if (searchResult.indexerFlags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        searchResult.indexerFlags.forEach { flag ->
+                            TagChip(tag = flag)
+                        }
+                    }
+                }
             }
 
             IconButton(onClick = onDownloadClick, enabled = isAddEnabled) {
@@ -909,6 +929,10 @@ private fun sortAndFilterProwlarrResults(
             return@filter false
         }
 
+        if (filter.flags.isNotEmpty() && result.indexerFlags.none { it in filter.flags }) {
+            return@filter false
+        }
+
         true
     }
 }
@@ -927,6 +951,7 @@ private fun sortAndFilterProwlarrResults(
 @Composable
 private fun ProwlarrFilterDialog(
     filter: ProwlarrSearchViewModel.Filter,
+    availableFlags: List<String>,
     onDismiss: () -> Unit,
     onConfirm: (filter: ProwlarrSearchViewModel.Filter) -> Unit,
     onReset: () -> Unit,
@@ -952,6 +977,9 @@ private fun ProwlarrFilterDialog(
     }
     var sizeMinUnit by rememberSaveable { mutableIntStateOf(filter.sizeMinUnit) }
     var sizeMaxUnit by rememberSaveable { mutableIntStateOf(filter.sizeMaxUnit) }
+    val selectedFlags = rememberSaveable(saver = stateListSaver()) {
+        mutableStateListOf<String>().apply { addAll(filter.flags) }
+    }
 
     val sizeUnits = remember {
         listOf(
@@ -1045,6 +1073,50 @@ private fun ProwlarrFilterDialog(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocalOffer,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.prowlarr_search_filter_flags),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                if (availableFlags.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.prowlarr_search_filter_flags_none),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        availableFlags.forEach { flag ->
+                            TagChip(
+                                tag = flag,
+                                isSelected = flag in selectedFlags,
+                                onClick = {
+                                    if (flag in selectedFlags) selectedFlags.remove(flag) else selectedFlags.add(flag)
+                                },
+                            )
+                        }
+                    }
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -1272,6 +1344,7 @@ private fun ProwlarrFilterDialog(
                             sizeMaxUnit = sizeMaxUnit,
                             indexerQuery = indexerQuery.text,
                             keyword = keyword.text,
+                            flags = selectedFlags.toList(),
                         )
                         onConfirm(newFilter)
                     },

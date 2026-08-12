@@ -407,6 +407,12 @@ class ProwlarrSearchViewModel(
         val sizeMaxUnit: Int = 2,
         val indexerQuery: String = "",
         val keyword: String = "",
+        // Selected indexer flags (e.g. "freeleech"/"halfleech" - see Search.Result.indexerFlags).
+        // A result matches if it carries ANY of these (OR, not AND) - freeleech/halfleech are
+        // normally mutually exclusive per result, so requiring all selected flags at once would
+        // rarely match anything. Empty = no flag filtering. See
+        // docs/prowlarr-p2-feedback-round1-plan.md section 4.
+        val flags: List<String> = emptyList(),
     ) {
         private fun Int.pow(x: Int): Long {
             var number = 1L
