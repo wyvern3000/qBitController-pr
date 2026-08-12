@@ -857,6 +857,8 @@
     <string name="prowlarr_search_go_to_settings">Go to Settings</string>
     <string name="prowlarr_search_no_server_selected">Select a server first to add torrents.</string>
     <string name="prowlarr_search_torrent_added">Torrent added successfully.</string>
+    <string name="prowlarr_search_download">Download</string>
+    <string name="prowlarr_search_manual_download">Download with custom options</string>
     <string name="prowlarr_search_indexer">Indexer</string>
     <string name="prowlarr_search_filter_keyword">Keyword</string>
     <string name="prowlarr_search_filter_keyword_hint">Matches release title, e.g. 1985</string>
