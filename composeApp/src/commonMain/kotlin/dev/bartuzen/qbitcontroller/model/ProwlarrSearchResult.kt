@@ -38,6 +38,15 @@ data class ProwlarrSearchResult(
     // - declaring only id sidesteps any future surprises about which other fields are/aren't always
     // present on this specific endpoint's category objects (ignoreUnknownKeys drops the rest).
     val categories: List<ProwlarrResultCategory>? = null,
+    // Torznab/Newznab "indexer flags" (site-specific promo tags like "freeleech"/"halfleech" -
+    // see qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flags usage in
+    // ProwlarrSearchScreen.kt). UNVERIFIED against a real API response - unlike [categories] above
+    // (which got its shape wrong twice against real search results, round 13), this field hasn't
+    // been checked against a real device at all yet. Declared as nullable/optional specifically so
+    // a wrong assumption here degrades to "flags missing" instead of a JsonConvertException taking
+    // out the whole search - see docs/prowlarr-p2-feedback-round1-plan.md section 4 and the
+    // PROGRESS.md "待验证" list.
+    val indexerFlags: List<String>? = null,
 )
 
 /**
@@ -74,4 +83,5 @@ fun ProwlarrSearchResult.toSearchResult() = Search.Result(
     seeders = seeders,
     siteUrl = indexer ?: "",
     categories = categories?.map { it.id } ?: emptyList(),
+    indexerFlags = indexerFlags ?: emptyList(),
 )
