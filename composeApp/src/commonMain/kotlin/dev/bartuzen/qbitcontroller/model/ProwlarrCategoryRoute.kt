@@ -20,7 +20,9 @@ import kotlinx.serialization.Serializable
  * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.resolveProwlarrDownloadRouting]. A matched
  * route's `null`/empty field falls back to [ProwlarrDownloadDefaults] for that one field
  * individually, not all-or-nothing - e.g. a route can override just [savePath] and still inherit
- * the global default [category]/[tags].
+ * the global default [category]/[tags]. [serverId] follows the same per-field fallback (added in
+ * P2 feedback round 1, see docs/prowlarr-p2-feedback-round1-plan.md section 3 - covers e.g. movies
+ * routing to one qBittorrent server while music routes to a different one).
  */
 @Serializable
 data class ProwlarrCategoryRoute(
@@ -30,6 +32,7 @@ data class ProwlarrCategoryRoute(
     val id: String,
     val name: String,
     val categoryIds: List<Int>,
+    val serverId: Int? = null,
     val savePath: String? = null,
     val category: String? = null,
     val tags: List<String> = emptyList(),

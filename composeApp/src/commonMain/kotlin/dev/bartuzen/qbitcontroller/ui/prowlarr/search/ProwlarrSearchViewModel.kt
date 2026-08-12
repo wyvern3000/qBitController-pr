@@ -129,20 +129,38 @@ class ProwlarrSearchViewModel(
     }
 
     /**
-     * Adds [searchResult] to the server identified by [serverId] using the user's configured
-     * Prowlarr download defaults/category routes (`SettingsManager.prowlarrDownloadDefaults`/
-     * `prowlarrCategoryRoutes`) - no per-download popup, see docs/prowlarr-download-defaults-plan.md
-     * (this replaces the fixed-empty-defaults behavior from docs/prowlarr-integration-plan.md,
-     * round 3, and formally supersedes the never-implemented "jump to AddTorrentScreen every
-     * download" direction from docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.4, which
-     * directly conflicted with "no popup per download").
+     * Adds [searchResult] using the user's configured Prowlarr download defaults/category routes
+     * (`SettingsManager.prowlarrDownloadDefaults`/`prowlarrCategoryRoutes`) - no per-download
+     * popup, see docs/prowlarr-download-defaults-plan.md (this replaces the fixed-empty-defaults
+     * behavior from docs/prowlarr-integration-plan.md, round 3, and formally supersedes the
+     * never-implemented "jump to AddTorrentScreen every download" direction from
+     * docs/prowlarr-p1-search-ui-and-tabs-plan.md section 2.4, which directly conflicted with "no
+     * popup per download").
+     *
+     * [fallbackServerId] is the server currently active elsewhere in the app (see
+     * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchScreen]'s own `serverId`
+     * param) - only used when neither a matching [ProwlarrCategoryRoute] nor
+     * [ProwlarrDownloadDefaults] configures a server (P2 feedback round 1, see
+     * docs/prowlarr-p2-feedback-round1-plan.md section 3: a user with several qBittorrent servers
+     * needs a way to say which one Prowlarr downloads land on that isn't just "whichever one
+     * happens to be open right now"). If nothing resolves a server at all,
+     * [Event.NoServerAvailable] is sent instead of silently failing.
      *
      * Magnet links are passed straight through as a link. Everything else is assumed to be a
      * direct .torrent file link and is downloaded by this device first, then uploaded to
      * qBittorrent as file bytes - see [ProwlarrSearchRepository.downloadTorrentFile].
      */
-    fun addTorrent(serverId: Int, searchResult: Search.Result) {
+    fun addTorrent(fallbackServerId: Int?, searchResult: Search.Result) {
         if (_isAdding.value) {
+            return
+        }
+
+        val defaults = settingsManager.prowlarrDownloadDefaults.value
+        val routes = settingsManager.prowlarrCategoryRoutes.value
+        val routing = resolveProwlarrDownloadRouting(searchResult.categories, routes, defaults)
+        val serverId = routing.serverId ?: fallbackServerId
+        if (serverId == null) {
+            viewModelScope.launch { eventChannel.send(Event.NoServerAvailable) }
             return
         }
 
@@ -153,7 +171,8 @@ class ProwlarrSearchViewModel(
                     serverId,
                     links = listOf(searchResult.fileUrl),
                     files = null,
-                    categories = searchResult.categories,
+                    routing = routing,
+                    defaults = defaults,
                 )
             } else {
                 when (val fileResult = prowlarrSearchRepository.downloadTorrentFile(searchResult.fileUrl)) {
@@ -165,7 +184,70 @@ class ProwlarrSearchViewModel(
                             serverId,
                             links = null,
                             files = listOf(fileName to fileResult.data),
-                            categories = searchResult.categories,
+                            routing = routing,
+                            defaults = defaults,
+                        )
+                    }
+                    is RequestResult.Error -> fileResult
+                }
+            }
+
+            when (result) {
+                is RequestResult.Success -> {
+                    if (result.data == "Fails.") {
+                        eventChannel.send(Event.AddTorrentError)
+                    } else {
+                        eventChannel.send(Event.AddTorrentSuccess)
+                    }
+                }
+                is RequestResult.Error.ApiError if result.code == 409 -> {
+                    eventChannel.send(Event.AddTorrentError)
+                }
+                is RequestResult.Error.ApiError if result.code == 415 -> {
+                    eventChannel.send(Event.InvalidTorrentFile)
+                }
+                is RequestResult.Error -> {
+                    eventChannel.send(Event.Error(result))
+                }
+            }
+        }
+
+        job.invokeOnCompletion { e ->
+            if (e !is CancellationException) {
+                _isAdding.value = false
+                addTorrentJob = null
+            }
+        }
+        addTorrentJob = job
+    }
+
+    /**
+     * Manual-mode counterpart to [addTorrent] (P2 feedback round 1 item 5, see
+     * docs/prowlarr-p2-feedback-round1-plan.md section 5): same magnet-passthrough/client-side-
+     * download-then-upload mechanism, but every param comes from what the user confirmed in
+     * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrManualAddDialog] instead of
+     * [resolveProwlarrDownloadRouting]'s auto-resolved values.
+     */
+    fun addTorrentManual(serverId: Int, searchResult: Search.Result, options: ManualDownloadOptions) {
+        if (_isAdding.value) {
+            return
+        }
+
+        _isAdding.value = true
+        val job = viewModelScope.launch {
+            val result = if (searchResult.fileUrl.startsWith("magnet:", ignoreCase = true)) {
+                addTorrentManual(serverId, links = listOf(searchResult.fileUrl), files = null, options = options)
+            } else {
+                when (val fileResult = prowlarrSearchRepository.downloadTorrentFile(searchResult.fileUrl)) {
+                    is RequestResult.Success -> {
+                        val fileName = searchResult.fileName.let {
+                            if (it.endsWith(".torrent", ignoreCase = true)) it else "$it.torrent"
+                        }
+                        addTorrentManual(
+                            serverId,
+                            links = null,
+                            files = listOf(fileName to fileResult.data),
+                            options = options,
                         )
                     }
                     is RequestResult.Error -> fileResult
@@ -213,33 +295,78 @@ class ProwlarrSearchViewModel(
         serverId: Int,
         links: List<String>?,
         files: List<Pair<String, ByteArray>>?,
-        categories: List<Int>,
-    ): RequestResult<String> {
-        val defaults = settingsManager.prowlarrDownloadDefaults.value
-        val routes = settingsManager.prowlarrCategoryRoutes.value
-        val (savePath, category, tags) = resolveProwlarrDownloadRouting(categories, routes, defaults)
+        routing: ProwlarrResolvedDownloadRouting,
+        defaults: ProwlarrDownloadDefaults,
+    ): RequestResult<String> = addTorrentRepository.addTorrent(
+        serverId = serverId,
+        links = links,
+        files = files,
+        savePath = routing.savePath,
+        category = routing.category,
+        tags = routing.tags,
+        stopCondition = defaults.stopCondition,
+        contentLayout = defaults.contentLayout,
+        torrentName = null,
+        downloadSpeedLimit = defaults.downloadSpeedLimit,
+        uploadSpeedLimit = defaults.uploadSpeedLimit,
+        ratioLimit = defaults.ratioLimit,
+        seedingTimeLimit = defaults.seedingTimeLimit,
+        isPaused = defaults.isPaused,
+        skipHashChecking = defaults.skipHashChecking,
+        isAutoTorrentManagementEnabled = defaults.isAutoTorrentManagementEnabled,
+        isSequentialDownloadEnabled = defaults.isSequentialDownloadEnabled,
+        isFirstLastPiecePrioritized = defaults.isFirstLastPiecePrioritized,
+    )
 
-        return addTorrentRepository.addTorrent(
-            serverId = serverId,
-            links = links,
-            files = files,
-            savePath = savePath,
-            category = category,
-            tags = tags,
-            stopCondition = defaults.stopCondition,
-            contentLayout = defaults.contentLayout,
-            torrentName = null,
-            downloadSpeedLimit = defaults.downloadSpeedLimit,
-            uploadSpeedLimit = defaults.uploadSpeedLimit,
-            ratioLimit = defaults.ratioLimit,
-            seedingTimeLimit = defaults.seedingTimeLimit,
-            isPaused = defaults.isPaused,
-            skipHashChecking = defaults.skipHashChecking,
-            isAutoTorrentManagementEnabled = defaults.isAutoTorrentManagementEnabled,
-            isSequentialDownloadEnabled = defaults.isSequentialDownloadEnabled,
-            isFirstLastPiecePrioritized = defaults.isFirstLastPiecePrioritized,
-        )
-    }
+    private suspend fun addTorrentManual(
+        serverId: Int,
+        links: List<String>?,
+        files: List<Pair<String, ByteArray>>?,
+        options: ManualDownloadOptions,
+    ): RequestResult<String> = addTorrentRepository.addTorrent(
+        serverId = serverId,
+        links = links,
+        files = files,
+        savePath = options.savePath,
+        category = options.category,
+        tags = options.tags,
+        stopCondition = options.stopCondition,
+        contentLayout = options.contentLayout,
+        torrentName = options.torrentName,
+        downloadSpeedLimit = options.downloadSpeedLimit,
+        uploadSpeedLimit = options.uploadSpeedLimit,
+        ratioLimit = options.ratioLimit,
+        seedingTimeLimit = options.seedingTimeLimit,
+        isPaused = options.isPaused,
+        skipHashChecking = options.skipHashChecking,
+        isAutoTorrentManagementEnabled = options.isAutoTorrentManagementEnabled,
+        isSequentialDownloadEnabled = options.isSequentialDownloadEnabled,
+        isFirstLastPiecePrioritized = options.isFirstLastPiecePrioritized,
+    )
+
+    /**
+     * User-confirmed values from [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrManualAddDialog]
+     * - see [addTorrentManual]. Same field set as [ProwlarrDownloadDefaults] plus [torrentName]
+     * (meaningful for a single manual download, unlike a shared default profile - see
+     * [ProwlarrDownloadDefaults] KDoc for why that one is always null on the auto path).
+     */
+    data class ManualDownloadOptions(
+        val savePath: String?,
+        val category: String?,
+        val tags: List<String>,
+        val torrentName: String?,
+        val stopCondition: String?,
+        val contentLayout: String?,
+        val downloadSpeedLimit: Int?,
+        val uploadSpeedLimit: Int?,
+        val ratioLimit: Double?,
+        val seedingTimeLimit: Int?,
+        val isPaused: Boolean,
+        val skipHashChecking: Boolean,
+        val isAutoTorrentManagementEnabled: Boolean?,
+        val isSequentialDownloadEnabled: Boolean,
+        val isFirstLastPiecePrioritized: Boolean,
+    )
 
     /**
      * Result filter for [ProwlarrSearchScreen] (deliberately a
@@ -309,12 +436,17 @@ class ProwlarrSearchViewModel(
         data object InvalidTorrentFile : Event()
         data object AddTorrentError : Event()
         data object AddTorrentSuccess : Event()
+
+        // Neither a matching ProwlarrCategoryRoute nor ProwlarrDownloadDefaults configured a
+        // server, and the app doesn't currently have one active either - see addTorrent() KDoc.
+        data object NoServerAvailable : Event()
     }
 }
 
 /**
- * Resolves the save path/category/tags to actually submit for a Prowlarr result, given its
- * Torznab [resultCategoryIds] - see docs/prowlarr-download-defaults-plan.md, sections 2.2/3.
+ * Resolves the server/save path/category/tags to actually submit for a Prowlarr result, given its
+ * Torznab [resultCategoryIds] - see docs/prowlarr-download-defaults-plan.md, sections 2.2/3, and
+ * docs/prowlarr-p2-feedback-round1-plan.md section 3 for [ProwlarrResolvedDownloadRouting.serverId].
  *
  * The first entry in [routes] (user-controlled priority via list order, not "most specific match"
  * or any other automatic ranking) whose [ProwlarrCategoryRoute.categoryIds] intersects
@@ -322,7 +454,10 @@ class ProwlarrSearchViewModel(
  * that field individually - e.g. a route can override just `savePath` and still inherit the global
  * default `category`/`tags` - rather than being all-or-nothing. No route matching (including when
  * [resultCategoryIds] is empty, e.g. an indexer that doesn't report categories) falls straight back
- * to [defaults] for all three.
+ * to [defaults] for all fields.
+ *
+ * Deliberately doesn't know about "the server currently active elsewhere in the app" - that
+ * fallback is the caller's job (see [ProwlarrSearchViewModel.addTorrent]), not this pure function's.
  *
  * Pure function, no ViewModel/state dependency, so it's usable from [ProwlarrSearchViewModel]
  * without needing test doubles for anything beyond plain data.
@@ -331,15 +466,23 @@ internal fun resolveProwlarrDownloadRouting(
     resultCategoryIds: List<Int>,
     routes: List<ProwlarrCategoryRoute>,
     defaults: ProwlarrDownloadDefaults,
-): Triple<String?, String?, List<String>> {
+): ProwlarrResolvedDownloadRouting {
     val route = routes.firstOrNull { route -> route.categoryIds.any { it in resultCategoryIds } }
     return if (route == null) {
-        Triple(defaults.savePath, defaults.category, defaults.tags)
+        ProwlarrResolvedDownloadRouting(defaults.serverId, defaults.savePath, defaults.category, defaults.tags)
     } else {
-        Triple(
-            route.savePath ?: defaults.savePath,
-            route.category ?: defaults.category,
-            route.tags.ifEmpty { defaults.tags },
+        ProwlarrResolvedDownloadRouting(
+            serverId = route.serverId ?: defaults.serverId,
+            savePath = route.savePath ?: defaults.savePath,
+            category = route.category ?: defaults.category,
+            tags = route.tags.ifEmpty { defaults.tags },
         )
     }
 }
+
+internal data class ProwlarrResolvedDownloadRouting(
+    val serverId: Int?,
+    val savePath: String?,
+    val category: String?,
+    val tags: List<String>,
+)
