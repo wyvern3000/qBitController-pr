@@ -327,6 +327,14 @@ fun ProwlarrSearchScreen(
         )
     }
 
+    manualAddTarget?.let { target ->
+        ProwlarrManualAddDialog(
+            searchResult = target,
+            viewModel = viewModel,
+            onDismiss = { manualAddTarget = null },
+        )
+    }
+
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
