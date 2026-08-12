@@ -2,6 +2,7 @@ package dev.bartuzen.qbitcontroller.ui.settings.prowlarr.download
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.bartuzen.qbitcontroller.data.ServerManager
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
@@ -31,11 +32,17 @@ import kotlin.random.Random
 class ProwlarrDownloadDefaultsViewModel(
     private val prowlarrRepository: ProwlarrRepository,
     private val settingsManager: SettingsManager,
+    serverManager: ServerManager,
 ) : ViewModel() {
     private val eventChannel = Channel<Event>()
     val eventFlow = eventChannel.receiveAsFlow()
 
     val downloadDefaults = settingsManager.prowlarrDownloadDefaults.value
+
+    // For the server picker in the defaults form and the route dialog (P2 feedback round 1, see
+    // docs/prowlarr-p2-feedback-round1-plan.md section 3) - live, since servers can be
+    // added/removed in another screen while this one is open.
+    val servers = serverManager.serversFlow
 
     private val _categoryRoutes = MutableStateFlow(settingsManager.prowlarrCategoryRoutes.value)
     val categoryRoutes = _categoryRoutes.asStateFlow()
@@ -86,6 +93,7 @@ class ProwlarrDownloadDefaultsViewModel(
         existingId: String?,
         name: String,
         categoryIds: List<Int>,
+        serverId: Int?,
         savePath: String?,
         category: String?,
         tags: List<String>,
@@ -94,6 +102,7 @@ class ProwlarrDownloadDefaultsViewModel(
             id = existingId ?: randomRouteId(),
             name = name,
             categoryIds = categoryIds,
+            serverId = serverId,
             savePath = savePath,
             category = category,
             tags = tags,

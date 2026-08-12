@@ -826,6 +826,9 @@
     <string name="prowlarr_download_defaults_title">Prowlarr Download Defaults</string>
     <string name="prowlarr_download_defaults_section_default">Default Parameters</string>
     <string name="prowlarr_download_defaults_section_routes">Category Routes</string>
+    <string name="prowlarr_download_defaults_server">Downloader</string>
+    <string name="prowlarr_download_defaults_server_app_active">Currently active server (in-app)</string>
+    <string name="prowlarr_download_defaults_server_use_default">Use default downloader</string>
     <string name="prowlarr_download_defaults_paused">Pause After Adding</string>
     <string name="prowlarr_download_defaults_add_route">Add Route</string>
     <string name="prowlarr_download_defaults_route_name">Name</string>

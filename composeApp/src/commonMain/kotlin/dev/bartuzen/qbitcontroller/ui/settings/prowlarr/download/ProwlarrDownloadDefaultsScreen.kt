@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ServerConfig
 import dev.bartuzen.qbitcontroller.ui.components.ActionMenuItem
 import dev.bartuzen.qbitcontroller.ui.components.AppBarActions
 import dev.bartuzen.qbitcontroller.ui.components.CheckboxWithLabel
@@ -104,6 +106,9 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_save_success
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_section_default
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_section_routes
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_server
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_server_app_active
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_server_use_default
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_title
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_selected
 import qbitcontroller.composeapp.generated.resources.settings_prowlarr_action_save
@@ -139,11 +144,14 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_upload_speed_li
  * results matching specific Torznab categories - see [ProwlarrCategoryRoute] KDoc for why the
  * override is scoped to just those three fields.
  *
- * Save path/category fields are plain text (no per-server autocomplete/dropdown, unlike
- * AddTorrentScreen) - confirmed with the user (plan doc section 7): these defaults need to make
- * sense regardless of which qBittorrent server ends up handling a given download, so binding the
- * settings screen to one "reference server" to query real categories/paths from wasn't worth the
- * added complexity for this round.
+ * Save path/category fields are still plain text, not a per-server autocomplete/dropdown like
+ * AddTorrentScreen's - this was originally because these defaults needed to make sense regardless
+ * of which qBittorrent server ends up handling a download (plan doc section 7). P2 feedback round
+ * 1 (docs/prowlarr-p2-feedback-round1-plan.md section 3) added an explicit [ProwlarrDownloadDefaults.serverId]/
+ * [ProwlarrCategoryRoute.serverId] field, so that original "server-agnostic" reasoning no longer
+ * strictly holds - each default/route now does pin one specific server. Turning save
+ * path/category into a live dropdown backed by that server's real category list wasn't part of
+ * that feedback round though, so it's left as plain text for now; worth revisiting later.
  */
 @Composable
 fun ProwlarrDownloadDefaultsScreen(
@@ -152,7 +160,9 @@ fun ProwlarrDownloadDefaultsScreen(
     viewModel: ProwlarrDownloadDefaultsViewModel = koinViewModel(),
 ) {
     val defaults = viewModel.downloadDefaults
+    val servers by viewModel.servers.collectAsStateWithLifecycle()
 
+    var serverId by rememberSaveable { mutableStateOf(defaults.serverId) }
     var savePath by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(defaults.savePath ?: ""))
     }
@@ -209,6 +219,7 @@ fun ProwlarrDownloadDefaultsScreen(
     var isFirstLastPiecePrioritized by rememberSaveable { mutableStateOf(defaults.isFirstLastPiecePrioritized) }
 
     fun buildDefaultsToSave() = ProwlarrDownloadDefaults(
+        serverId = serverId,
         savePath = savePath.text.ifBlank { null },
         category = category.text.ifBlank { null },
         tags = tags.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
@@ -328,6 +339,14 @@ fun ProwlarrDownloadDefaultsScreen(
                 text = stringResource(Res.string.prowlarr_download_defaults_section_default),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 8.dp),
+            )
+
+            ServerDropdown(
+                servers = servers,
+                selectedServerId = serverId,
+                onSelect = { serverId = it },
+                noneLabel = stringResource(Res.string.prowlarr_download_defaults_server_app_active),
+                modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
@@ -543,9 +562,18 @@ fun ProwlarrDownloadDefaultsScreen(
             CategoryRouteDialog(
                 existingRoute = null,
                 categoryGroups = categoryGroups,
+                servers = servers,
                 onDismiss = { currentDialog = null },
-                onConfirm = { name, categoryIds, routeSavePath, routeCategory, routeTags ->
-                    viewModel.saveCategoryRoute(null, name, categoryIds, routeSavePath, routeCategory, routeTags)
+                onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
+                    viewModel.saveCategoryRoute(
+                        null,
+                        name,
+                        categoryIds,
+                        routeServerId,
+                        routeSavePath,
+                        routeCategory,
+                        routeTags,
+                    )
                     currentDialog = null
                 },
             )
@@ -554,9 +582,18 @@ fun ProwlarrDownloadDefaultsScreen(
             CategoryRouteDialog(
                 existingRoute = dialog.route,
                 categoryGroups = categoryGroups,
+                servers = servers,
                 onDismiss = { currentDialog = null },
-                onConfirm = { name, categoryIds, routeSavePath, routeCategory, routeTags ->
-                    viewModel.saveCategoryRoute(dialog.route.id, name, categoryIds, routeSavePath, routeCategory, routeTags)
+                onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
+                    viewModel.saveCategoryRoute(
+                        dialog.route.id,
+                        name,
+                        categoryIds,
+                        routeServerId,
+                        routeSavePath,
+                        routeCategory,
+                        routeTags,
+                    )
                     currentDialog = null
                 },
             )
@@ -572,6 +609,71 @@ fun ProwlarrDownloadDefaultsScreen(
             )
         }
         null -> {}
+    }
+}
+
+/**
+ * Server picker used both by the "Default Parameters" form and [CategoryRouteDialog] - P2
+ * feedback round 1 (docs/prowlarr-p2-feedback-round1-plan.md section 3). [noneLabel] differs
+ * between the two call sites: the defaults form's `null` means "no default set, fall back to
+ * whichever server is active elsewhere in the app", while a route's `null` means "don't override,
+ * inherit the default's server" - same shape, different fallback semantics, so the label is left
+ * to the caller rather than hardcoded here.
+ */
+@Composable
+private fun ServerDropdown(
+    servers: List<ServerConfig>,
+    selectedServerId: Int?,
+    onSelect: (Int?) -> Unit,
+    noneLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val selectedServer = servers.find { it.id == selectedServerId }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            label = {
+                Text(
+                    text = stringResource(Res.string.prowlarr_download_defaults_server),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            value = selectedServer?.displayName ?: noneLabel,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = noneLabel) },
+                onClick = {
+                    onSelect(null)
+                    expanded = false
+                },
+            )
+            servers.forEach { server ->
+                DropdownMenuItem(
+                    text = { Text(text = server.displayName) },
+                    onClick = {
+                        onSelect(server.id)
+                        expanded = false
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -694,8 +796,16 @@ private sealed class RouteDialog {
 private fun CategoryRouteDialog(
     existingRoute: ProwlarrCategoryRoute?,
     categoryGroups: List<CategoryGroup>,
+    servers: List<ServerConfig>,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, categoryIds: List<Int>, savePath: String?, category: String?, tags: List<String>) -> Unit,
+    onConfirm: (
+        name: String,
+        categoryIds: List<Int>,
+        serverId: Int?,
+        savePath: String?,
+        category: String?,
+        tags: List<String>,
+    ) -> Unit,
 ) {
     var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(existingRoute?.name ?: ""))
@@ -707,6 +817,7 @@ private fun CategoryRouteDialog(
         stateSaver = stringResourceSaver(Res.string.prowlarr_download_defaults_route_categories_required),
     ) { mutableStateOf(null) }
 
+    var serverId by rememberSaveable { mutableStateOf(existingRoute?.serverId) }
     var savePath by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(existingRoute?.savePath ?: ""))
     }
@@ -754,6 +865,7 @@ private fun CategoryRouteDialog(
             onConfirm(
                 name.text,
                 categoryIds,
+                serverId,
                 savePath.text.ifBlank { null },
                 category.text.ifBlank { null },
                 tags.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
@@ -794,6 +906,14 @@ private fun CategoryRouteDialog(
                         { Icon(imageVector = Icons.Filled.Error, contentDescription = null) }
                     },
                     keyboardActions = KeyboardActions(onDone = { tryConfirm() }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                ServerDropdown(
+                    servers = servers,
+                    selectedServerId = serverId,
+                    onSelect = { serverId = it },
+                    noneLabel = stringResource(Res.string.prowlarr_download_defaults_server_use_default),
                     modifier = Modifier.fillMaxWidth(),
                 )
 
