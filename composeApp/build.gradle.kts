@@ -14,6 +14,11 @@ import java.util.Properties
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+// Used both by compose.desktop.nativeDistributions.packageName (which determines the output dir
+// name under build/compose/binaries/*/app/) and by the flatpak packaging task below, which reads
+// from that same dir. Keeping a single source of truth avoids the two silently drifting apart.
+val desktopPackageName = "qBitController-pr"
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
@@ -337,7 +342,7 @@ compose.desktop {
             ).toTypedArray()
 
             targetFormats(*formats)
-            packageName = "qBitController-pr"
+            packageName = desktopPackageName
             // Windows MSI requires a strict numeric MAJOR.MINOR.BUILD version (no pre-release
             // suffix), so strip anything from the first "-" onward for packaging purposes only;
             // the user-facing version shown in-app (BuildConfig.Version) keeps the full string.
@@ -413,7 +418,7 @@ listOf("" to "main", "Release" to "main-release").forEach { (buildType, buildFol
                 delete("$flatpakDir/lib/")
             }
             copy {
-                from("$buildDir/compose/binaries/$buildFolder/app/qBitController/")
+                from("$buildDir/compose/binaries/$buildFolder/app/$desktopPackageName/")
                 into("$flatpakDir/")
             }
             copy {
