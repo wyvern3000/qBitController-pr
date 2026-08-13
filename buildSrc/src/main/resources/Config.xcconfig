@@ -1,4 +1,4 @@
-PRODUCT_NAME=qBitController
+PRODUCT_NAME=qBitController-pr
 PRODUCT_BUNDLE_IDENTIFIER=dev.bartuzen.qbitcontroller
 
 // generated

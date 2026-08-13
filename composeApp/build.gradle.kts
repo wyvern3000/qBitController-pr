@@ -337,8 +337,11 @@ compose.desktop {
             ).toTypedArray()
 
             targetFormats(*formats)
-            packageName = "qBitController"
-            packageVersion = Versions.AppVersion
+            packageName = "qBitController-pr"
+            // Windows MSI requires a strict numeric MAJOR.MINOR.BUILD version (no pre-release
+            // suffix), so strip anything from the first "-" onward for packaging purposes only;
+            // the user-facing version shown in-app (BuildConfig.Version) keeps the full string.
+            packageVersion = Versions.AppVersion.substringBefore("-")
 
             linux {
                 iconFile.set(project.file("icon.png"))
