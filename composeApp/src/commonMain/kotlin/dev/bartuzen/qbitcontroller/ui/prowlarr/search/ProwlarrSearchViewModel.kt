@@ -59,7 +59,7 @@ class ProwlarrSearchViewModel(
      * fields with the same starting point the auto path would use - see
      * docs/prowlarr-p2-feedback-round1-plan.md section 5.
      */
-    fun resolveDownloadRouting(resultCategoryIds: List<Int>): ProwlarrResolvedDownloadRouting {
+    internal fun resolveDownloadRouting(resultCategoryIds: List<Int>): ProwlarrResolvedDownloadRouting {
         val defaults = settingsManager.prowlarrDownloadDefaults.value
         val routes = settingsManager.prowlarrCategoryRoutes.value
         return resolveProwlarrDownloadRouting(resultCategoryIds, routes, defaults)
