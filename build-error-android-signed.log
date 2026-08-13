@@ -1,0 +1,209 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: assembleFreeRelease
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :preferences:preBuild UP-TO-DATE
+> Task :preferences:preReleaseBuild UP-TO-DATE
+> Task :preferences:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:generateLocalesConfig
+> Task :composeApp:copyLanguagesToAndroid
+> Task :preferences:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :preferences:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :preferences:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :preferences:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :preferences:generateResourceAccessorsForAndroidMain SKIPPED
+> Task :preferences:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :preferences:copyNonXmlValueResourcesForCommonMain NO-SOURCE
+> Task :preferences:prepareComposeResourcesTaskForCommonMain NO-SOURCE
+> Task :preferences:generateResourceAccessorsForCommonMain SKIPPED
+> Task :preferences:generateActualResourceCollectorsForAndroidMain SKIPPED
+> Task :preferences:generateComposeResClass SKIPPED
+> Task :preferences:generateExpectResourceCollectorsForCommonMain SKIPPED
+> Task :preferences:convertXmlValueResourcesForAndroidRelease NO-SOURCE
+> Task :preferences:copyNonXmlValueResourcesForAndroidRelease NO-SOURCE
+> Task :preferences:prepareComposeResourcesTaskForAndroidRelease NO-SOURCE
+> Task :preferences:copyReleaseComposeResourcesToAndroidAssets
+> Task :preferences:prepareReleaseArtProfile
+> Task :preferences:generateReleaseResValues
+> Task :preferences:processReleaseNavigationResources
+> Task :preferences:generateResourceAccessorsForAndroidRelease SKIPPED
+> Task :preferences:generateReleaseResources
+> Task :preferences:mergeReleaseJniLibFolders
+> Task :preferences:javaPreCompileRelease
+> Task :preferences:mergeReleaseNativeLibs NO-SOURCE
+> Task :preferences:copyReleaseJniLibsProjectOnly
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :composeApp:generateLanguageList
+> Task :composeApp:preBuild
+> Task :composeApp:preFreeReleaseBuild
+> Task :preferences:packageReleaseResources
+> Task :composeApp:mergeFreeReleaseJniLibFolders
+> Task :composeApp:buildKotlinToolingMetadata
+> Task :composeApp:mergeFreeReleaseNativeLibs
+> Task :composeApp:checkFreeReleaseDuplicateClasses
+> Task :composeApp:mergeFreeReleaseArtProfile
+> Task :composeApp:extractProguardFiles
+> Task :composeApp:checkFreeReleaseProguardFiles
+> Task :composeApp:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :preferences:parseReleaseLocalResources
+
+> Task :composeApp:stripFreeReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :composeApp:extractFreeReleaseNativeSymbolTables
+> Task :composeApp:mergeFreeReleaseNativeDebugMetadata NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForJvmMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForJvmMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForJvmMain NO-SOURCE
+> Task :preferences:generateReleaseRFile
+> Task :composeApp:generateResourceAccessorsForJvmMain NO-SOURCE
+> Task :composeApp:generateAndroidFreeReleaseBuildConfigClasses SKIPPED
+> Task :composeApp:generateBuildConfigClasses
+> Task :composeApp:generateComposeResClass
+> Task :composeApp:convertXmlValueResourcesForCommonMain
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain
+> Task :composeApp:generateJvmMainBuildConfigClasses SKIPPED
+> Task :composeApp:convertXmlValueResourcesForAndroidFree NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain
+> Task :composeApp:copyNonXmlValueResourcesForAndroidFree NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidFree NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidFree NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidFreeRelease NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain
+> Task :composeApp:copyNonXmlValueResourcesForAndroidFreeRelease NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidFreeRelease NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidFreeRelease NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidRelease NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidRelease NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidRelease NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidRelease NO-SOURCE
+> Task :preferences:writeReleaseAarMetadata
+> Task :composeApp:checkFreeReleaseAarMetadata
+> Task :composeApp:processFreeReleaseNavigationResources
+> Task :composeApp:compileFreeReleaseNavigationResources
+> Task :composeApp:generateFreeReleaseResValues
+> Task :composeApp:mapFreeReleaseSourceSetPaths
+> Task :composeApp:generateFreeReleaseResources
+> Task :composeApp:expandFreeReleaseL8ArtProfileWildcards
+> Task :composeApp:copyFreeReleaseComposeResourcesToAndroidAssets
+> Task :composeApp:packageFreeReleaseResources
+> Task :composeApp:parseFreeReleaseLocalResources
+> Task :composeApp:createFreeReleaseCompatibleScreenManifests
+> Task :composeApp:extractDeepLinksFreeRelease
+> Task :preferences:extractDeepLinksRelease
+> Task :composeApp:generateResourceAccessorsForCommonMain
+> Task :composeApp:generateActualResourceCollectorsForAndroidMain
+> Task :composeApp:javaPreCompileFreeRelease
+> Task :preferences:processReleaseManifest
+> Task :composeApp:mergeFreeReleaseStartupProfile
+> Task :composeApp:mergeFreeReleaseShaders
+> Task :composeApp:compileFreeReleaseShaders NO-SOURCE
+> Task :composeApp:freeReleaseAssetsCopyForAGP NO-SOURCE
+> Task :composeApp:generateFreeReleaseAssets UP-TO-DATE
+> Task :preferences:mergeReleaseShaders
+> Task :preferences:compileReleaseShaders NO-SOURCE
+> Task :preferences:generateReleaseAssets UP-TO-DATE
+> Task :preferences:releaseAssetsCopyForAGP NO-SOURCE
+> Task :preferences:mergeReleaseAssets
+> Task :composeApp:processFreeReleaseMainManifest
+> Task :composeApp:mergeFreeReleaseAssets
+> Task :composeApp:processFreeReleaseManifest
+> Task :composeApp:processFreeReleaseManifestForPackage
+> Task :composeApp:compressFreeReleaseAssets
+> Task :preferences:extractProguardFiles
+> Task :preferences:prepareLintJarForPublish
+> Task :preferences:checkReleaseAarMetadata
+> Task :preferences:stripReleaseDebugSymbols NO-SOURCE
+> Task :composeApp:extractFreeReleaseVersionControlInfo
+> Task :preferences:extractDeepLinksForAarRelease
+> Task :preferences:copyReleaseJniLibsProjectAndLocalJars
+> Task :composeApp:validateSigningFreeRelease
+> Task :preferences:writeReleaseLintModelMetadata
+> Task :composeApp:writeFreeReleaseAppMetadata
+> Task :composeApp:writeFreeReleaseSigningConfigVersions
+> Task :composeApp:mergeFreeReleaseResources
+> Task :composeApp:processFreeReleaseResources
+> Task :preferences:compileReleaseKotlinAndroid
+> Task :preferences:compileReleaseJavaWithJavac NO-SOURCE
+> Task :preferences:mergeReleaseGeneratedProguardFiles
+> Task :preferences:processReleaseJavaRes
+> Task :preferences:exportReleaseConsumerProguardFiles
+> Task :preferences:bundleLibRuntimeToJarRelease
+> Task :preferences:bundleLibCompileToJarRelease
+> Task :preferences:createFullJarRelease
+> Task :preferences:mergeReleaseConsumerProguardFiles
+> Task :preferences:generateReleaseLintModel
+> Task :preferences:mergeReleaseJavaResource
+> Task :preferences:generateReleaseLintVitalModel
+> Task :preferences:extractReleaseAnnotations
+> Task :preferences:syncReleaseLibJars
+> Task :preferences:bundleReleaseLocalLintAar
+> Task :preferences:lintVitalAnalyzeRelease
+> Task :composeApp:compileFreeReleaseKotlinAndroid
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/network/ImageLoaderProvider.kt:32:29 This declaration needs opt-in. Its usage should be marked with '@coil3.annotation.ExperimentalCoilApi' or '@OptIn(coil3.annotation.ExperimentalCoilApi::class)'
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/components/PlatformBackHandler.kt:11:9 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:421:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:436:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:451:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:466:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:482:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/settings/SettingsScreen.kt:135:56 'val Icons.Filled.Rule: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Rule.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:17:48 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:21:85 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:25:60 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
+w: file:///home/runner/work/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:29:59 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
+
+> Task :composeApp:compileFreeReleaseJavaWithJavac NO-SOURCE
+> Task :composeApp:mergeFreeReleaseGeneratedProguardFiles
+> Task :composeApp:processFreeReleaseJavaRes
+> Task :composeApp:generateFreeReleaseLintVitalReportModel
+> Task :composeApp:expandFreeReleaseArtProfileWildcards
+> Task :composeApp:mergeFreeReleaseJavaResource
+> Task :composeApp:produceFreeReleaseComposeMapping
+> Task :composeApp:reportFreeReleaseComposeMappingErrors
+> Task :composeApp:lintVitalAnalyzeFreeRelease
+> Task :composeApp:lintVitalReportFreeRelease
+> Task :composeApp:lintVitalFreeRelease
+> Task :composeApp:minifyFreeReleaseWithR8
+> Task :composeApp:convertShrunkResourcesToBinaryFreeRelease
+> Task :composeApp:optimizeFreeReleaseResources
+> Task :composeApp:mergeFreeReleaseComposeMapping
+> Task :composeApp:l8DexDesugarLibFreeRelease
+> Task :composeApp:compileFreeReleaseArtProfile
+> Task :composeApp:packageFreeRelease FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1786616921625.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/qBitController-pr/qBitController-pr/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':composeApp:packageFreeRelease' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.tasks.PackageAndroidArtifact$IncrementalSplitterRunnable
+   > com.android.ide.common.signing.KeytoolException: Failed to read key  from store "/tmp/keystore-qbitcontroller-2316305844629697606.jks": Tag number over 30 is not supported
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 3m 55s
+107 actionable tasks: 107 executed
+Configuration cache entry stored.
