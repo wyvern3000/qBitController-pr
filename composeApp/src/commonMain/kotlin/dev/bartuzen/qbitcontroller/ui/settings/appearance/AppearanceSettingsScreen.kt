@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,11 +42,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.materialkolor.PaletteStyle
+import dev.bartuzen.qbitcontroller.data.OptionalTab
 import dev.bartuzen.qbitcontroller.data.Theme
 import dev.bartuzen.qbitcontroller.preferences.ListPreference
 import dev.bartuzen.qbitcontroller.preferences.ListPreferenceType
 import dev.bartuzen.qbitcontroller.preferences.LocalPreferenceTheme
 import dev.bartuzen.qbitcontroller.preferences.Preference
+import dev.bartuzen.qbitcontroller.preferences.PreferenceCategory
 import dev.bartuzen.qbitcontroller.preferences.SwitchPreference
 import dev.bartuzen.qbitcontroller.ui.components.Dialog
 import dev.bartuzen.qbitcontroller.ui.theme.defaultPrimaryColor
@@ -55,6 +59,10 @@ import dev.zt64.compose.pipette.RingColorPicker
 import dev.zt64.compose.pipette.SquareColorPicker
 import org.koin.compose.viewmodel.koinViewModel
 import qbitcontroller.composeapp.generated.resources.Res
+import qbitcontroller.composeapp.generated.resources.destination_logs
+import qbitcontroller.composeapp.generated.resources.destination_prowlarr
+import qbitcontroller.composeapp.generated.resources.destination_rss
+import qbitcontroller.composeapp.generated.resources.destination_search
 import qbitcontroller.composeapp.generated.resources.dialog_cancel
 import qbitcontroller.composeapp.generated.resources.dialog_ok
 import qbitcontroller.composeapp.generated.resources.settings_app_color
@@ -77,6 +85,8 @@ import qbitcontroller.composeapp.generated.resources.settings_theme
 import qbitcontroller.composeapp.generated.resources.settings_theme_dark
 import qbitcontroller.composeapp.generated.resources.settings_theme_light
 import qbitcontroller.composeapp.generated.resources.settings_theme_system_default
+import qbitcontroller.composeapp.generated.resources.settings_visible_tabs
+import qbitcontroller.composeapp.generated.resources.settings_visible_tabs_summary
 
 @Composable
 fun AppearanceSettingsScreen(
@@ -110,6 +120,7 @@ fun AppearanceSettingsScreen(
         },
     ) { innerPadding ->
         val enableDynamicColors by viewModel.enableDynamicColors.flow.collectAsStateWithLifecycle()
+        val visibleTabs by viewModel.visibleTabs.flow.collectAsStateWithLifecycle()
         LazyColumn(
             state = listState,
             contentPadding = innerPadding,
@@ -282,6 +293,37 @@ fun AppearanceSettingsScreen(
                     value = showRelativeTimestamps,
                     onValueChange = { viewModel.showRelativeTimestamps.value = it },
                     title = { Text(text = stringResource(Res.string.settings_relative_timestamps)) },
+                )
+            }
+
+            item {
+                PreferenceCategory(title = { Text(text = stringResource(Res.string.settings_visible_tabs)) })
+            }
+            item {
+                val preferenceTheme = LocalPreferenceTheme.current
+                Text(
+                    text = stringResource(Res.string.settings_visible_tabs_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = preferenceTheme.horizontalSpacing, vertical = 4.dp),
+                )
+            }
+            items(
+                items = listOf(
+                    OptionalTab.SEARCH to Res.string.destination_search,
+                    OptionalTab.PROWLARR to Res.string.destination_prowlarr,
+                    OptionalTab.RSS to Res.string.destination_rss,
+                    OptionalTab.LOGS to Res.string.destination_logs,
+                ),
+                key = { (tab, _) -> tab.name },
+            ) { (tab, titleRes) ->
+                SwitchPreference(
+                    value = tab in visibleTabs,
+                    onValueChange = { checked ->
+                        viewModel.visibleTabs.value = if (checked) visibleTabs + tab else visibleTabs - tab
+                    },
+                    title = { Text(text = stringResource(titleRes)) },
+                    modifier = Modifier.animateItem(),
                 )
             }
         }
