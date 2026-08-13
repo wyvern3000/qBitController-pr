@@ -1,0 +1,466 @@
+> Task :composeApp:generateActualResourceCollectorsForDesktopMain
+> Task :composeApp:generateBuildConfigClasses
+> Task :composeApp:generateComposeResClass
+> Task :composeApp:generateDesktopMainBuildConfigClasses SKIPPED
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain
+> Task :composeApp:generateJvmMainBuildConfigClasses SKIPPED
+> Task :composeApp:generateLanguageList
+> Task :composeApp:generateNonAndroidMainBuildConfigClasses SKIPPED
+> Task :preferences:kmpPartiallyResolvedDependenciesChecker
+> Task :preferences:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :preferences:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :preferences:copyNonXmlValueResourcesForCommonMain NO-SOURCE
+> Task :preferences:prepareComposeResourcesTaskForCommonMain NO-SOURCE
+> Task :preferences:generateResourceAccessorsForCommonMain SKIPPED
+> Task :preferences:convertXmlValueResourcesForJvmMain NO-SOURCE
+> Task :preferences:copyNonXmlValueResourcesForJvmMain NO-SOURCE
+> Task :preferences:prepareComposeResourcesTaskForJvmMain NO-SOURCE
+> Task :preferences:generateResourceAccessorsForJvmMain SKIPPED
+> Task :preferences:generateActualResourceCollectorsForJvmMain SKIPPED
+> Task :preferences:generateComposeResClass SKIPPED
+> Task :preferences:generateExpectResourceCollectorsForCommonMain SKIPPED
+> Task :preferences:assembleJvmMainResources
+> Task :preferences:jvmProcessResources
+> Task :preferences:processJvmMainResources SKIPPED
+> Task :composeApp:assembleDesktopMainResources
+> Task :composeApp:desktopProcessResources
+> Task :composeApp:processDesktopMainResources SKIPPED
+> Task :composeApp:unpackDefaultComposeDesktopJvmApplicationResources
+> Task :preferences:compileKotlinJvm
+> Task :preferences:compileJvmMainJava NO-SOURCE
+> Task :preferences:jvmMainClasses
+> Task :preferences:jvmJar
+> Task :composeApp:compileKotlinDesktop
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/network/ImageLoaderProvider.kt:32:29 This declaration needs opt-in. Its usage should be marked with '@coil3.annotation.ExperimentalCoilApi' or '@OptIn(coil3.annotation.ExperimentalCoilApi::class)'
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/components/PlatformBackHandler.kt:11:9 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:421:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:436:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:451:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:466:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:482:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/settings/SettingsScreen.kt:135:56 'val Icons.Filled.Rule: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Rule.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:17:48 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:21:85 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:25:60 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
+w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:29:59 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
+
+> Task :composeApp:compileDesktopMainJava NO-SOURCE
+> Task :composeApp:desktopMainClasses
+> Task :composeApp:desktopJar
+
+> Task :composeApp:proguardReleaseJars
+ProGuard, version 7.7.0
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/savedstate-compose.kotlin_module]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/runtime.kotlin_module]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/runtime-saveable.kotlin_module]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/lifecycle-runtime-compose.kotlin_module]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/core.kotlin_module]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of program class [module-info]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/AL2.0]
+Note: duplicate definition of resource file [META-INF/LGPL2.1]
+Note: duplicate definition of resource file [META-INF/LICENSE]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
+Note: there were 126 duplicate class definitions.
+      (https://www.guardsquare.com/proguard/manual/troubleshooting#duplicateclass)
+Note: com.sun.jna.Native calls 'Field.getType'
+Note: com.sun.jna.Structure calls 'Field.getType'
+Note: com.sun.jna.StructureReadContext calls 'Field.getType'
+Note: org.freedesktop.dbus.Marshalling calls 'Method.getGenericParameterTypes'
+Note: org.freedesktop.dbus.Marshalling calls 'Field.getGenericType'
+Note: org.freedesktop.dbus.Marshalling calls 'Class.getTypeParameters'
+Note: org.freedesktop.dbus.Marshalling calls 'Field.getType'
+Note: org.freedesktop.dbus.RemoteInvocationHandler calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.RemoteInvocationHandler calls 'Method.getGenericParameterTypes'
+Note: org.freedesktop.dbus.StructHelper calls 'Field.getType'
+Note: org.freedesktop.dbus.bin.DBusDaemon$DBusServer calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.connections.base.ConnectionMethodInvocation calls 'Method.getGenericParameterTypes'
+Note: org.freedesktop.dbus.connections.base.ConnectionMethodInvocation calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.connections.base.DBusBoundPropertyHandler calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.messages.ExportedObject calls 'Method.getGenericParameterTypes'
+Note: org.freedesktop.dbus.messages.ExportedObject calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.messages.ExportedObject calls 'Field.getType'
+Note: org.freedesktop.dbus.propertyref.PropRefRemoteHandler calls 'Method.getGenericReturnType'
+Note: org.freedesktop.dbus.utils.Util calls 'Class.getGenericInterfaces'
+Note: com.sun.jna.Native calls 'Class.getDeclaringClass'
+Note: org.freedesktop.dbus.DBusMatchRule calls 'Class.getEnclosingClass'
+Note: org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder calls 'Class.getEnclosingClass'
+Note: org.freedesktop.dbus.messages.DBusSignal calls 'Class.getEnclosingClass'
+Warning: okhttp3.internal.graal.OkHttpFeature: can't find superclass or interface org.graalvm.nativeimage.hosted.Feature
+Warning: okhttp3.internal.platform.ConscryptPlatform$DisabledHostnameVerifier: can't find superclass or interface org.conscrypt.ConscryptHostnameVerifier
+Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature
+Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
+Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
+Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
+Warning: okhttp3.internal.graal.TargetBouncyCastlePlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
+Warning: okhttp3.internal.graal.TargetBouncyCastlePlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
+Warning: okhttp3.internal.graal.TargetConscryptPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
+Warning: okhttp3.internal.graal.TargetConscryptPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
+Warning: okhttp3.internal.graal.TargetJdk8WithJettyBootPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
+Warning: okhttp3.internal.graal.TargetJdk8WithJettyBootPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
+Warning: okhttp3.internal.graal.TargetOpenJSSEPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
+Warning: okhttp3.internal.graal.TargetOpenJSSEPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
+Warning: okhttp3.internal.graal.TargetPlatform: can't find referenced class com.oracle.svm.core.annotate.Substitute
+Warning: okhttp3.internal.graal.TargetPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLParameters
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLParameters
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
+Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLParameters
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.ConscryptHostnameVerifier
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt$Version
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt$Version
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt$Version
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt$Version
+Warning: okhttp3.internal.platform.ConscryptPlatform$Companion: can't find referenced class org.conscrypt.Conscrypt$Version
+Warning: okhttp3.internal.platform.ConscryptPlatform$DisabledHostnameVerifier: can't find referenced class org.conscrypt.ConscryptHostnameVerifier
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.net.ssl.OpenJSSE
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.net.ssl.OpenJSSE
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLSocket
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLSocket
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLParameters
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLParameters
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLSocket
+Warning: okhttp3.internal.platform.OpenJSSEPlatform: can't find referenced class org.openjsse.javax.net.ssl.SSLSocket
+Note: io.ktor.http.content.BlockingBridgeKt: can't find dynamically referenced class io.ktor.utils.io.jvm.javaio.PollersKt
+Note: com.sun.jna.Klass accesses a declared constructor '<init>()' dynamically
+Note: com.sun.jna.Structure accesses a constructor '<init>()' dynamically
+Note: com.sun.jna.platform.WindowUtils$MacWindowUtils$1 accesses a method 'getPeer()' dynamically
+Note: com.sun.jna.platform.WindowUtils$MacWindowUtils$1 accesses a method 'setAlpha(float)' dynamically
+Note: com.sun.jna.platform.WindowUtils$X11WindowUtils accesses a method 'getVisual()' dynamically
+Note: com.sun.jna.platform.win32.COM.util.Convert accesses a method 'values()' dynamically
+Note: com.sun.jna.ptr.ByReference accesses a method 'getValue()' dynamically
+Note: io.ktor.http.content.BlockingBridgeKt accesses a method 'isParkingAllowed()' dynamically
+Note: io.ktor.network.sockets.UnixSocketAddress accesses a method 'getPath()' dynamically
+Note: org.freedesktop.dbus.Marshalling accesses a declared constructor '<init>()' dynamically
+Note: org.freedesktop.dbus.messages.Error accesses a constructor '<init>(java.lang.String)' dynamically
+Note: org.freedesktop.dbus.messages.ExportedObject accesses a method 'value()' dynamically
+Note: org.freedesktop.dbus.utils.ReflectionFileDescriptorHelper accesses a declared constructor '<init>(int)' dynamically
+Note: org.slf4j.LoggerFactory accesses a constructor '<init>()' dynamically
+Note: org.slf4j.helpers.SubstituteLogger accesses a method 'log(org.slf4j.event.LoggingEvent)' dynamically
+Note: the configuration keeps the entry point 'com.materialkolor.internal.ColorMathKt { long toComposeColor(com.github.ajalt.colormath.Color); }', but not the descriptor class 'com.github.ajalt.colormath.Color'
+Note: the configuration keeps the entry point 'io.github.vinceglb.filekit.dialogs.platform.windows.jna.IShellItemArray { com.sun.jna.platform.win32.WinNT$HRESULT GetPropertyStore(io.github.vinceglb.filekit.dialogs.platform.windows.jna.ShTypes$GETPROPERTYSTOREFLAGS,com.sun.jna.platform.win32.Guid$REFIID,com.sun.jna.ptr.PointerByReference); }', but not the descriptor class 'io.github.vinceglb.filekit.dialogs.platform.windows.jna.ShTypes$GETPROPERTYSTOREFLAGS'
+Note: the configuration keeps the entry point 'io.github.vinceglb.filekit.dialogs.platform.windows.jna.ShellItemArray { com.sun.jna.platform.win32.WinNT$HRESULT GetPropertyStore(io.github.vinceglb.filekit.dialogs.platform.windows.jna.ShTypes$GETPROPERTYSTOREFLAGS,com.sun.jna.platform.win32.Guid$REFIID,com.sun.jna.ptr.PointerByReference); }', but not the descriptor class 'io.github.vinceglb.filekit.dialogs.platform.windows.jna.ShTypes$GETPROPERTYSTOREFLAGS'
+Note: the configuration keeps the entry point 'io.ktor.client.plugins.HttpPlainTextKt { java.lang.String HttpPlainText$lambda$0$read(java.nio.charset.Charset,io.ktor.client.call.HttpClientCall,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.client.plugins.HttpPlainTextKt { java.lang.String access$HttpPlainText$lambda$0$read(java.nio.charset.Charset,io.ktor.client.call.HttpClientCall,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.client.request.forms.FormBuilder { void append(java.lang.String,kotlinx.io.Source,io.ktor.http.Headers); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.client.request.forms.FormBuilder { void append$default(io.ktor.client.request.forms.FormBuilder,java.lang.String,kotlinx.io.Source,io.ktor.http.Headers,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.client.request.forms.FormDataContentKt { java.lang.Object copyTo(kotlinx.io.Source,io.ktor.utils.io.ByteWriteChannel,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.client.request.forms.FormDataContentKt { java.lang.Object access$copyTo(kotlinx.io.Source,io.ktor.utils.io.ByteWriteChannel,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.events.EventsKt { void raiseCatching(io.ktor.events.Events,io.ktor.events.EventDefinition,java.lang.Object,org.slf4j.Logger); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.events.EventsKt { void raiseCatching$default(io.ktor.events.Events,io.ktor.events.EventDefinition,java.lang.Object,org.slf4j.Logger,int,java.lang.Object); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.http.CodecsKt { void forEach(kotlinx.io.Source,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.http.CodecsKt { boolean forEach$lambda$0(kotlin.jvm.functions.Function1,kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartEvent$Epilogue { MultipartEvent$Epilogue(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartEvent$Preamble { MultipartEvent$Preamble(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object parsePreambleImpl(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,io.ktor.utils.io.ByteWriteChannel,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object parsePreambleImpl$default(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,io.ktor.utils.io.ByteWriteChannel,long,kotlin.coroutines.Continuation,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object parsePartBodyImpl(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,io.ktor.utils.io.ByteWriteChannel,io.ktor.http.cio.HttpHeadersMap,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object skipIfFoundReadCount(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { kotlinx.coroutines.channels.ReceiveChannel parseMultipart(kotlinx.coroutines.CoroutineScope,kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,java.lang.Long,long); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object access$parsePreambleImpl(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,io.ktor.utils.io.ByteWriteChannel,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object access$parsePartBodyImpl(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteReadChannel,io.ktor.utils.io.ByteWriteChannel,io.ktor.http.cio.HttpHeadersMap,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt { java.lang.Object access$skipIfFoundReadCount(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt$parseMultipart$1 { MultipartKt$parseMultipart$1(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,long,java.lang.Long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.http.cio.MultipartKt$parseMultipart$1$preambleData$1 { MultipartKt$parseMultipart$1$preambleData$1(kotlinx.io.bytestring.ByteString,io.ktor.utils.io.CountedByteReadChannel,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.network.sockets.Datagram { Datagram(kotlinx.io.Source,io.ktor.network.sockets.SocketAddress); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.network.sockets.DatagramSendChannelKt { void writeMessageTo(kotlinx.io.Source,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.network.sockets.DatagramSendChannelKt { void access$writeMessageTo(kotlinx.io.Source,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.serialization.kotlinx.json.ExperimentalJsonConverter$serialize$2 { ExperimentalJsonConverter$serialize$2(kotlinx.io.Buffer,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.util.Base64Kt { java.lang.String encodeBase64(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.util.Base64Kt { kotlinx.io.Source decodeBase64Bytes(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.util.BufferViewJvmKt { int read(java.nio.channels.ReadableByteChannel,kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.util.BufferViewJvmKt { int write(java.nio.channels.WritableByteChannel,kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.util.InputJvmKt { java.io.InputStream asStream(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.util.InputJvmKt$asStream$1 { InputJvmKt$asStream$1(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.util.logging.LoggerJvmKt { boolean isTraceEnabled(org.slf4j.Logger); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.util.logging.LoggerJvmKt { boolean isDebugEnabled(org.slf4j.Logger); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.util.logging.LoggerKt { void error(org.slf4j.Logger,java.lang.Throwable); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.util.logging.LoggerKt { void trace(org.slf4j.Logger,kotlin.jvm.functions.Function0); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.util.logging.LoggerKt { void debug(org.slf4j.Logger,kotlin.jvm.functions.Function0); }', but not the descriptor class 'org.slf4j.Logger'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteChannelCtorKt { io.ktor.utils.io.ByteReadChannel ByteReadChannel(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteChannelScanner { ByteChannelScanner(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteWriteChannel,long); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteChannelScanner { ByteChannelScanner(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteWriteChannel,long,int,kotlin.jvm.internal.DefaultConstructorMarker); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteChannelScanner { java.lang.String toSingleLineString(kotlinx.io.bytestring.ByteString); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object readTo(io.ktor.utils.io.ByteReadChannel,kotlinx.io.RawSink,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.RawSink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object readTo$default(io.ktor.utils.io.ByteReadChannel,kotlinx.io.RawSink,long,kotlin.coroutines.Continuation,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.RawSink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object readUntil(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteWriteChannel,long,boolean,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object readUntil$default(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,io.ktor.utils.io.ByteWriteChannel,long,boolean,kotlin.coroutines.Continuation,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object skipIfFound(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { void internalReadLineTo$transferString(kotlinx.io.Source,java.lang.Appendable,kotlin.jvm.internal.Ref$LongRef,long); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { long internalReadLineTo$scanForSoleCr(kotlinx.io.Source,boolean,long,long); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object internalReadLineTo$discardCrlfOrCr(kotlinx.io.Source,io.ktor.utils.io.ByteReadChannel,boolean,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperationsKt { java.lang.Object access$internalReadLineTo$discardCrlfOrCr(kotlinx.io.Source,io.ktor.utils.io.ByteReadChannel,boolean,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelOperations_jvmKt { java.lang.Object skipDelimiter(io.ktor.utils.io.ByteReadChannel,kotlinx.io.bytestring.ByteString,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.bytestring.ByteString'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteReadChannelSource { long readAtMostTo(kotlinx.io.Buffer,long); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelOperationsKt { java.lang.Object writeSource(io.ktor.utils.io.ByteWriteChannel,kotlinx.io.Source,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelOperationsKt { java.lang.Object writeBuffer(io.ktor.utils.io.ByteWriteChannel,kotlinx.io.RawSource,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.RawSource'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelOperationsKt { java.lang.Object writeBuffer(io.ktor.utils.io.ByteWriteChannel,kotlinx.io.RawSource,long,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.RawSource'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelOperationsKt { java.lang.Object writePacket(io.ktor.utils.io.ByteWriteChannel,kotlinx.io.Buffer,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelOperationsKt { java.lang.Object writePacket(io.ktor.utils.io.ByteWriteChannel,kotlinx.io.Source,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.ByteWriteChannelSink { void write(kotlinx.io.Buffer,long); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.DeprecationKt { java.lang.String readText(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.DeprecationKt { void release(kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.LookAheadSuspendSession { java.nio.ByteBuffer request$lambda$0(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.SinkByteWriteChannel { SinkByteWriteChannel(kotlinx.io.RawSink); }', but not the descriptor class 'kotlinx.io.RawSink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.SinkByteWriteChannelKt { io.ktor.utils.io.ByteWriteChannel asByteWriteChannel(kotlinx.io.RawSink); }', but not the descriptor class 'kotlinx.io.RawSink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.SourceByteReadChannel { SourceByteReadChannel(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.CharsetJVMKt { int encodeImpl(java.nio.charset.CharsetEncoder,java.lang.CharSequence,int,int,kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.CharsetJVMKt { int decode(java.nio.charset.CharsetDecoder,kotlinx.io.Source,java.lang.Appendable,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.EncodingKt { void encode(java.nio.charset.CharsetEncoder,char[],int,int,kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.EncodingKt { java.lang.String decode(java.nio.charset.CharsetDecoder,kotlinx.io.Source,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.EncodingKt { java.lang.String decode$default(java.nio.charset.CharsetDecoder,kotlinx.io.Source,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.EncodingKt { int encodeArrayImpl(java.nio.charset.CharsetEncoder,char[],int,int,kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.charsets.EncodingKt { void encodeToImpl(java.nio.charset.CharsetEncoder,kotlinx.io.Sink,java.lang.CharSequence,int,int); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BufferAppendKt { int writeBufferAppend(kotlinx.io.Buffer,kotlinx.io.Buffer,int); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BufferAppendKt { int writeBufferAppend(kotlinx.io.Buffer,kotlinx.io.Buffer,int); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BufferKt { boolean canRead(kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BufferPrimitivesJvmKt { void writeByteBuffer(kotlinx.io.Buffer,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BuffersKt { byte[] readBytes(kotlinx.io.Buffer,int); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BuffersKt { byte[] readBytes$default(kotlinx.io.Buffer,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BuffersKt { boolean isEmpty(kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderExtensions_jvmKt { void writeFully(kotlinx.io.Sink,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { int getSize(kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void getSize$annotations(kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void append(kotlinx.io.Sink,java.lang.CharSequence,int,int); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void append$default(kotlinx.io.Sink,java.lang.CharSequence,int,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { kotlinx.io.Source build(kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void writeFully(kotlinx.io.Sink,byte[],int,int); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void writeFully$default(kotlinx.io.Sink,byte[],int,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void writePacket(kotlinx.io.Sink,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.BytePacketBuilderKt { void writePacket(kotlinx.io.Sink,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketExtensions_jvmKt { int readAvailable(kotlinx.io.Source,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketExtensions_jvmKt { void readFully(kotlinx.io.Source,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketExtensions_jvmKt { void read(kotlinx.io.Source,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { long getRemaining(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { void getRemaining$annotations(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { int readAvailable(kotlinx.io.Source,kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { int readAvailable(kotlinx.io.Source,kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { kotlinx.io.Source copy(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { short readShortLittleEndian(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { long discard(kotlinx.io.Source,long); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { long discard$default(kotlinx.io.Source,long,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { void takeWhile(kotlinx.io.Source,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { void readFully(kotlinx.io.Source,byte[],int,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { void readFully$default(kotlinx.io.Source,byte[],int,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { java.lang.Object preview(kotlinx.io.Source,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { java.lang.Object preview(kotlinx.io.Sink,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.ByteReadPacketKt { void release(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.CopyKt { long copyTo(kotlinx.io.Source,kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.CopyKt { long copyTo(kotlinx.io.Source,kotlinx.io.Sink); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.InputKt { boolean getEndOfInput(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.InputKt { int readAvailable(kotlinx.io.Source,byte[],int,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.InputKt { int readAvailable$default(kotlinx.io.Source,byte[],int,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.OutputArraysJVMKt { void writeByteBuffer(kotlinx.io.Sink,java.nio.ByteBuffer); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.PacketKt { boolean isEmpty(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.PacketKt { void isEmpty$annotations(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.PacketKt { boolean isNotEmpty(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.PacketKt { void isNotEmpty$annotations(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { byte[] readBytes(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { byte[] readBytes(kotlinx.io.Source,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readText(kotlinx.io.Source,java.nio.charset.Charset,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readText$default(kotlinx.io.Source,java.nio.charset.Charset,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readTextExact(kotlinx.io.Source,java.nio.charset.Charset,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readTextExact$default(kotlinx.io.Source,java.nio.charset.Charset,int,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readTextExactCharacters(kotlinx.io.Source,int,java.nio.charset.Charset); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { java.lang.String readTextExactCharacters$default(kotlinx.io.Source,int,java.nio.charset.Charset,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { void writeText(kotlinx.io.Sink,java.lang.CharSequence,int,int,java.nio.charset.Charset); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { void writeText$default(kotlinx.io.Sink,java.lang.CharSequence,int,int,java.nio.charset.Charset,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { void writeText(kotlinx.io.Sink,char[],int,int,java.nio.charset.Charset); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.StringsKt { void writeText$default(kotlinx.io.Sink,char[],int,int,java.nio.charset.Charset,int,java.lang.Object); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.internal.ChunkBufferJvmKt { void writeDirect(kotlinx.io.Buffer,int,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.internal.ChunkBufferJvmKt { void readDirect(kotlinx.io.Buffer,kotlin.jvm.functions.Function1); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.core.internal.ChunkBufferKt { int getWriteRemaining(kotlinx.io.Buffer); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.jvm.javaio.RawSourceChannel { RawSourceChannel(kotlinx.io.RawSource,kotlin.coroutines.CoroutineContext); }', but not the descriptor class 'kotlinx.io.RawSource'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.jvm.nio.ReadableByteChannelSource { long readAtMostTo(kotlinx.io.Buffer,long); }', but not the descriptor class 'kotlinx.io.Buffer'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.streams.StreamsKt { java.io.InputStream inputStream(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.utils.io.streams.StreamsKt { void writePacket(java.io.OutputStream,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.DefaultWebSocketSessionImpl { java.lang.Object checkMaxFrameSize(kotlinx.io.Sink,io.ktor.websocket.Frame,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.websocket.DefaultWebSocketSessionImpl { java.lang.Object access$checkMaxFrameSize(io.ktor.websocket.DefaultWebSocketSessionImpl,kotlinx.io.Sink,io.ktor.websocket.Frame,kotlin.coroutines.Continuation); }', but not the descriptor class 'kotlinx.io.Sink'
+Note: the configuration keeps the entry point 'io.ktor.websocket.Frame$Binary { Frame$Binary(boolean,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.Frame$Close { Frame$Close(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.Frame$Ping { Frame$Ping(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.Frame$Pong { Frame$Pong(kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.Frame$Text { Frame$Text(boolean,kotlinx.io.Source); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.RawWebSocketCommonKt { kotlinx.io.Source mask(kotlinx.io.Source,int); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.RawWebSocketCommonKt { kotlinx.io.Source mask$lambda$0(int,kotlinx.io.Source,byte[]); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.internals.BytePacketUtilsKt { boolean endsWith(kotlinx.io.Source,byte[]); }', but not the descriptor class 'kotlinx.io.Source'
+Note: the configuration keeps the entry point 'io.ktor.websocket.internals.DeflaterUtilsKt { int deflateTo(kotlinx.io.Sink,java.util.zip.Deflater,java.nio.ByteBuffer,boolean); }', but not the descriptor class 'kotlinx.io.Sink'
+Warning: there were 50 unresolved references to classes or interfaces.
+         You may need to add missing library jars or update their versions.
+         If your code works fine without the missing classes, you can suppress
+         the warnings with '-dontwarn' options.
+         (https://www.guardsquare.com/proguard/manual/troubleshooting#unresolvedclass)
+
+> Task :composeApp:packageReleaseAppImage
+The distribution is written to /__w/qBitController-pr/qBitController-pr/composeApp/build/compose/binaries/main-release/app
+
+> Task :composeApp:prepareReleaseFlatpak
+
+> Task :composeApp:bundleReleaseFlatpak FAILED
+Downloading sources
+Failed to download sources: module qbitcontroller: Unable to get source file 'bin/': File '/__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/bin' not found
+gradle/actions: Writing build results to /__w/_temp/.gradle-actions/build-results/build-1786598719020.json
+
+3 problems were found storing the configuration cache.
+- Task `:composeApp:bundleReleaseFlatpak` of type `org.gradle.api.DefaultTask`: cannot serialize object of type 'org.gradle.api.internal.project.DefaultProject', a subtype of 'org.gradle.api.Project', as these are not supported with the configuration cache.
+  See https://docs.gradle.org/9.5.0/userguide/configuration_cache_requirements.html#config_cache:requirements:disallowed_types
+- Task `:composeApp:prepareReleaseFlatpak` of type `org.gradle.api.DefaultTask`: cannot serialize Gradle script object references as these are not supported with the configuration cache.
+  See https://docs.gradle.org/9.5.0/userguide/configuration_cache_requirements.html#config_cache:requirements:disallowed_types
+- Task `:composeApp:prepareReleaseFlatpak` of type `org.gradle.api.DefaultTask`: cannot serialize object of type 'org.gradle.api.internal.project.DefaultProject', a subtype of 'org.gradle.api.Project', as these are not supported with the configuration cache.
+  See https://docs.gradle.org/9.5.0/userguide/configuration_cache_requirements.html#config_cache:requirements:disallowed_types
+
+See the complete report at file:///__w/qBitController-pr/qBitController-pr/build/reports/configuration-cache/9bcred5zxd5v9f7hq1dgprfk9/7y9qo2cjl0p0ph8sf9szhvjs0/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///__w/qBitController-pr/qBitController-pr/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':composeApp:bundleReleaseFlatpak' (registered in build file 'composeApp/build.gradle.kts').
+> Process 'command 'flatpak-builder'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 7m 41s
+33 actionable tasks: 33 executed
+Configuration cache entry discarded with 3 problems.
