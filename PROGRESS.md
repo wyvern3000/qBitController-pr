@@ -35,7 +35,7 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 | 14 | P2 首轮真机反馈 5 条全部实施（去掉 isEnabled 开关、下载默认参数入口挪位、下载器选择、索引器标志过滤、长按=手动下载弹窗） |
 | 15 | Round 14 收尾 CI 失败排查，三处独立编译错误（`rememberSaveable` 包路径、漏 import、可见性不匹配）一次修完 |
 
-## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ✅
+## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在签名
 
 用户要求把 `feature/prowlarr-connection` 合并进 `main`，App 改名为 `qBitController-pr`，发布正式版
 `2.2.1-v1`，多平台优先。
@@ -45,47 +45,65 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 - App 显示名（Android `strings.xml` 的 `app_name` / iOS `Config.xcconfig` 的 `PRODUCT_NAME` / 桌面端
   `packageName`）统一改为 `qBitController-pr`，Bundle ID / applicationId 均未动
 - `Versions.AppVersion` 2.2.1 → **2.2.1-v1**，`AppVersionCode` 29 → 30。桌面端 `packageVersion` 单独
-  用 `.substringBefore("-")` 去掉后缀（Windows MSI 要求严格数字 `MAJOR.MINOR.BUILD`，验证过带后缀会
-  直接构建失败），app 内 `BuildConfig.Version` 仍显示完整的 `2.2.1-v1`
+  用 `.substringBefore("-")` 去掉后缀（Windows MSI 要求严格数字 `MAJOR.MINOR.BUILD`）
 
-**顺手修复**：`build-snapshot.yml`/`check-codestyle.yml` 一直监听不存在的 `master` 分支（仓库默认
-分支其实是 `main`），从未真正触发过，已改成监听 `main`，并给 `build-snapshot.yml` 加了
-`workflow_dispatch` 方便手动跑全平台验证构建。
+**顺手修复**：`build-snapshot.yml`/`check-codestyle.yml` 一直监听不存在的 `master` 分支，改成监听
+`main`，并给 `build-snapshot.yml` 加了 `workflow_dispatch`。
 
-**改名引出的三处路径硬编码不一致（均为本轮改名直接导致，非既有 bug）**：
+**改名引出的三处路径硬编码不一致（均已修复并验证）**：桌面端 flatpak 打包任务的 `app/qBitController/`
+源目录、iOS `Generate IPA` 步骤的 `mv .../qBitController.app`、flatpak `manifest.yml` 的
+`command: /app/bin/qBitController` 均硬编码旧包名，改名后全部失效。改用共享常量
+`desktopPackageName`（build.gradle.kts）+ 逐个手动改名（iOS/flatpak manifest 是静态文件没模板化）。
+排查用的是跟 `build-prowlarr-apk.yml` 一样的"失败时把日志写回仓库"套路，建临时 debug workflow
+单独跑某一平台迭代，确认后即删除。
 
-1. 桌面端 flatpak 打包任务 `from("$buildDir/.../app/qBitController/")` 硬编码旧包名 →
-   AppImage 输出目录已随 `packageName` 改名，导致 `bin/` 复制失败、`flatpak-builder` 报
-   `Unable to get source file 'bin/'`。改用共享常量 `desktopPackageName`（新增在文件顶部），
-   `compose.desktop.nativeDistributions.packageName` 和这里都引用它，避免以后再次漂移
-2. iOS `build.yml` 的 `Generate IPA` 步骤 `mv .../qBitController.app` 硬编码旧产品名 → 实际产出是
-   `qBitController-pr.app`（`xcodebuild` 本身成功，只是这一步 `mv` 找不到文件）
-3. flatpak `manifest.yml` 的 `command: /app/bin/qBitController` 硬编码旧可执行文件名 → `bin/`
-   目录本身已经复制对了（上面第 1 点修完后），但 flatpak 最终 finish 阶段报
-   `Command '/app/bin/qBitController' not found`，因为 AppImage 里实际的启动脚本也随包名改叫
-   `qBitController-pr`
+**全平台验证（未签名 dry-run）全部通过**：Android / iOS / macOS×2 / Windows×2 / Linux×2。
 
-排查方式：沙盒访问不了 GitHub Actions 日志的 Azure Blob 存储，用跟 `build-prowlarr-apk.yml` 一样的
-"失败时把日志用 Contents API 写回仓库"套路，临时建了 `debug-linux-build.yml`（后来还有一个
-`debug-winarm64-build.yml`）单独跑某一个平台的 job 迭代排错，确认修复后即删除，不留在仓库里。
+**正式打 tag `v2.2.1-v1` 发布，卡在 Android 签名**：
 
-**全平台验证结果**：Android / iOS / macOS(arm64+x86_64) / Windows(x86_64) / Linux(x86_64+arm64) 全部
-构建成功。Windows arm64 在一次全平台联跑中失败过一次，单独隔离重跑后成功——判断是 `windows-11-arm`
-这类较新 GitHub 托管 runner 的偶发性抖动，不是代码问题，未做进一步改动。
+1. 第一次卡点——**secret 命名不匹配**：`build-release.yml` 原来读的是
+   `QBITCONTROLLER_STORE_FILE_BASE64`/`QBITCONTROLLER_STORE_PASSWORD`/`QBITCONTROLLER_KEY_ALIAS`/
+   `QBITCONTROLLER_KEY_PASSWORD`（上游项目的命名），但用户实际配置的是
+   `SIGNING_KEYSTORE_BASE64`/`SIGNING_STORE_PASSWORD`/`SIGNING_KEY_ALIAS`/`SIGNING_KEY_PASSWORD`。
+   引用不上的 secret 在表达式里静默取到空字符串，`Base64.decode("")` 生成一个 0 字节的"keystore"，
+   报出一个具有误导性的 `KeytoolException: Tag number over 30 is not supported`（看起来像损坏的
+   keystore，实际是空文件）。已修正 `build-release.yml` 里的 `secrets:` 映射改用 `SIGNING_*`
+   （`56513b70`/`b553538d`）
+2. 顺手按用户要求**移除了 `build-playstore`/`upload-playstore`/`upload-altstore` 三个 job**，
+   `build-release.yml` 现在只剩 `extract-version` → `build` → `upload-release` 三步，不再尝试上传
+   Google Play / 更新 AltStore 源
+3. **改完 secret 名字后用同样的 keytoolException 复现**——用一个单独的 debug workflow（这次确保
+   secret 引用方式正确，之前排查这一步犯过同样的"reusable workflow 内部 secret 引用方式在独立
+   workflow 里用会读到空值"的错，已在 commit message 里记录避免以后重犯）验证，结果**报错完全一样**。
+   说明 secret 命名问题是真实存在、也修对了，但**不是全部原因**——`SIGNING_KEYSTORE_BASE64` 这个
+   secret 本身解出来的字节就不是一个合法的 keystore。`Base64.decode()` 本身没抛异常（说明字符串本身
+   是合法 base64 字符集，没有换行/URL-safe 字符集之类的问题），但解出来的字节没法被当成有效
+   JKS/PKCS12 解析。**这一步需要用户核实/重新生成这个 secret**，我这边拿不到实际内容没法再往下查
+4. 已删除本轮所有临时 debug workflow 和调试日志文件，仓库目前干净
 
-**下一步**：确认全平台验证绿了之后打 tag `v2.2.1-v1` 触发 `build-release.yml` 正式发布（GitHub
-Release + 全平台产物）。该 workflow 还会尝试上传 Google Play（`build-playstore`/`upload-playstore`）
-和更新 AltStore 源（`upload-altstore`）——这两个 job 不阻塞主发布（`upload-release` 只依赖
-`extract-version` + `build`），但如果仓库配置了对应 secret 会真的对外发布到商店，已跟用户确认过这个
-副作用。
+**下一步（需要用户操作）**：
+- 请用户在本地用 `keytool -list -keystore 你的keystore文件` 先确认这个 keystore 文件本身是否能正常
+  打开（排除文件本身已损坏的可能）
+- 确认后重新生成 base64（建议 `base64 -w0 keystore.jks`，Linux；macOS 用
+  `base64 -i keystore.jks | tr -d '\n'`，避免换行/软换行被带进 secret 值），完整复制、不要有多余
+  引号或空格，重新写入 `SIGNING_KEYSTORE_BASE64` 这个 GitHub secret
+- 顺手确认 `SIGNING_STORE_PASSWORD`/`SIGNING_KEY_ALIAS`/`SIGNING_KEY_PASSWORD` 三个值当前是否正确
+  （尤其 alias，如果记错了具体是哪个 alias 也会导致类似的读取失败，虽然这次的报错更像是 keystore
+  文件本身解析失败，不像是 alias/密码错误的典型报错）
+- 确认好后回来说一声，我再验证一次签名、正式重新发布 `v2.2.1-v1`（当前这个 tag 因为没有任何一次
+  release workflow 跑完整，还没有实际产生 GitHub Release，可以直接复用这个 tag 号重新触发，不需要
+  改版本号）
 
 ## 下一轮接手时先做什么
 
-1. **确认本轮的 `v2.2.1-v1` release 是否成功发布**——如果对话中止在打 tag 之前或 release workflow
-   跑到一半，先查 `git tag -l` 和 Actions 页面确认状态，避免重复打 tag
-2. **Round 14/15 的所有改动至今没有一次真机测试**——优先级高于继续做新功能。尤其是反馈 3 的下载器
-   兜底优先级链、反馈 4 的 `indexerFlags` 过滤（字段未经第一方核实，见下方待确认事项）、反馈 5 的
-   手动下载弹窗整条提交路径
+1. **`v2.2.1-v1` 发布还卡在 Android 签名 keystore 数据问题上**（不是 secret 命名，那个已经修对了）——
+   查 `git tag -l` 确认 tag 还在，如果用户已经重新生成了 `SIGNING_KEYSTORE_BASE64`，先用本轮踩过坑的
+   方式（独立 debug workflow，直接引用 `secrets.SIGNING_KEYSTORE_BASE64` 等真实名字，**不要**照抄
+   `build.yml` 内部 `secrets.store-file-base64` 这种 reusable workflow 专用的写法，那个在独立
+   workflow 里会静默读到空值）单独验证签名能不能过，过了再重新触发这个 tag 的 release
+2. **Round 14/15 的所有改动至今没有一次真机测试**——优先级次于上面签名的问题，但仍然高于继续做新
+   功能。尤其是反馈 3 的下载器兜底优先级链、反馈 4 的 `indexerFlags` 过滤（字段未经第一方核实，见
+   下方待确认事项）、反馈 5 的手动下载弹窗整条提交路径
 3. 分类选择器的 "Standard"/"Site-Specific" 分组标题和 8 个标准 Torznab 大类名还是硬编码英文，未走
    本地化——目前判断合理（协议层分类名，非用户文案），如用户反馈别扭再处理
 4. 所有功能性验收做完后，按方案第 8 节建议，把结论合并进 `docs/prowlarr-integration-plan.md` 的
