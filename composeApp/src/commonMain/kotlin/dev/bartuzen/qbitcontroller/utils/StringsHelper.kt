@@ -24,6 +24,7 @@ import qbitcontroller.composeapp.generated.resources.date_seconds_ago
 import qbitcontroller.composeapp.generated.resources.date_weeks_ago
 import qbitcontroller.composeapp.generated.resources.date_years_ago
 import qbitcontroller.composeapp.generated.resources.error_api
+import qbitcontroller.composeapp.generated.resources.error_api_detail
 import qbitcontroller.composeapp.generated.resources.error_banned
 import qbitcontroller.composeapp.generated.resources.error_cannot_connect
 import qbitcontroller.composeapp.generated.resources.error_invalid_credentials
@@ -207,7 +208,11 @@ suspend fun getErrorMessage(error: RequestResult.Error) = when (error) {
     is RequestResult.Error.RequestError.UnknownLoginResponse ->
         getString(Res.string.error_unknown_login_response, error.response.toString())
     is RequestResult.Error.RequestError.Unknown -> getString(Res.string.error_unknown, error.message)
-    is RequestResult.Error.ApiError -> getString(Res.string.error_api, error.code)
+    is RequestResult.Error.ApiError -> if (error.message != null) {
+        getString(Res.string.error_api_detail, error.code, error.message)
+    } else {
+        getString(Res.string.error_api, error.code)
+    }
 }
 
 expect fun Instant.formatDate(): String
