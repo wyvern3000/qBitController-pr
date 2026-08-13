@@ -1,223 +1,4 @@
-> Task :composeApp:generateActualResourceCollectorsForDesktopMain
-> Task :composeApp:generateBuildConfigClasses
-> Task :composeApp:generateComposeResClass
-> Task :composeApp:generateDesktopMainBuildConfigClasses SKIPPED
-> Task :composeApp:generateExpectResourceCollectorsForCommonMain
-> Task :composeApp:generateJvmMainBuildConfigClasses SKIPPED
-> Task :composeApp:generateLanguageList
-> Task :composeApp:generateNonAndroidMainBuildConfigClasses SKIPPED
-> Task :preferences:kmpPartiallyResolvedDependenciesChecker
-> Task :preferences:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :preferences:convertXmlValueResourcesForCommonMain NO-SOURCE
-> Task :preferences:copyNonXmlValueResourcesForCommonMain NO-SOURCE
-> Task :preferences:prepareComposeResourcesTaskForCommonMain NO-SOURCE
-> Task :preferences:generateResourceAccessorsForCommonMain SKIPPED
-> Task :preferences:convertXmlValueResourcesForJvmMain NO-SOURCE
-> Task :preferences:copyNonXmlValueResourcesForJvmMain NO-SOURCE
-> Task :preferences:prepareComposeResourcesTaskForJvmMain NO-SOURCE
-> Task :preferences:generateResourceAccessorsForJvmMain SKIPPED
-> Task :preferences:generateActualResourceCollectorsForJvmMain SKIPPED
-> Task :preferences:generateComposeResClass SKIPPED
-> Task :preferences:generateExpectResourceCollectorsForCommonMain SKIPPED
-> Task :preferences:assembleJvmMainResources
-> Task :preferences:jvmProcessResources
-> Task :preferences:processJvmMainResources SKIPPED
-> Task :composeApp:assembleDesktopMainResources
-> Task :composeApp:desktopProcessResources
-> Task :composeApp:processDesktopMainResources SKIPPED
-> Task :composeApp:unpackDefaultComposeDesktopJvmApplicationResources
-> Task :preferences:compileKotlinJvm
-> Task :preferences:compileJvmMainJava NO-SOURCE
-> Task :preferences:jvmMainClasses
-> Task :preferences:jvmJar
-> Task :composeApp:compileKotlinDesktop
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/network/ImageLoaderProvider.kt:32:29 This declaration needs opt-in. Its usage should be marked with '@coil3.annotation.ExperimentalCoilApi' or '@OptIn(coil3.annotation.ExperimentalCoilApi::class)'
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/components/PlatformBackHandler.kt:11:9 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:421:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:436:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:451:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:466:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/main/MainScreen.kt:482:25 'fun BackHandler(enabled: Boolean = ..., onBack: () -> Unit): Unit' is deprecated. Use NavigationEventHandler instead.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/ui/settings/SettingsScreen.kt:135:56 'val Icons.Filled.Rule: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Rule.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:17:48 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:21:85 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:25:60 'fun String.decodeBase64String(): String' is deprecated. Ambiguous and lenient. Use `Base64.Default.decode()` from the Kotlin standard library.
-w: file:///__w/qBitController-pr/qBitController-pr/composeApp/src/commonMain/kotlin/dev/bartuzen/qbitcontroller/utils/SerializableNavType.kt:29:59 'fun String.encodeBase64(): String' is deprecated. Use `Base64.Default.encode()` from the Kotlin standard library.
-
-> Task :composeApp:compileDesktopMainJava NO-SOURCE
-> Task :composeApp:desktopMainClasses
-> Task :composeApp:desktopJar
-
-> Task :composeApp:proguardReleaseJars
-ProGuard, version 7.7.0
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/savedstate-compose.kotlin_module]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/runtime.kotlin_module]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/runtime-saveable.kotlin_module]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/lifecycle-runtime-compose.kotlin_module]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/core.kotlin_module]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of program class [module-info]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/AL2.0]
-Note: duplicate definition of resource file [META-INF/LGPL2.1]
-Note: duplicate definition of resource file [META-INF/LICENSE]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: duplicate definition of resource file [META-INF/MANIFEST.MF]
-Note: there were 126 duplicate class definitions.
-      (https://www.guardsquare.com/proguard/manual/troubleshooting#duplicateclass)
-Note: com.sun.jna.Native calls 'Field.getType'
-Note: com.sun.jna.Structure calls 'Field.getType'
-Note: com.sun.jna.StructureReadContext calls 'Field.getType'
-Note: org.freedesktop.dbus.Marshalling calls 'Method.getGenericParameterTypes'
-Note: org.freedesktop.dbus.Marshalling calls 'Field.getGenericType'
-Note: org.freedesktop.dbus.Marshalling calls 'Class.getTypeParameters'
-Note: org.freedesktop.dbus.Marshalling calls 'Field.getType'
-Note: org.freedesktop.dbus.RemoteInvocationHandler calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.RemoteInvocationHandler calls 'Method.getGenericParameterTypes'
-Note: org.freedesktop.dbus.StructHelper calls 'Field.getType'
-Note: org.freedesktop.dbus.bin.DBusDaemon$DBusServer calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.connections.base.ConnectionMethodInvocation calls 'Method.getGenericParameterTypes'
-Note: org.freedesktop.dbus.connections.base.ConnectionMethodInvocation calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.connections.base.DBusBoundPropertyHandler calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.messages.ExportedObject calls 'Method.getGenericParameterTypes'
-Note: org.freedesktop.dbus.messages.ExportedObject calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.messages.ExportedObject calls 'Field.getType'
-Note: org.freedesktop.dbus.propertyref.PropRefRemoteHandler calls 'Method.getGenericReturnType'
-Note: org.freedesktop.dbus.utils.Util calls 'Class.getGenericInterfaces'
-Note: com.sun.jna.Native calls 'Class.getDeclaringClass'
-Note: org.freedesktop.dbus.DBusMatchRule calls 'Class.getEnclosingClass'
-Note: org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder calls 'Class.getEnclosingClass'
-Note: org.freedesktop.dbus.messages.DBusSignal calls 'Class.getEnclosingClass'
-Warning: okhttp3.internal.graal.OkHttpFeature: can't find superclass or interface org.graalvm.nativeimage.hosted.Feature
-Warning: okhttp3.internal.platform.ConscryptPlatform$DisabledHostnameVerifier: can't find superclass or interface org.conscrypt.ConscryptHostnameVerifier
-Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature
-Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
-Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
-Warning: okhttp3.internal.graal.OkHttpFeature: can't find referenced class org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
-Warning: okhttp3.internal.graal.TargetBouncyCastlePlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
-Warning: okhttp3.internal.graal.TargetBouncyCastlePlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
-Warning: okhttp3.internal.graal.TargetConscryptPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
-Warning: okhttp3.internal.graal.TargetConscryptPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
-Warning: okhttp3.internal.graal.TargetJdk8WithJettyBootPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
-Warning: okhttp3.internal.graal.TargetJdk8WithJettyBootPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
-Warning: okhttp3.internal.graal.TargetOpenJSSEPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
-Warning: okhttp3.internal.graal.TargetOpenJSSEPlatform: can't find referenced class com.oracle.svm.core.annotate.Delete
-Warning: okhttp3.internal.graal.TargetPlatform: can't find referenced class com.oracle.svm.core.annotate.Substitute
-Warning: okhttp3.internal.graal.TargetPlatform: can't find referenced class com.oracle.svm.core.annotate.TargetClass
-Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+ed class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
 Warning: okhttp3.internal.platform.BouncyCastlePlatform: can't find referenced class org.bouncycastle.jsse.BCSSLSocket
@@ -426,10 +207,148 @@ The distribution is written to /__w/qBitController-pr/qBitController-pr/composeA
 
 > Task :composeApp:prepareReleaseFlatpak
 
-> Task :composeApp:bundleReleaseFlatpak FAILED
+> Task :composeApp:bundleReleaseFlatpak
 Downloading sources
-Failed to download sources: module qbitcontroller: Unable to get source file 'bin/': File '/__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/bin' not found
-gradle/actions: Writing build results to /__w/_temp/.gradle-actions/build-results/build-1786598719020.json
+Initializing build dir
+Committing stage init to cache
+Starting build of dev.bartuzen.qbitcontroller
+========================================================================
+Building module qbitcontroller in /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-builder/build/qbitcontroller-1
+========================================================================
+Running: cp -r bin/ /app/bin/
+Running: cp -r lib/ /app/lib/
+Running: mkdir -p /app/share/applications
+Running: install -D dev.bartuzen.qbitcontroller.desktop /app/share/applications/dev.bartuzen.qbitcontroller.desktop
+Running: mkdir -p /app/share/icons/hicolor/scalable/apps/
+Running: cp icon.svg /app/share/icons/hicolor/scalable/apps/dev.bartuzen.qbitcontroller.svg
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/bin/qBitController-pr
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/bin/qBitController-pr
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/bin/qBitController-pr to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/bin/qBitController-pr.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/libapplauncher.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/libapplauncher.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/libapplauncher.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/libapplauncher.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/app/libskiko-linux-x64.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/app/libskiko-linux-x64.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/app/libskiko-linux-x64.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/app/libskiko-linux-x64.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjawt.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjawt.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjawt.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjawt.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jexec
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jexec
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jexec to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/jexec.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjavajpeg.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjavajpeg.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjavajpeg.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjavajpeg.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjava.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjava.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjava.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjava.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfreetype.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfreetype.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfreetype.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libfreetype.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_xawt.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_xawt.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_xawt.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libawt_xawt.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libawt.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libverify.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libverify.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libverify.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libverify.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libj2gss.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libj2gss.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libj2gss.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libj2gss.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libprefs.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libprefs.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libprefs.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libprefs.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsyslookup.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsyslookup.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsyslookup.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libsyslookup.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libmlib_image.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libmlib_image.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libmlib_image.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libmlib_image.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjvm.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjvm.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjvm.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/server/libjvm.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjsig.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjsig.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/server/libjsig.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/server/libjsig.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfontmanager.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfontmanager.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libfontmanager.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libfontmanager.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnet.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnet.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnet.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libnet.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jspawnhelper
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jspawnhelper
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/jspawnhelper to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/jspawnhelper.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnio.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnio.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libnio.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libnio.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libzip.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libzip.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libzip.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libzip.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsplashscreen.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsplashscreen.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libsplashscreen.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libsplashscreen.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/liblcms.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/liblcms.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/liblcms.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/liblcms.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsig.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsig.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsig.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjsig.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_headless.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_headless.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libawt_headless.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libawt_headless.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjli.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjli.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjli.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjli.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjaas.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjaas.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjaas.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjaas.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjimage.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjimage.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjimage.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjimage.so.debug
+compressing debuginfo in: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsound.so
+processing: /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsound.so
+Nothing to do.
+stripping /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/runtime/lib/libjsound.so to /__w/qBitController-pr/qBitController-pr/composeApp/build/flatpak/build/flatpak-target/files/lib/debug/lib/runtime/lib/libjsound.so.debug
+Committing stage build-qbitcontroller to cache
+Cleaning up
+Committing stage cleanup to cache
+Finishing app
+Error: Command '/app/bin/qBitController' not found
+
+> Task :composeApp:bundleReleaseFlatpak FAILED
+gradle/actions: Writing build results to /__w/_temp/.gradle-actions/build-results/build-1786603126493.json
 
 3 problems were found storing the configuration cache.
 - Task `:composeApp:bundleReleaseFlatpak` of type `org.gradle.api.DefaultTask`: cannot serialize object of type 'org.gradle.api.internal.project.DefaultProject', a subtype of 'org.gradle.api.Project', as these are not supported with the configuration cache.
@@ -439,7 +358,7 @@ gradle/actions: Writing build results to /__w/_temp/.gradle-actions/build-result
 - Task `:composeApp:prepareReleaseFlatpak` of type `org.gradle.api.DefaultTask`: cannot serialize object of type 'org.gradle.api.internal.project.DefaultProject', a subtype of 'org.gradle.api.Project', as these are not supported with the configuration cache.
   See https://docs.gradle.org/9.5.0/userguide/configuration_cache_requirements.html#config_cache:requirements:disallowed_types
 
-See the complete report at file:///__w/qBitController-pr/qBitController-pr/build/reports/configuration-cache/9bcred5zxd5v9f7hq1dgprfk9/7y9qo2cjl0p0ph8sf9szhvjs0/configuration-cache-report.html
+See the complete report at file:///__w/qBitController-pr/qBitController-pr/build/reports/configuration-cache/502y5ffut00ia5odoshb40mju/7y9qo2cjl0p0ph8sf9szhvjs0/configuration-cache-report.html
 
 [Incubating] Problems report is available at: file:///__w/qBitController-pr/qBitController-pr/build/reports/problems/problems-report.html
 
@@ -461,6 +380,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 7m 41s
+BUILD FAILED in 7m 59s
 33 actionable tasks: 33 executed
 Configuration cache entry discarded with 3 problems.
