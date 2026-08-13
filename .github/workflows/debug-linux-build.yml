@@ -1,0 +1,68 @@
+name: Debug Linux Flatpak Build (temp)
+
+# Temporary, dev-only workflow to isolate the build-linux job from build.yml for fast iteration
+# without re-running the whole multi-platform matrix. Same log-capture-on-failure pattern as
+# build-prowlarr-apk.yml, since the sandbox can't reach GitHub's log blob storage directly.
+# Delete once the flatpak build is green again.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifactName: linux-x86_64
+            arch: x86_64
+
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build project
+        id: build
+        run: |
+          set -o pipefail
+          ./gradlew bundleReleaseFlatpak 2>&1 | tee build-output.log
+        continue-on-error: true
+
+      - name: Save build log to repo on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          tail -c 60000 build-output.log > build-error-linux.log
+          CONTENT=$(base64 -w0 build-error-linux.log)
+          EXISTING_SHA=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error-linux.log?ref=${{ github.ref_name }}" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('sha',''))")
+          if [ -n "$EXISTING_SHA" ]; then
+            SHA_JSON=",\"sha\":\"$EXISTING_SHA\""
+          else
+            SHA_JSON=""
+          fi
+          curl -s -X PUT \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error-linux.log" \
+            -d "{\"message\":\"Debug: linux flatpak build error log for ${{ github.sha }}\",\"content\":\"$CONTENT\",\"branch\":\"${{ github.ref_name }}\"$SHA_JSON}"
+
+      - name: Fail job if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
