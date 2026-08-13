@@ -101,7 +101,7 @@ jobs:
         working-directory: iosApp
         run: |
           mkdir -p Payload
-          mv ./build/Build/Products/Release-iphoneos/qBitController.app Payload/
+          mv "./build/Build/Products/Release-iphoneos/qBitController-pr.app" Payload/
           zip -r "qbitcontroller-${{ inputs.version }}-ios.ipa" Payload
 
       - name: Upload artifact
