@@ -31,7 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -80,6 +80,7 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_tags
 import qbitcontroller.composeapp.generated.resources.torrent_add_torrent_management_mode
 import qbitcontroller.composeapp.generated.resources.torrent_add_torrent_management_mode_auto
 import qbitcontroller.composeapp.generated.resources.torrent_add_torrent_management_mode_manual
+import qbitcontroller.composeapp.generated.resources.torrent_add_upload_speed_limit
 import qbitcontroller.composeapp.generated.resources.torrent_no_categories
 
 /**
