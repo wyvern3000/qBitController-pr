@@ -2,7 +2,7 @@ id: dev.bartuzen.qbitcontroller
 sdk: org.freedesktop.Sdk
 runtime: org.freedesktop.Platform
 runtime-version: "24.08"
-command: /app/bin/qBitController
+command: /app/bin/qBitController-pr
 finish-args:
   - --share=network
   - --socket=x11
