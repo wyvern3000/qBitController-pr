@@ -1,0 +1,70 @@
+name: Debug Android Release Signing (temp)
+
+# Temporary, dev-only workflow to see the exact Gradle error from the signed release build
+# (build-release.yml passes sign-android: true, which build-android failed on in the real
+# release run). Delete once resolved / no longer needed.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android-signed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build project
+        id: build
+        run: |
+          set -o pipefail
+          ./gradlew assembleFreeRelease 2>&1 | tee build-output.log
+        env:
+          QBITCONTROLLER_SIGN_RELEASE: true
+          QBITCONTROLLER_STORE_FILE_BASE64: ${{ secrets.store-file-base64 }}
+          QBITCONTROLLER_STORE_PASSWORD: ${{ secrets.store-password }}
+          QBITCONTROLLER_KEY_ALIAS: ${{ secrets.key-alias }}
+          QBITCONTROLLER_KEY_PASSWORD: ${{ secrets.key-password }}
+        continue-on-error: true
+
+      - name: Save build log to repo on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          tail -c 60000 build-output.log > build-error-android-signed.log
+          CONTENT=$(base64 -w0 build-error-android-signed.log)
+          EXISTING_SHA=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error-android-signed.log?ref=${{ github.ref_name }}" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('sha',''))")
+          if [ -n "$EXISTING_SHA" ]; then
+            SHA_JSON=",\"sha\":\"$EXISTING_SHA\""
+          else
+            SHA_JSON=""
+          fi
+          curl -s -X PUT \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/build-error-android-signed.log" \
+            -d "{\"message\":\"Debug: android signed release build error log for ${{ github.sha }}\",\"content\":\"$CONTENT\",\"branch\":\"${{ github.ref_name }}\"$SHA_JSON}"
+
+      - name: Report whether secrets were present (no values, just presence)
+        if: always()
+        run: |
+          echo "store-file-base64 set: ${{ secrets.store-file-base64 != '' }}"
+          echo "store-password set: ${{ secrets.store-password != '' }}"
+          echo "key-alias set: ${{ secrets.key-alias != '' }}"
+          echo "key-password set: ${{ secrets.key-password != '' }}"
+
+      - name: Fail job if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
