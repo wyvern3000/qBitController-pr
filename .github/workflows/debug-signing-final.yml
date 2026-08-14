@@ -27,7 +27,8 @@ jobs:
       - name: Report secret length (sanity check only, no content)
         env:
           KS: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
-        run: echo "SIGNING_KEYSTORE_BASE64 length: ${#KS}"
+        run: |
+          echo "SIGNING_KEYSTORE_BASE64 length: ${#KS}"
 
       - name: Build signed release APK
         id: build
