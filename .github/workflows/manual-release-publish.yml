@@ -1,0 +1,67 @@
+name: Manual Release Publish (temp)
+
+# One-off workflow to publish the v2.2.1-v1 GitHub Release using the artifacts that already
+# built successfully in run 31761860088, skipping windows-arm64 (still flaky/failing, will be
+# fixed separately later per user instruction). Delete once used.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source-run-id:
+        description: "Run ID to pull successful artifacts from"
+        required: true
+      tag:
+        description: "Tag to attach the release to"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Download artifacts from source run
+        uses: actions/download-artifact@v5
+        with:
+          run-id: ${{ inputs.source-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          merge-multiple: true
+
+      - name: List downloaded files
+        run: ls -la
+
+      - name: Extract release body from tag message
+        id: changelog
+        run: |
+          TAG_NAME=${{ inputs.tag }}
+          TAG_SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$TAG_NAME" | \
+            jq -r '.object.sha')
+
+          BODY=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/git/tags/$TAG_SHA" | \
+            jq -r '.message' | tail -n +2)
+
+          BODY_CLEAN=$(echo "$BODY" | sed '/^-----BEGIN PGP SIGNATURE-----$/,/^-----END PGP SIGNATURE-----$/d')
+
+          {
+            echo "body<<EOF"
+            echo "$BODY_CLEAN"
+            echo ""
+            echo "---"
+            echo "**Known issue:** Windows arm64 (.msi) is not included in this release due to a"
+            echo "build failure on the windows-11-arm GitHub-hosted runner; will follow up separately."
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: "qBitController ${{ inputs.tag }}"
+          body: ${{ steps.changelog.outputs.body }}
+          files: qbitcontroller-*.*
