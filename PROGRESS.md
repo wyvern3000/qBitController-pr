@@ -35,7 +35,7 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 | 14 | P2 首轮真机反馈 5 条全部实施（去掉 isEnabled 开关、下载默认参数入口挪位、下载器选择、索引器标志过滤、长按=手动下载弹窗） |
 | 15 | Round 14 收尾 CI 失败排查，三处独立编译错误（`rememberSaveable` 包路径、漏 import、可见性不匹配）一次修完 |
 
-## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在签名
+## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在 secret 作用域
 
 用户要求把 `feature/prowlarr-connection` 合并进 `main`，App 改名为 `qBitController-pr`，发布正式版
 `2.2.1-v1`，多平台优先。
@@ -72,35 +72,38 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 2. 顺手按用户要求**移除了 `build-playstore`/`upload-playstore`/`upload-altstore` 三个 job**，
    `build-release.yml` 现在只剩 `extract-version` → `build` → `upload-release` 三步，不再尝试上传
    Google Play / 更新 AltStore 源
-3. **改完 secret 名字后用同样的 keytoolException 复现**——用一个单独的 debug workflow（这次确保
-   secret 引用方式正确，之前排查这一步犯过同样的"reusable workflow 内部 secret 引用方式在独立
-   workflow 里用会读到空值"的错，已在 commit message 里记录避免以后重犯）验证，结果**报错完全一样**。
-   说明 secret 命名问题是真实存在、也修对了，但**不是全部原因**——`SIGNING_KEYSTORE_BASE64` 这个
-   secret 本身解出来的字节就不是一个合法的 keystore。`Base64.decode()` 本身没抛异常（说明字符串本身
-   是合法 base64 字符集，没有换行/URL-safe 字符集之类的问题），但解出来的字节没法被当成有效
-   JKS/PKCS12 解析。**这一步需要用户核实/重新生成这个 secret**，我这边拿不到实际内容没法再往下查
+3. **改完 secret 名字后用同样的 keytoolException 复现**——用一个单独的 debug workflow 验证，结果
+   **报错完全一样**。往下继续排查（对比 bash `base64 -d` 跟项目实际用的 Kotlin `Base64.decode()`
+   在同一个 secret 上的表现），发现 **`secrets.SIGNING_KEYSTORE_BASE64` 在一个没有声明
+   `environment:` 的 workflow job 里读出来是空的（长度 0 字节）**。这才是真正的根因——之前两次报错
+   （`KeytoolException: Tag number over 30`、这次的 `Keystore file exists, but is empty`）都是同一个
+   "空 keystore 文件" 问题在不同工具（AGP 内部 keystore 读取 vs 命令行 `keytool -list`）下表现出的
+   不同报错信息，看起来像"内容损坏"实际是"内容根本没读到"。**跟 secret 命名对不对、keystore 文件
+   本身合不合法都没关系**——本地 `keytool -list` 能打开、命名也改对了，但 CI 里这个 job 拿到的就是
+   空字符串。最大可能：这四个 `SIGNING_*` secret 是配置在 **GitHub Environment**（Settings →
+   Environments → 某个环境 → secrets）下的，而不是仓库级别的 Actions secrets（Settings → Secrets
+   and variables → Actions → Repository secrets）——job 不声明匹配的 `environment:` 就完全看不到
+   environment 级别的 secret，GitHub 不会报错，只会静默给空值
 4. 已删除本轮所有临时 debug workflow 和调试日志文件，仓库目前干净
 
 **下一步（需要用户操作）**：
-- 请用户在本地用 `keytool -list -keystore 你的keystore文件` 先确认这个 keystore 文件本身是否能正常
-  打开（排除文件本身已损坏的可能）
-- 确认后重新生成 base64（建议 `base64 -w0 keystore.jks`，Linux；macOS 用
-  `base64 -i keystore.jks | tr -d '\n'`，避免换行/软换行被带进 secret 值），完整复制、不要有多余
-  引号或空格，重新写入 `SIGNING_KEYSTORE_BASE64` 这个 GitHub secret
-- 顺手确认 `SIGNING_STORE_PASSWORD`/`SIGNING_KEY_ALIAS`/`SIGNING_KEY_PASSWORD` 三个值当前是否正确
-  （尤其 alias，如果记错了具体是哪个 alias 也会导致类似的读取失败，虽然这次的报错更像是 keystore
-  文件本身解析失败，不像是 alias/密码错误的典型报错）
-- 确认好后回来说一声，我再验证一次签名、正式重新发布 `v2.2.1-v1`（当前这个 tag 因为没有任何一次
+- 去 GitHub 仓库 Settings 确认这四个 `SIGNING_*` secret 到底加在哪：
+  - `Settings → Secrets and variables → Actions → Repository secrets`（这是 `build-release.yml`
+    期望的位置，job 不需要声明 `environment:` 就能读到）
+  - 还是 `Settings → Environments → 某个环境名 → Environment secrets`（如果是这里，需要告诉我具体
+    的环境名，我给 `build-release.yml` 的 `build` job 加上对应的 `environment:` 声明；或者更简单，
+    直接把这四个值复制一份到仓库级别的 Repository secrets 里）
+- 确认调整好之后回来说一声，我再验证一次签名、正式重新发布 `v2.2.1-v1`（当前这个 tag 因为没有任何一次
   release workflow 跑完整，还没有实际产生 GitHub Release，可以直接复用这个 tag 号重新触发，不需要
   改版本号）
 
 ## 下一轮接手时先做什么
 
-1. **`v2.2.1-v1` 发布还卡在 Android 签名 keystore 数据问题上**（不是 secret 命名，那个已经修对了）——
-   查 `git tag -l` 确认 tag 还在，如果用户已经重新生成了 `SIGNING_KEYSTORE_BASE64`，先用本轮踩过坑的
-   方式（独立 debug workflow，直接引用 `secrets.SIGNING_KEYSTORE_BASE64` 等真实名字，**不要**照抄
-   `build.yml` 内部 `secrets.store-file-base64` 这种 reusable workflow 专用的写法，那个在独立
-   workflow 里会静默读到空值）单独验证签名能不能过，过了再重新触发这个 tag 的 release
+1. **`v2.2.1-v1` 发布还卡在 Android 签名 secret 读不到值上**（不是命名、也不是 keystore 文件本身
+   坏了，这两个都已排除）——大概率是 secret 配置在了 GitHub Environment 而不是 Repository 级别，
+   看 PROGRESS.md 本轮记录的排查过程和用户回复。确认调整好后，先用独立 debug workflow 验证
+   `secrets.SIGNING_KEYSTORE_BASE64` 等能读到非空值、`keytool -list` 能正常解析，再重新触发
+   `v2.2.1-v1` 这个 tag 的 release
 2. **Round 14/15 的所有改动至今没有一次真机测试**——优先级次于上面签名的问题，但仍然高于继续做新
    功能。尤其是反馈 3 的下载器兜底优先级链、反馈 4 的 `indexerFlags` 过滤（字段未经第一方核实，见
    下方待确认事项）、反馈 5 的手动下载弹窗整条提交路径
