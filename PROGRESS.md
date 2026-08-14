@@ -35,7 +35,7 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 | 14 | P2 首轮真机反馈 5 条全部实施（去掉 isEnabled 开关、下载默认参数入口挪位、下载器选择、索引器标志过滤、长按=手动下载弹窗） |
 | 15 | Round 14 收尾 CI 失败排查，三处独立编译错误（`rememberSaveable` 包路径、漏 import、可见性不匹配）一次修完 |
 
-## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在 secret 作用域
+## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在 alias 值配错
 
 用户要求把 `feature/prowlarr-connection` 合并进 `main`，App 改名为 `qBitController-pr`，发布正式版
 `2.2.1-v1`，多平台优先。
@@ -85,25 +85,32 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
    and variables → Actions → Repository secrets）——job 不声明匹配的 `environment:` 就完全看不到
    environment 级别的 secret，GitHub 不会报错，只会静默给空值
 4. 已删除本轮所有临时 debug workflow 和调试日志文件，仓库目前干净
+5. **用户把这四个 secret 从 Environment 挪到 Repository 级别后，keystore 读取问题彻底解决**——
+   重新验证：构建一路跑到 `packageFreeRelease` 这一步（前面 compile/minify/R8 全过），说明 base64
+   解码、密码都是对的。卡在了一个新的、更具体的问题上：
+   ```
+   KeytoolException: Failed to read key my-release-key.jks from store ...
+   No key with alias 'my-release-key.jks' found in keystore
+   ```
+   `SIGNING_KEY_ALIAS` 这个 secret 的值好像被设成了 keystore **文件名**
+   `my-release-key.jks`，而不是用户 `keytool -list` 截图里显示的真正的 alias `my-key-alias`——
+   需要用户把这个 secret 的值改成 `my-key-alias`
 
 **下一步（需要用户操作）**：
-- 去 GitHub 仓库 Settings 确认这四个 `SIGNING_*` secret 到底加在哪：
-  - `Settings → Secrets and variables → Actions → Repository secrets`（这是 `build-release.yml`
-    期望的位置，job 不需要声明 `environment:` 就能读到）
-  - 还是 `Settings → Environments → 某个环境名 → Environment secrets`（如果是这里，需要告诉我具体
-    的环境名，我给 `build-release.yml` 的 `build` job 加上对应的 `environment:` 声明；或者更简单，
-    直接把这四个值复制一份到仓库级别的 Repository secrets 里）
-- 确认调整好之后回来说一声，我再验证一次签名、正式重新发布 `v2.2.1-v1`（当前这个 tag 因为没有任何一次
+- 把 `SIGNING_KEY_ALIAS` 这个 Repository secret 的值改成 `my-key-alias`（不是文件名
+  `my-release-key.jks`）
+- 改好后回来说一声，我再验证一次签名、正式重新发布 `v2.2.1-v1`（当前这个 tag 因为没有任何一次
   release workflow 跑完整，还没有实际产生 GitHub Release，可以直接复用这个 tag 号重新触发，不需要
   改版本号）
 
 ## 下一轮接手时先做什么
 
-1. **`v2.2.1-v1` 发布还卡在 Android 签名 secret 读不到值上**（不是命名、也不是 keystore 文件本身
-   坏了，这两个都已排除）——大概率是 secret 配置在了 GitHub Environment 而不是 Repository 级别，
-   看 PROGRESS.md 本轮记录的排查过程和用户回复。确认调整好后，先用独立 debug workflow 验证
-   `secrets.SIGNING_KEYSTORE_BASE64` 等能读到非空值、`keytool -list` 能正常解析，再重新触发
-   `v2.2.1-v1` 这个 tag 的 release
+1. **`v2.2.1-v1` 发布卡在 `SIGNING_KEY_ALIAS` 这一个 secret 的值配错了**（keystore 本身、base64、
+   密码、secret 作用域全部验证通过）——如果用户已经把这个值改成 `my-key-alias`，先用独立 debug
+   workflow 快速验证一次签名能过、`apksigner verify` 能看到证书，再重新触发 `v2.2.1-v1` 这个 tag 的
+   release。**写临时 debug workflow 时注意 YAML 里 `run:` 后面如果不是块标量（`|`），双引号字符串
+   内部不能出现 `冒号+空格`（比如 `"length: ${#X}"`），会被 YAML 解析成新的映射键，导致整个 workflow
+   文件解析失败、`workflow_dispatch` 触发器"消失"（本轮踩过一次）**
 2. **Round 14/15 的所有改动至今没有一次真机测试**——优先级次于上面签名的问题，但仍然高于继续做新
    功能。尤其是反馈 3 的下载器兜底优先级链、反馈 4 的 `indexerFlags` 过滤（字段未经第一方核实，见
    下方待确认事项）、反馈 5 的手动下载弹窗整条提交路径
