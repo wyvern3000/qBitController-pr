@@ -35,7 +35,7 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
 | 14 | P2 首轮真机反馈 5 条全部实施（去掉 isEnabled 开关、下载默认参数入口挪位、下载器选择、索引器标志过滤、长按=手动下载弹窗） |
 | 15 | Round 14 收尾 CI 失败排查，三处独立编译错误（`rememberSaveable` 包路径、漏 import、可见性不匹配）一次修完 |
 
-## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ⚠️ 卡在 alias 值配错
+## Round 16（2026-08-13，本轮）：合并 main + 改名发布 qBitController-pr 2.2.1-v1 ✅ 签名问题已解决，等待最终发布结果
 
 用户要求把 `feature/prowlarr-connection` 合并进 `main`，App 改名为 `qBitController-pr`，发布正式版
 `2.2.1-v1`，多平台优先。
@@ -95,6 +95,10 @@ Prowlarr 搜索源。详细方案见 `docs/prowlarr-integration-plan.md`——**
    `SIGNING_KEY_ALIAS` 这个 secret 的值好像被设成了 keystore **文件名**
    `my-release-key.jks`，而不是用户 `keytool -list` 截图里显示的真正的 alias `my-key-alias`——
    需要用户把这个 secret 的值改成 `my-key-alias`
+6. **用户改好 `SIGNING_KEY_ALIAS` 后重新验证，`assembleFreeRelease` 签名构建成功**——四个
+   `SIGNING_*` secret（keystore/store密码/alias/key密码）全部验证通过。签名这条线彻底走通，已把
+   `v2.2.1-v1` 这个 tag 删掉重新指向 main 最新 commit（此前 tag 停留在旧 commit，不包含
+   secret 改名 + 移除 playstore/altstore 的修复），重新触发正式发布
 
 **下一步（需要用户操作）**：
 - 把 `SIGNING_KEY_ALIAS` 这个 Repository secret 的值改成 `my-key-alias`（不是文件名
