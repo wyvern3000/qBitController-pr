@@ -1,6 +1,9 @@
-# qBitController
+# qBitController-pr
 fork from https://github.com/Bartuzen/qBitController
 
+[qBitController-pr](https://github.com/wyvern3000/qBitController-pr) allows you to search for BT/PT site resources using Prowler within the same app and pass them to the qBittorrent downloader, monitoring the download progress in real time. It supports configuring different qBittorrent downloaders/download paths for different categories.You need to configure the qBittorrent server and Prowlarr server information in your app, and then you can start using it.
+
+---
 qBitController is a free and open-source app that allows you to control [qBittorrent](https://github.com/qbittorrent/qBittorrent) from Android, iOS, Windows, Linux, and macOS devices.
 
 ## Screenshots
@@ -14,7 +17,8 @@ qBitController is a free and open-source app that allows you to control [qBittor
 
 
 
-
+---
 [Prowlarr](https://prowlarr.com) is an indexer manager/proxy built on the popular arr .net/reactjs base stack to integrate with your various PVR apps. Prowlarr supports management of both Torrent Trackers and Usenet Indexers. It integrates seamlessly with LazyLibrarian, Lidarr, Mylar3, Radarr, and Sonarr offering complete management of your indexers with no per app Indexer setup required (we do it all).
 
-qBitController-pr allows you to search for BT/PT site resources using Prowler within the same app and pass them to the qBittorrent downloader, monitoring the download progress in real time. It supports configuring different qBittorrent downloaders/download paths for different categories.You need to configure the qBittorrent server and Prowlarr server information in your app, and then you can start using it.
+<img src="https://wiki.servarr.com/assets/prowlarr/logos/128.png" alt="Screenshot 4" width="64" />
+https://wiki.servarr.com/en/prowlarr
