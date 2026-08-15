@@ -60,8 +60,8 @@ internal data class CategoryGroup(val id: Int, val name: String, val subCategori
  * Groups [indexers]' `capabilities.categories` ([ProwlarrCategory] list) that are **standard**
  * (id < [SITE_SPECIFIC_CATEGORY_ID_THRESHOLD]) Torznab categories by top-level id, unioning
  * subcategories for ids more than one indexer reports - e.g. OurBits and another tracker both
- * reporting "Movies" (2000) get merged into one chip with the union of both indexers'
- * `Movies/*` subcategories. Standard ids are part of the shared Torznab spec, not any one
+ * reporting "Movies" (2000) get merged into one chip with the union of both indexers' Movies
+ * subcategories. Standard ids are part of the shared Torznab spec, not any one
  * indexer's private namespace, so merging by id across indexers is safe here in a way it isn't
  * for site-specific ids - see [buildSiteSpecificGroups].
  *
