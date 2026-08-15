@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.ServerConfig
 import dev.bartuzen.qbitcontroller.ui.components.ActionMenuItem
 import dev.bartuzen.qbitcontroller.ui.components.AppBarActions
@@ -74,6 +75,7 @@ import dev.bartuzen.qbitcontroller.ui.components.SwipeableSnackbarHost
 import dev.bartuzen.qbitcontroller.ui.prowlarr.CategoryGroup
 import dev.bartuzen.qbitcontroller.ui.prowlarr.CategorySelectionSection
 import dev.bartuzen.qbitcontroller.ui.prowlarr.IndexerCategoryGroup
+import dev.bartuzen.qbitcontroller.ui.prowlarr.IndexerSelectionSection
 import dev.bartuzen.qbitcontroller.ui.prowlarr.buildSiteSpecificGroups
 import dev.bartuzen.qbitcontroller.ui.prowlarr.buildStandardCategoryGroups
 import dev.bartuzen.qbitcontroller.utils.EventEffect
@@ -99,11 +101,13 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_move_route_up
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_no_routes
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_paused
-import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_categories_required
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_dialog_add
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_dialog_edit
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_field_hint
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_indexers_any
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_match_required
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_name
+import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_route_summary_both
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_save_success
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_section_default
 import qbitcontroller.composeapp.generated.resources.prowlarr_download_defaults_section_routes
@@ -561,18 +565,19 @@ fun ProwlarrDownloadDefaultsScreen(
 
     when (val dialog = currentDialog) {
         is RouteDialog.AddRoute -> {
-            CategoryRouteDialog(
+            DownloadRouteDialog(
                 existingRoute = null,
                 standardGroups = standardCategoryGroups,
                 siteSpecificIndexerGroups = siteSpecificCategoryGroups,
+                indexers = indexers ?: emptyList(),
                 servers = servers,
                 onDismiss = { currentDialog = null },
-                onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
+                onConfirm = { name, categoryIds, indexerIds, routeServerId, routeSavePath, routeCategory, routeTags ->
                     viewModel.saveCategoryRoute(
                         null,
                         name,
                         categoryIds,
-                        emptyList(),
+                        indexerIds,
                         routeServerId,
                         routeSavePath,
                         routeCategory,
@@ -583,18 +588,19 @@ fun ProwlarrDownloadDefaultsScreen(
             )
         }
         is RouteDialog.EditRoute -> {
-            CategoryRouteDialog(
+            DownloadRouteDialog(
                 existingRoute = dialog.route,
                 standardGroups = standardCategoryGroups,
                 siteSpecificIndexerGroups = siteSpecificCategoryGroups,
+                indexers = indexers ?: emptyList(),
                 servers = servers,
                 onDismiss = { currentDialog = null },
-                onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
+                onConfirm = { name, categoryIds, indexerIds, routeServerId, routeSavePath, routeCategory, routeTags ->
                     viewModel.saveCategoryRoute(
                         dialog.route.id,
                         name,
                         categoryIds,
-                        dialog.route.indexerIds,
+                        indexerIds,
                         routeServerId,
                         routeSavePath,
                         routeCategory,
@@ -619,7 +625,7 @@ fun ProwlarrDownloadDefaultsScreen(
 }
 
 /**
- * Server picker used both by the "Default Parameters" form and [CategoryRouteDialog] - P2
+ * Server picker used both by the "Default Parameters" form and [DownloadRouteDialog] - P2
  * feedback round 1 (docs/prowlarr-p2-feedback-round1-plan.md section 3). [noneLabel] differs
  * between the two call sites: the defaults form's `null` means "no default set, fall back to
  * whichever server is active elsewhere in the app", while a route's `null` means "don't override,
@@ -743,8 +749,28 @@ private fun RouteListItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = route.name, style = MaterialTheme.typography.bodyLarge)
+            // Both dimensions filled in: dedicated two-placeholder string rather than concatenating
+            // two calls to prowlarr_search_categories_selected client-side - a hardcoded separator
+            // (", " or similar) between two independently-translated fragments can come out in the
+            // wrong order/punctuation for languages with different list conventions, the same
+            // reasoning the plan doc gives for this string (section 3.4). Single-dimension routes
+            // (still the only kind creatable before this round, and likely the common case for a
+            // while after) keep reusing the plain "%1$d selected" count - genuinely dimension-
+            // agnostic text despite the string's "categories" name (docs/prowlarr-route-and-
+            // category-grouping-plan.md section 3.4).
+            val summary = if (route.categoryIds.isNotEmpty() && route.indexerIds.isNotEmpty()) {
+                stringResource(
+                    Res.string.prowlarr_download_defaults_route_summary_both,
+                    route.categoryIds.size,
+                    route.indexerIds.size,
+                )
+            } else if (route.indexerIds.isNotEmpty()) {
+                stringResource(Res.string.prowlarr_search_categories_selected, route.indexerIds.size)
+            } else {
+                stringResource(Res.string.prowlarr_search_categories_selected, route.categoryIds.size)
+            }
             Text(
-                text = stringResource(Res.string.prowlarr_search_categories_selected, route.categoryIds.size),
+                text = summary,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -791,30 +817,43 @@ private sealed class RouteDialog {
  * with the search screen's picker, see ui/prowlarr/ProwlarrCategoryPicker.kt) so selecting which
  * categories this route matches is the exact same interaction as filtering search results by
  * category - no separate picker UI to maintain, including the standard/site-specific-per-indexer
- * split (docs/prowlarr-route-and-category-grouping-plan.md section 4.4).
+ * split (docs/prowlarr-route-and-category-grouping-plan.md section 4.4). Also reuses
+ * [IndexerSelectionSection] (ui/prowlarr/ProwlarrIndexerPicker.kt) the same way for the indexer
+ * matching dimension (plan doc section 3).
  *
- * [orphanCategoryIds]: if the route being edited has category ids that aren't offered by any
- * currently configured indexer (e.g. that indexer was since disabled/removed, or indexers just
- * haven't finished loading yet), those ids won't render as chips - but editing the route and
- * saving shouldn't silently drop them. They're carried through untouched and merged back into the
- * saved [ProwlarrCategoryRoute.categoryIds] on confirm.
+ * Renamed from `CategoryRouteDialog` this round (plan doc section 3.5) - the old name read as "the
+ * category-route dialog" now that a route can match on category *and/or* indexer, and it was easy
+ * to confuse with the sibling `sealed class RouteDialog` (dialog *visibility* state, an unrelated
+ * concept) sharing most of the same words. The rest of the plan doc's 3.5 rename table (the
+ * `ProwlarrCategoryRoute` class/file, `SettingsManager`/`ViewModel` property and method names) is
+ * deferred to plan step 7 - this dialog's own `existingRoute: ProwlarrCategoryRoute?` parameter
+ * type keeps its current name until then.
  *
- * [ProwlarrCategoryRoute.indexerIds] (the second matching dimension - plan doc section 3) has no
- * picker UI here yet (that's plan step 6, `IndexerSelectionSection`) - this dialog only preserves
- * whatever an edited route already had (new routes always get an empty list, i.e. "any indexer").
- * Safe as a standalone step: an empty [ProwlarrCategoryRoute.indexerIds] is a real, valid "no
- * indexer restriction" state, not a placeholder needing a migration once step 6 lands.
+ * [orphanCategoryIds]/[orphanIndexerIds]: if the route being edited references a category or
+ * indexer id that isn't offered by/present in any currently configured indexer (that indexer was
+ * since disabled/removed, or indexers just haven't finished loading yet), those ids won't render
+ * as chips in either picker - but editing the route and saving shouldn't silently drop them. Both
+ * are carried through untouched and merged back into the saved
+ * [ProwlarrCategoryRoute.categoryIds]/[ProwlarrCategoryRoute.indexerIds] on confirm.
+ *
+ * Validation (plan doc section 3.4): a route needs *at least one* of categories/indexers selected,
+ * not both - [matchError] only fires when the category selection (top + sub + orphan ids) *and*
+ * [selectedIndexerIds] (+ orphans) both end up empty at confirm time. Either dimension being empty
+ * on its own is a valid "wildcard, matches anything on this dimension" state - see
+ * [resolveProwlarrDownloadRouting].
  */
 @Composable
-private fun CategoryRouteDialog(
+private fun DownloadRouteDialog(
     existingRoute: ProwlarrCategoryRoute?,
     standardGroups: List<CategoryGroup>,
     siteSpecificIndexerGroups: List<IndexerCategoryGroup>,
+    indexers: List<ProwlarrIndexer>,
     servers: List<ServerConfig>,
     onDismiss: () -> Unit,
     onConfirm: (
         name: String,
         categoryIds: List<Int>,
+        indexerIds: List<Int>,
         serverId: Int?,
         savePath: String?,
         category: String?,
@@ -827,8 +866,8 @@ private fun CategoryRouteDialog(
     var nameError by rememberSaveable(
         stateSaver = stringResourceSaver(Res.string.error_required_field),
     ) { mutableStateOf(null) }
-    var categoriesError by rememberSaveable(
-        stateSaver = stringResourceSaver(Res.string.prowlarr_download_defaults_route_categories_required),
+    var matchError by rememberSaveable(
+        stateSaver = stringResourceSaver(Res.string.prowlarr_download_defaults_route_match_required),
     ) { mutableStateOf(null) }
 
     var serverId by rememberSaveable { mutableStateOf(existingRoute?.serverId) }
@@ -855,10 +894,15 @@ private fun CategoryRouteDialog(
         val knownIds = allCategoryGroups.flatMap { group -> listOf(group.id) + group.subCategories.map { it.id } }.toSet()
         (existingRoute?.categoryIds ?: emptyList()).filterNot { it in knownIds }
     }
+    val orphanIndexerIds = remember(indexers, existingRoute) {
+        val knownIndexerIds = indexers.map { it.id }.toSet()
+        (existingRoute?.indexerIds ?: emptyList()).filterNot { it in knownIndexerIds }
+    }
 
     var categoryExpanded by rememberSaveable { mutableStateOf(true) }
     val expandedGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
     val expandedIndexerGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+    var indexerExpanded by rememberSaveable { mutableStateOf(true) }
 
     val initialTopCategoryIds = remember(allCategoryGroups, existingRoute) {
         existingRoute?.categoryIds?.filter { id -> allCategoryGroups.any { it.id == id } } ?: emptyList()
@@ -874,21 +918,29 @@ private fun CategoryRouteDialog(
     val selectedSubCategoryIds = rememberSaveable(saver = stateListSaver()) {
         mutableStateListOf<Int>().apply { addAll(initialSubCategoryIds) }
     }
+    val initialIndexerIds = remember(indexers, existingRoute) {
+        existingRoute?.indexerIds?.filter { id -> indexers.any { it.id == id } } ?: emptyList()
+    }
+    val selectedIndexerIds = rememberSaveable(saver = stateListSaver()) {
+        mutableStateListOf<Int>().apply { addAll(initialIndexerIds) }
+    }
 
     fun tryConfirm() {
         val categoryIds = (selectedTopCategoryIds + selectedSubCategoryIds + orphanCategoryIds).distinct()
+        val indexerIds = (selectedIndexerIds + orphanIndexerIds).distinct()
 
         nameError = if (name.text.isBlank()) Res.string.error_required_field else null
-        categoriesError = if (categoryIds.isEmpty()) {
-            Res.string.prowlarr_download_defaults_route_categories_required
+        matchError = if (categoryIds.isEmpty() && indexerIds.isEmpty()) {
+            Res.string.prowlarr_download_defaults_route_match_required
         } else {
             null
         }
 
-        if (nameError == null && categoriesError == null) {
+        if (nameError == null && matchError == null) {
             onConfirm(
                 name.text,
                 categoryIds,
+                indexerIds,
                 serverId,
                 savePath.text.ifBlank { null },
                 category.text.ifBlank { null },
@@ -941,6 +993,21 @@ private fun CategoryRouteDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                IndexerSelectionSection(
+                    expanded = indexerExpanded,
+                    onExpandedChange = { indexerExpanded = it },
+                    indexers = indexers,
+                    selectedIndexerIds = selectedIndexerIds,
+                    onToggleIndexer = { id ->
+                        if (id in selectedIndexerIds) {
+                            selectedIndexerIds.remove(id)
+                        } else {
+                            selectedIndexerIds.add(id)
+                        }
+                        matchError = null
+                    },
+                )
+
                 CategorySelectionSection(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = it },
@@ -965,7 +1032,7 @@ private fun CategoryRouteDialog(
                         } else {
                             selectedTopCategoryIds.add(id)
                         }
-                        categoriesError = null
+                        matchError = null
                     },
                     selectedSubCategoryIds = selectedSubCategoryIds,
                     onToggleSubCategory = { id ->
@@ -974,12 +1041,12 @@ private fun CategoryRouteDialog(
                         } else {
                             selectedSubCategoryIds.add(id)
                         }
-                        categoriesError = null
+                        matchError = null
                     },
                 )
-                if (categoriesError != null) {
+                if (matchError != null) {
                     Text(
-                        text = stringResource(categoriesError!!),
+                        text = stringResource(matchError!!),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )

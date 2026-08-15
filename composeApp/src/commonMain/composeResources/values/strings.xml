@@ -837,8 +837,9 @@
     <string name="prowlarr_download_defaults_route_field_hint">Leave blank to use the default</string>
     <string name="prowlarr_download_defaults_no_routes">No category routes yet. Results are downloaded using the default parameters above.</string>
     <string name="prowlarr_download_defaults_save_success">Download defaults have been saved.</string>
-    <string name="prowlarr_download_defaults_route_categories_required">Select at least one category.</string>
+    <string name="prowlarr_download_defaults_route_match_required">Select at least one category or indexer.</string>
     <string name="prowlarr_download_defaults_route_indexers_any">Any Indexer</string>
+    <string name="prowlarr_download_defaults_route_summary_both">%1$d categories, %2$d indexers</string>
     <string name="prowlarr_download_defaults_delete_route">Delete route</string>
     <string name="prowlarr_download_defaults_move_route_up">Move up</string>
     <string name="prowlarr_download_defaults_move_route_down">Move down</string>
