@@ -73,7 +73,9 @@ import dev.bartuzen.qbitcontroller.ui.components.DropdownMenuItem
 import dev.bartuzen.qbitcontroller.ui.components.SwipeableSnackbarHost
 import dev.bartuzen.qbitcontroller.ui.prowlarr.CategoryGroup
 import dev.bartuzen.qbitcontroller.ui.prowlarr.CategorySelectionSection
-import dev.bartuzen.qbitcontroller.ui.prowlarr.buildCategoryGroups
+import dev.bartuzen.qbitcontroller.ui.prowlarr.IndexerCategoryGroup
+import dev.bartuzen.qbitcontroller.ui.prowlarr.buildSiteSpecificGroups
+import dev.bartuzen.qbitcontroller.ui.prowlarr.buildStandardCategoryGroups
 import dev.bartuzen.qbitcontroller.utils.EventEffect
 import dev.bartuzen.qbitcontroller.utils.getDecimalSeparator
 import dev.bartuzen.qbitcontroller.utils.getErrorMessage
@@ -251,7 +253,8 @@ fun ProwlarrDownloadDefaultsScreen(
 
     val categoryRoutes by viewModel.categoryRoutes.collectAsStateWithLifecycle()
     val indexers by viewModel.indexers.collectAsStateWithLifecycle()
-    val categoryGroups = remember(indexers) { buildCategoryGroups(indexers ?: emptyList()) }
+    val standardCategoryGroups = remember(indexers) { buildStandardCategoryGroups(indexers ?: emptyList()) }
+    val siteSpecificCategoryGroups = remember(indexers) { buildSiteSpecificGroups(indexers ?: emptyList()) }
 
     LaunchedEffect(Unit) {
         viewModel.loadIndexers()
@@ -560,7 +563,8 @@ fun ProwlarrDownloadDefaultsScreen(
         is RouteDialog.AddRoute -> {
             CategoryRouteDialog(
                 existingRoute = null,
-                categoryGroups = categoryGroups,
+                standardGroups = standardCategoryGroups,
+                siteSpecificIndexerGroups = siteSpecificCategoryGroups,
                 servers = servers,
                 onDismiss = { currentDialog = null },
                 onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
@@ -580,7 +584,8 @@ fun ProwlarrDownloadDefaultsScreen(
         is RouteDialog.EditRoute -> {
             CategoryRouteDialog(
                 existingRoute = dialog.route,
-                categoryGroups = categoryGroups,
+                standardGroups = standardCategoryGroups,
+                siteSpecificIndexerGroups = siteSpecificCategoryGroups,
                 servers = servers,
                 onDismiss = { currentDialog = null },
                 onConfirm = { name, categoryIds, routeServerId, routeSavePath, routeCategory, routeTags ->
@@ -783,7 +788,8 @@ private sealed class RouteDialog {
  * Add/edit dialog for a single [ProwlarrCategoryRoute]. Reuses [CategorySelectionSection] (shared
  * with the search screen's picker, see ui/prowlarr/ProwlarrCategoryPicker.kt) so selecting which
  * categories this route matches is the exact same interaction as filtering search results by
- * category - no separate picker UI to maintain.
+ * category - no separate picker UI to maintain, including the standard/site-specific-per-indexer
+ * split (docs/prowlarr-route-and-category-grouping-plan.md section 4.4).
  *
  * [orphanCategoryIds]: if the route being edited has category ids that aren't offered by any
  * currently configured indexer (e.g. that indexer was since disabled/removed, or indexers just
@@ -794,7 +800,8 @@ private sealed class RouteDialog {
 @Composable
 private fun CategoryRouteDialog(
     existingRoute: ProwlarrCategoryRoute?,
-    categoryGroups: List<CategoryGroup>,
+    standardGroups: List<CategoryGroup>,
+    siteSpecificIndexerGroups: List<IndexerCategoryGroup>,
     servers: List<ServerConfig>,
     onDismiss: () -> Unit,
     onConfirm: (
@@ -827,20 +834,30 @@ private fun CategoryRouteDialog(
         mutableStateOf(TextFieldValue(existingRoute?.tags?.joinToString(", ") ?: ""))
     }
 
-    val orphanCategoryIds = remember(categoryGroups, existingRoute) {
-        val knownIds = categoryGroups.flatMap { group -> listOf(group.id) + group.subCategories.map { it.id } }.toSet()
+    // Orphan/initial-selection derivation below needs to look across both sections - a route's
+    // categoryIds don't record which section a category came from, only its raw id, and that's
+    // still true after the standard/site-specific-per-indexer split (see plan doc section 5: the
+    // grouping-by-indexer change only affects how site-specific categories are *displayed*, not
+    // what ends up in ProwlarrCategoryRoute.categoryIds).
+    val allCategoryGroups = remember(standardGroups, siteSpecificIndexerGroups) {
+        standardGroups + siteSpecificIndexerGroups.flatMap { it.categories }
+    }
+
+    val orphanCategoryIds = remember(allCategoryGroups, existingRoute) {
+        val knownIds = allCategoryGroups.flatMap { group -> listOf(group.id) + group.subCategories.map { it.id } }.toSet()
         (existingRoute?.categoryIds ?: emptyList()).filterNot { it in knownIds }
     }
 
     var categoryExpanded by rememberSaveable { mutableStateOf(true) }
     val expandedGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+    val expandedIndexerGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
 
-    val initialTopCategoryIds = remember(categoryGroups, existingRoute) {
-        existingRoute?.categoryIds?.filter { id -> categoryGroups.any { it.id == id } } ?: emptyList()
+    val initialTopCategoryIds = remember(allCategoryGroups, existingRoute) {
+        existingRoute?.categoryIds?.filter { id -> allCategoryGroups.any { it.id == id } } ?: emptyList()
     }
-    val initialSubCategoryIds = remember(categoryGroups, existingRoute) {
+    val initialSubCategoryIds = remember(allCategoryGroups, existingRoute) {
         existingRoute?.categoryIds?.filter { id ->
-            categoryGroups.any { group -> group.subCategories.any { it.id == id } }
+            allCategoryGroups.any { group -> group.subCategories.any { it.id == id } }
         } ?: emptyList()
     }
     val selectedTopCategoryIds = rememberSaveable(saver = stateListSaver()) {
@@ -919,10 +936,19 @@ private fun CategoryRouteDialog(
                 CategorySelectionSection(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = it },
-                    categoryGroups = categoryGroups,
+                    standardGroups = standardGroups,
+                    siteSpecificIndexerGroups = siteSpecificIndexerGroups,
                     expandedGroupIds = expandedGroupIds,
+                    expandedIndexerGroupIds = expandedIndexerGroupIds,
                     onToggleGroupExpanded = { id ->
                         if (id in expandedGroupIds) expandedGroupIds.remove(id) else expandedGroupIds.add(id)
+                    },
+                    onToggleIndexerGroupExpanded = { id ->
+                        if (id in expandedIndexerGroupIds) {
+                            expandedIndexerGroupIds.remove(id)
+                        } else {
+                            expandedIndexerGroupIds.add(id)
+                        }
                     },
                     selectedTopCategoryIds = selectedTopCategoryIds,
                     onToggleTopCategory = { id ->

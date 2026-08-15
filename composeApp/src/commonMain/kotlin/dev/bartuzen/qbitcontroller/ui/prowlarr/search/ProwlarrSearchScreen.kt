@@ -100,7 +100,8 @@ import dev.bartuzen.qbitcontroller.ui.components.RadioButtonWithLabel
 import dev.bartuzen.qbitcontroller.ui.components.SwipeableSnackbarHost
 import dev.bartuzen.qbitcontroller.ui.components.TagChip
 import dev.bartuzen.qbitcontroller.ui.prowlarr.CategorySelectionSection
-import dev.bartuzen.qbitcontroller.ui.prowlarr.buildCategoryGroups
+import dev.bartuzen.qbitcontroller.ui.prowlarr.buildSiteSpecificGroups
+import dev.bartuzen.qbitcontroller.ui.prowlarr.buildStandardCategoryGroups
 import dev.bartuzen.qbitcontroller.ui.theme.LocalCustomColors
 import dev.bartuzen.qbitcontroller.utils.EventEffect
 import dev.bartuzen.qbitcontroller.utils.formatBytes
@@ -218,6 +219,7 @@ fun ProwlarrSearchScreen(
 
     var categorySectionExpanded by rememberSaveable { mutableStateOf(false) }
     val expandedCategoryGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
+    val expandedIndexerCategoryGroupIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
     val selectedTopCategoryIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
     val selectedSubCategoryIds = rememberSaveable(saver = stateListSaver()) { mutableStateListOf<Int>() }
 
@@ -249,18 +251,24 @@ fun ProwlarrSearchScreen(
         IndexerSelection.Selected -> indexers?.filter { it.id in selectedIndexerIds }
     } ?: emptyList()
 
-    // See buildCategoryGroups KDoc for why this is a union across effectiveIndexers rather than a
-    // fixed 8-item Torznab top-level list, which is what the plan doc originally called for.
-    val categoryGroups = remember(effectiveIndexers) { buildCategoryGroups(effectiveIndexers) }
+    // See buildStandardCategoryGroups KDoc for why this is a union across effectiveIndexers rather
+    // than a fixed 8-item Torznab top-level list, which is what the plan doc originally called for.
+    val standardCategoryGroups = remember(effectiveIndexers) { buildStandardCategoryGroups(effectiveIndexers) }
+    // See buildSiteSpecificGroups KDoc for why this is grouped per indexer instead of also merged
+    // by id across effectiveIndexers the way the standard groups above are.
+    val siteSpecificCategoryGroups = remember(effectiveIndexers) { buildSiteSpecificGroups(effectiveIndexers) }
 
     // Same cleanup idea as the indexer LaunchedEffect above, but for categories: dropping an
-    // indexer from the selection can shrink categoryGroups (a category only offered by that
+    // indexer from the selection can shrink the groups above (a category only offered by that
     // indexer disappears), so any previously-checked top/sub category id no longer present has to
     // be un-checked too, or the search would silently keep applying a filter the UI no longer shows
-    // as selected.
-    LaunchedEffect(categoryGroups) {
-        val validTopIds = categoryGroups.mapTo(mutableSetOf()) { it.id }
-        val validSubIds = categoryGroups.flatMapTo(mutableSetOf()) { group -> group.subCategories.map { it.id } }
+    // as selected. Site-specific groups are flattened in here too since a selected top/sub id is
+    // still just a plain category id regardless of which section it came from (see
+    // docs/prowlarr-route-and-category-grouping-plan.md section 5).
+    LaunchedEffect(standardCategoryGroups, siteSpecificCategoryGroups) {
+        val allGroups = standardCategoryGroups + siteSpecificCategoryGroups.flatMap { it.categories }
+        val validTopIds = allGroups.mapTo(mutableSetOf()) { it.id }
+        val validSubIds = allGroups.flatMapTo(mutableSetOf()) { group -> group.subCategories.map { it.id } }
         selectedTopCategoryIds.removeAll { it !in validTopIds }
         selectedSubCategoryIds.removeAll { it !in validSubIds }
     }
@@ -502,13 +510,22 @@ fun ProwlarrSearchScreen(
                 CategorySelectionSection(
                     expanded = categorySectionExpanded,
                     onExpandedChange = { categorySectionExpanded = it },
-                    categoryGroups = categoryGroups,
+                    standardGroups = standardCategoryGroups,
+                    siteSpecificIndexerGroups = siteSpecificCategoryGroups,
                     expandedGroupIds = expandedCategoryGroupIds,
+                    expandedIndexerGroupIds = expandedIndexerCategoryGroupIds,
                     onToggleGroupExpanded = { id ->
                         if (id in expandedCategoryGroupIds) {
                             expandedCategoryGroupIds.remove(id)
                         } else {
                             expandedCategoryGroupIds.add(id)
+                        }
+                    },
+                    onToggleIndexerGroupExpanded = { id ->
+                        if (id in expandedIndexerCategoryGroupIds) {
+                            expandedIndexerCategoryGroupIds.remove(id)
+                        } else {
+                            expandedIndexerCategoryGroupIds.add(id)
                         }
                     },
                     selectedTopCategoryIds = selectedTopCategoryIds,

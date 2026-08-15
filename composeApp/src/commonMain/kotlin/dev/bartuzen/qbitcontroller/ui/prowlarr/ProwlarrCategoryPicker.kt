@@ -50,8 +50,9 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_
 
 /**
  * A top-level Torznab/Newznab category entry (e.g. id 2000 "Movies", or an indexer-specific custom
- * entry like id 100401 "Movies" - see [buildCategoryGroups]) together with the union of its
- * [subCategories][ProwlarrCategory.subCategories] across whichever indexers are currently in play.
+ * entry like id 100401 "Movies" - see [buildStandardCategoryGroups]/[buildSiteSpecificGroups])
+ * together with the union of its [subCategories][ProwlarrCategory.subCategories] - across all
+ * indexers in play for a standard entry, or within one indexer's own list for a site-specific one.
  */
 internal data class CategoryGroup(val id: Int, val name: String, val subCategories: List<ProwlarrCategory>)
 
@@ -152,7 +153,7 @@ internal const val SITE_SPECIFIC_CATEGORY_ID_THRESHOLD = 100_000
 
 /**
  * Collapsible category multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.2,
- * and [buildCategoryGroups] for why the grouping itself deviates from that doc). Two-level: each
+ * and [buildStandardCategoryGroups] for why the grouping itself deviates from that doc). Two-level: each
  * [CategoryGroup] is its own row - directly selectable via [CategoryChip], with an expand chevron
  * next to it only when it actually has subcategories to show. There's no existing two-level
  * selector anywhere else in this codebase to mirror (TorrentListScreen's category filter is a flat,
@@ -163,17 +164,28 @@ internal const val SITE_SPECIFIC_CATEGORY_ID_THRESHOLD = 100_000
  * a flat id-sorted list put e.g. OurBits' standard "Movies" (2000, with a real "Movies/3D"
  * subcategory) directly next to its own redundant site-specific "Movies" (100401, no subcategories)
  * with no visual distinction - looked like duplicated/glitched data rather than two different,
- * intentionally-separate ids. [buildCategoryGroups]' KDoc already called this out as a known
+ * intentionally-separate ids. [buildStandardCategoryGroups]' KDoc already called this out as a known
  * "same name, different id" quirk, but seeing it on a real device made clear a flat list wasn't
  * good enough - it needed the section split, not just a code comment.
+ *
+ * The site-specific section is further grouped per indexer via [IndexerCategoryGroupRow]
+ * (docs/prowlarr-route-and-category-grouping-plan.md section 4) - see [buildSiteSpecificGroups] for
+ * why this is a *data*-layer split, not just a display-layer one. Each indexer's own group has its
+ * own collapse state ([expandedIndexerGroupIds]/[onToggleIndexerGroupExpanded]); which individual
+ * category *within* a group has its subcategories expanded still shares [expandedGroupIds]/
+ * [onToggleGroupExpanded] with the standard section (see [siteSpecificExpandKey] for how that stays
+ * collision-free without a third expand-state list).
  */
 @Composable
 internal fun CategorySelectionSection(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    categoryGroups: List<CategoryGroup>,
+    standardGroups: List<CategoryGroup>,
+    siteSpecificIndexerGroups: List<IndexerCategoryGroup>,
     expandedGroupIds: List<Int>,
+    expandedIndexerGroupIds: List<Int>,
     onToggleGroupExpanded: (Int) -> Unit,
+    onToggleIndexerGroupExpanded: (Int) -> Unit,
     selectedTopCategoryIds: List<Int>,
     onToggleTopCategory: (Int) -> Unit,
     selectedSubCategoryIds: List<Int>,
@@ -222,7 +234,7 @@ internal fun CategorySelectionSection(
         }
 
         AnimatedVisibility(visible = expanded) {
-            if (categoryGroups.isEmpty()) {
+            if (standardGroups.isEmpty() && siteSpecificIndexerGroups.isEmpty()) {
                 Text(
                     text = stringResource(Res.string.prowlarr_search_categories_all),
                     style = MaterialTheme.typography.bodySmall,
@@ -230,10 +242,6 @@ internal fun CategorySelectionSection(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             } else {
-                val (standardGroups, siteSpecificGroups) = categoryGroups.partition {
-                    it.id < SITE_SPECIFIC_CATEGORY_ID_THRESHOLD
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -243,7 +251,7 @@ internal fun CategorySelectionSection(
                     // Only bother labeling sections when there's actually a second one to
                     // distinguish from - a lone "Standard" header with nothing else on screen would
                     // just be noise.
-                    val showSectionLabels = standardGroups.isNotEmpty() && siteSpecificGroups.isNotEmpty()
+                    val showSectionLabels = standardGroups.isNotEmpty() && siteSpecificIndexerGroups.isNotEmpty()
 
                     if (standardGroups.isNotEmpty()) {
                         if (showSectionLabels) {
@@ -262,23 +270,32 @@ internal fun CategorySelectionSection(
                         }
                     }
 
-                    if (siteSpecificGroups.isNotEmpty()) {
+                    if (siteSpecificIndexerGroups.isNotEmpty()) {
                         if (showSectionLabels) {
                             CategorySectionLabel(
                                 text = stringResource(Res.string.prowlarr_search_categories_site_specific),
                                 modifier = Modifier.padding(top = 4.dp),
                             )
                         }
-                        siteSpecificGroups.forEach { group ->
-                            CategoryGroupRow(
-                                group = group,
-                                isExpanded = group.id in expandedGroupIds,
-                                onToggleExpanded = { onToggleGroupExpanded(group.id) },
-                                isTopSelected = group.id in selectedTopCategoryIds,
-                                onToggleTop = { onToggleTopCategory(group.id) },
-                                selectedSubCategoryIds = selectedSubCategoryIds,
-                                onToggleSub = onToggleSubCategory,
-                            )
+                        siteSpecificIndexerGroups.forEach { indexerGroup ->
+                            IndexerCategoryGroupRow(
+                                indexerName = indexerGroup.indexerName,
+                                isExpanded = indexerGroup.indexerId in expandedIndexerGroupIds,
+                                onToggleExpanded = { onToggleIndexerGroupExpanded(indexerGroup.indexerId) },
+                            ) {
+                                indexerGroup.categories.forEach { group ->
+                                    val expandKey = siteSpecificExpandKey(indexerGroup.indexerId, group.id)
+                                    CategoryGroupRow(
+                                        group = group,
+                                        isExpanded = expandKey in expandedGroupIds,
+                                        onToggleExpanded = { onToggleGroupExpanded(expandKey) },
+                                        isTopSelected = group.id in selectedTopCategoryIds,
+                                        onToggleTop = { onToggleTopCategory(group.id) },
+                                        selectedSubCategoryIds = selectedSubCategoryIds,
+                                        onToggleSub = onToggleSubCategory,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -286,6 +303,22 @@ internal fun CategorySelectionSection(
         }
     }
 }
+
+/**
+ * Encodes ([indexerId], [categoryId]) into one negative int so the site-specific section can reuse
+ * [CategorySelectionSection]'s existing [expandedGroupIds][CategorySelectionSection]/
+ * `onToggleGroupExpanded` pair (a single `List<Int>`) as its per-category expand-state key, instead
+ * of adding a third expand-state parameter - see plan doc section 4.3, "展开状态的 key 需要注意一个
+ * 细节": since categories are now grouped per indexer ([buildSiteSpecificGroups]) rather than merged
+ * globally by id, two different indexers can each have their own, unrelated category at e.g. id
+ * 100001, and using the raw id as the expand key would wrongly mark both "expanded" together.
+ *
+ * Collision-free by construction, not by chance: negative results can never collide with a standard
+ * group's key (always its raw, non-negative category id), and two different (indexerId, categoryId)
+ * pairs only collide if `categoryId >= 1_000_000` - true of every real Torznab id seen so far,
+ * standard or site-specific (see plan doc section 4.2).
+ */
+private fun siteSpecificExpandKey(indexerId: Int, categoryId: Int): Int = -(indexerId * 1_000_000 + categoryId)
 
 @Composable
 internal fun CategorySectionLabel(text: String, modifier: Modifier = Modifier) {
@@ -295,6 +328,62 @@ internal fun CategorySectionLabel(text: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(start = 4.dp, bottom = 2.dp),
     )
+}
+
+/**
+ * Collapsible header for one indexer's own site-specific [CategoryGroup] list - see
+ * [buildSiteSpecificGroups] for why site-specific categories are grouped per indexer instead of
+ * merged globally, and [CategorySelectionSection] for how this fits into the overall picker. The
+ * header itself isn't selectable (it's a grouping container, not a category) - only expand/collapse
+ * toggles [content], which the caller fills with one [CategoryGroupRow] per category in that
+ * indexer's own group.
+ */
+@Composable
+internal fun IndexerCategoryGroupRow(
+    indexerName: String,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+
+    Column(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleExpanded() }
+                .padding(vertical = 4.dp),
+        ) {
+            Text(
+                text = indexerName,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp),
+            )
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(end = 4.dp)
+                    .rotate(rotation),
+            )
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                modifier = Modifier.padding(start = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                content = content,
+            )
+        }
+    }
 }
 
 /** A single [CategoryGroup] row plus its (optionally expanded) subcategory chips - see [CategorySelectionSection]. */
