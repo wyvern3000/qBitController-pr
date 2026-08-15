@@ -108,7 +108,7 @@ fun ProwlarrManualAddDialog(
     val serverData by viewModel.manualAddServerData.collectAsStateWithLifecycle()
     val isLoadingServerData by viewModel.isLoadingManualAddServerData.collectAsStateWithLifecycle()
 
-    val routing = remember { viewModel.resolveDownloadRouting(searchResult.categories) }
+    val routing = remember { viewModel.resolveDownloadRouting(searchResult.categories, searchResult.indexerId) }
     val defaults = remember { viewModel.downloadDefaults }
 
     var serverId by rememberSaveable {

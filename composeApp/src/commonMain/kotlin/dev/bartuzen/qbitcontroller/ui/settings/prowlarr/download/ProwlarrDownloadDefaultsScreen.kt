@@ -572,6 +572,7 @@ fun ProwlarrDownloadDefaultsScreen(
                         null,
                         name,
                         categoryIds,
+                        emptyList(),
                         routeServerId,
                         routeSavePath,
                         routeCategory,
@@ -593,6 +594,7 @@ fun ProwlarrDownloadDefaultsScreen(
                         dialog.route.id,
                         name,
                         categoryIds,
+                        dialog.route.indexerIds,
                         routeServerId,
                         routeSavePath,
                         routeCategory,
@@ -796,6 +798,12 @@ private sealed class RouteDialog {
  * haven't finished loading yet), those ids won't render as chips - but editing the route and
  * saving shouldn't silently drop them. They're carried through untouched and merged back into the
  * saved [ProwlarrCategoryRoute.categoryIds] on confirm.
+ *
+ * [ProwlarrCategoryRoute.indexerIds] (the second matching dimension - plan doc section 3) has no
+ * picker UI here yet (that's plan step 6, `IndexerSelectionSection`) - this dialog only preserves
+ * whatever an edited route already had (new routes always get an empty list, i.e. "any indexer").
+ * Safe as a standalone step: an empty [ProwlarrCategoryRoute.indexerIds] is a real, valid "no
+ * indexer restriction" state, not a placeholder needing a migration once step 6 lands.
  */
 @Composable
 private fun CategoryRouteDialog(

@@ -84,4 +84,5 @@ fun ProwlarrSearchResult.toSearchResult() = Search.Result(
     siteUrl = indexer ?: "",
     categories = categories?.map { it.id } ?: emptyList(),
     indexerFlags = indexerFlags ?: emptyList(),
+    indexerId = indexerId,
 )

@@ -59,10 +59,13 @@ class ProwlarrSearchViewModel(
      * fields with the same starting point the auto path would use - see
      * docs/prowlarr-p2-feedback-round1-plan.md section 5.
      */
-    internal fun resolveDownloadRouting(resultCategoryIds: List<Int>): ProwlarrResolvedDownloadRouting {
+    internal fun resolveDownloadRouting(
+        resultCategoryIds: List<Int>,
+        resultIndexerId: Int?,
+    ): ProwlarrResolvedDownloadRouting {
         val defaults = settingsManager.prowlarrDownloadDefaults.value
         val routes = settingsManager.prowlarrCategoryRoutes.value
-        return resolveProwlarrDownloadRouting(resultCategoryIds, routes, defaults)
+        return resolveProwlarrDownloadRouting(resultCategoryIds, resultIndexerId, routes, defaults)
     }
 
     private val _isLoading = MutableStateFlow(false)
@@ -255,7 +258,7 @@ class ProwlarrSearchViewModel(
 
         val defaults = settingsManager.prowlarrDownloadDefaults.value
         val routes = settingsManager.prowlarrCategoryRoutes.value
-        val routing = resolveProwlarrDownloadRouting(searchResult.categories, routes, defaults)
+        val routing = resolveProwlarrDownloadRouting(searchResult.categories, searchResult.indexerId, routes, defaults)
         val serverId = routing.serverId ?: fallbackServerId
         if (serverId == null) {
             viewModelScope.launch { eventChannel.send(Event.NoServerAvailable) }
@@ -563,16 +566,20 @@ class ProwlarrSearchViewModel(
 
 /**
  * Resolves the server/save path/category/tags to actually submit for a Prowlarr result, given its
- * Torznab [resultCategoryIds] - see docs/prowlarr-download-defaults-plan.md, sections 2.2/3, and
- * docs/prowlarr-p2-feedback-round1-plan.md section 3 for [ProwlarrResolvedDownloadRouting.serverId].
+ * Torznab [resultCategoryIds] and originating [resultIndexerId] - see
+ * docs/prowlarr-download-defaults-plan.md, sections 2.2/3, docs/prowlarr-p2-feedback-round1-plan.md
+ * section 3 for [ProwlarrResolvedDownloadRouting.serverId], and
+ * docs/prowlarr-route-and-category-grouping-plan.md section 3 for the [resultIndexerId] dimension.
  *
  * The first entry in [routes] (user-controlled priority via list order, not "most specific match"
- * or any other automatic ranking) whose [ProwlarrCategoryRoute.categoryIds] intersects
- * [resultCategoryIds] wins. A matched route's own `null`/empty field falls back to [defaults] for
- * that field individually - e.g. a route can override just `savePath` and still inherit the global
- * default `category`/`tags` - rather than being all-or-nothing. No route matching (including when
- * [resultCategoryIds] is empty, e.g. an indexer that doesn't report categories) falls straight back
- * to [defaults] for all fields.
+ * or any other automatic ranking) that matches wins - a route matches when *both* of its dimensions
+ * match, and an empty [ProwlarrCategoryRoute.categoryIds]/[ProwlarrCategoryRoute.indexerIds] is a
+ * wildcard for that one dimension (matches anything), independently of the other dimension. A
+ * matched route's own `null`/empty field falls back to [defaults] for that field individually -
+ * e.g. a route can override just `savePath` and still inherit the global default `category`/`tags`
+ * - rather than being all-or-nothing. No route matching (including when both [resultCategoryIds]
+ * and [resultIndexerId] fail to match any route, or when [routes] is empty) falls straight back to
+ * [defaults] for all fields.
  *
  * Deliberately doesn't know about "the server currently active elsewhere in the app" - that
  * fallback is the caller's job (see [ProwlarrSearchViewModel.addTorrent]), not this pure function's.
@@ -582,10 +589,15 @@ class ProwlarrSearchViewModel(
  */
 internal fun resolveProwlarrDownloadRouting(
     resultCategoryIds: List<Int>,
+    resultIndexerId: Int?,
     routes: List<ProwlarrCategoryRoute>,
     defaults: ProwlarrDownloadDefaults,
 ): ProwlarrResolvedDownloadRouting {
-    val route = routes.firstOrNull { route -> route.categoryIds.any { it in resultCategoryIds } }
+    val route = routes.firstOrNull { route ->
+        val categoryMatches = route.categoryIds.isEmpty() || route.categoryIds.any { it in resultCategoryIds }
+        val indexerMatches = route.indexerIds.isEmpty() || resultIndexerId in route.indexerIds
+        categoryMatches && indexerMatches
+    }
     return if (route == null) {
         ProwlarrResolvedDownloadRouting(defaults.serverId, defaults.savePath, defaults.category, defaults.tags)
     } else {

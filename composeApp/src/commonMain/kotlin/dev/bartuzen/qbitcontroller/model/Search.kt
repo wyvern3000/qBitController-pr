@@ -47,6 +47,18 @@ data class Search(
         // above: always empty for qBittorrent's own search plugin results, no @SerialName since
         // it's not part of that wire format, only Prowlarr results populate it.
         val indexerFlags: List<String> = emptyList(),
+
+        // Which Prowlarr indexer (site) this result came from - the second matching dimension for
+        // ProwlarrCategoryRoute (docs/prowlarr-route-and-category-grouping-plan.md section 3), used
+        // by resolveProwlarrDownloadRouting() alongside [categories]. Same null/empty-for-qBit-own-
+        // results rationale as [categories]/[indexerFlags] above, but nullable rather than an empty
+        // list/default: unlike those two (naturally "no categories"/"no flags" when absent), a
+        // missing indexer *id* has no sensible non-null default that wouldn't accidentally match a
+        // real indexer's id, so null unambiguously means "not a Prowlarr result" or "not yet
+        // verified against a real response" rather than "indexer 0". Like [categories] before it,
+        // this field's presence/shape in Prowlarr's actual /api/v1/search response hasn't been
+        // confirmed against a real device yet - see the "待确认事项" note this adds to PROGRESS.md.
+        val indexerId: Int? = null,
     )
 
     enum class Status {
