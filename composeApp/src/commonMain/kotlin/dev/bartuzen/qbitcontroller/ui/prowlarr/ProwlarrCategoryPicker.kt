@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,33 +56,30 @@ import qbitcontroller.composeapp.generated.resources.prowlarr_search_categories_
 internal data class CategoryGroup(val id: Int, val name: String, val subCategories: List<ProwlarrCategory>)
 
 /**
- * Groups [indexers]' `capabilities.categories` ([ProwlarrCategory] list) by top-level id,
- * unioning subcategories for ids more than one indexer reports.
+ * Groups [indexers]' `capabilities.categories` ([ProwlarrCategory] list) that are **standard**
+ * (id < [SITE_SPECIFIC_CATEGORY_ID_THRESHOLD]) Torznab categories by top-level id, unioning
+ * subcategories for ids more than one indexer reports - e.g. OurBits and another tracker both
+ * reporting "Movies" (2000) get merged into one chip with the union of both indexers'
+ * `Movies/*` subcategories. Standard ids are part of the shared Torznab spec, not any one
+ * indexer's private namespace, so merging by id across indexers is safe here in a way it isn't
+ * for site-specific ids - see [buildSiteSpecificGroups].
  *
- * Deliberately **not** the plan doc's original design (section 2.2): that called for a fixed list of
- * the 8 standard Torznab top-level categories (1000 Console ... 8000 Other) as the only top-level
- * groups. Checked against the real indexer sample from round 7 and that would have made the picker
- * nearly useless for exactly the indexers this instance has configured - e.g. OpenCD (a Chinese
- * music tracker) puts effectively its entire genre taxonomy (华语流行/古典音乐/摇滚/爵士/... ) under
- * custom ids in the 100000+ range, as flat top-level entries with no parent among the 8 standard
- * ones, and OurBits reports both a standard "Movies" (2000, with real subCategories) and a redundant
- * custom "Movies" (100401, no subCategories) as two separate top-level entries. Prowlarr's
- * `capabilities.categories` array doesn't structurally distinguish "standard" from "custom" - both
- * are just top-level entries, some with subCategories, some without - so building groups from
- * whatever indexers actually report (rather than hardcoding the 8) is the only way to expose the
- * custom ones at all. Sorting by id keeps the standard 1000-8000 range naturally first, ahead of the
- * 100000+ custom entries, without needing to special-case anything.
- *
- * One known quirk this doesn't try to solve: two groups from different indexers (or, per the OurBits
- * example above, the same indexer) can share a display name but not an id - they show up as separate
- * chips. Deduping by name would risk merging categories that only coincidentally share a label, so
- * this leaves that as-is rather than guessing.
+ * Split out from a single `buildCategoryGroups(indexers)` (docs/prowlarr-route-and-category-
+ * grouping-plan.md section 4.2) that used to return one flat, id-sorted list mixing both ranges -
+ * [CategorySelectionSection] partitioned that list into "Standard"/"Site-Specific" sections for
+ * display (round 9), but the underlying site-specific half was still merged globally by id, which
+ * silently combined same-id-different-meaning custom categories from different indexers (see
+ * [buildSiteSpecificGroups] KDoc). Splitting the *data* layer, not just the display layer, is what
+ * actually fixes that.
  */
-internal fun buildCategoryGroups(indexers: List<ProwlarrIndexer>): List<CategoryGroup> {
+internal fun buildStandardCategoryGroups(indexers: List<ProwlarrIndexer>): List<CategoryGroup> {
     val byId = linkedMapOf<Int, CategoryGroup>()
     for (indexer in indexers) {
         val categories = indexer.capabilities?.categories ?: continue
         for (category in categories) {
+            if (category.id >= SITE_SPECIFIC_CATEGORY_ID_THRESHOLD) {
+                continue
+            }
             val existing = byId[category.id]
             byId[category.id] = if (existing == null) {
                 CategoryGroup(category.id, category.name, category.subCategories)
@@ -92,6 +90,58 @@ internal fun buildCategoryGroups(indexers: List<ProwlarrIndexer>): List<Category
     }
     return byId.values.sortedBy { it.id }
 }
+
+/** One indexer's own site-specific categories - see [buildSiteSpecificGroups]. */
+internal data class IndexerCategoryGroup(val indexerId: Int, val indexerName: String, val categories: List<CategoryGroup>)
+
+/**
+ * Groups [indexers]' **site-specific** (id >= [SITE_SPECIFIC_CATEGORY_ID_THRESHOLD]) categories
+ * *per indexer*, deliberately **not** merged across indexers by id the way
+ * [buildStandardCategoryGroups] merges the standard range. Unlike standard ids (part of the shared
+ * Torznab spec), site-specific ids are each indexer's own private namespace - the old
+ * global-by-id-merge implementation this replaces would combine two different indexers' unrelated
+ * custom categories into one chip whenever they happened to reuse the same 100000+ id (common in
+ * practice: many trackers are built from copies of the same Cardigann indexer template, which bakes
+ * in the same custom ids). Grouping per indexer instead means each indexer's own ids are only ever
+ * compared against its own other categories, so an accidental id collision between two unrelated
+ * indexers can no longer merge them.
+ *
+ * Within a single indexer's own category list, merge-by-id is still applied (same logic as
+ * [buildStandardCategoryGroups]) as a defensive measure in case that one indexer's own response
+ * happens to repeat an id - not expected in practice, but cheap to keep correct.
+ *
+ * Indexers with zero site-specific categories are omitted entirely (not returned as an
+ * empty-categories entry) - see [CategorySelectionSection] KDoc, "no site-specific categories at
+ * all" and "no site-specific categories for *this* indexer" should both just not show up, rather
+ * than rendering an empty group.
+ *
+ * Sorted by indexer name - see docs/prowlarr-route-and-category-grouping-plan.md section 4.2 for
+ * why this is plain Unicode-codepoint ordering (correct for Latin names, not true pinyin order for
+ * Chinese ones) rather than a locale-aware collator.
+ */
+internal fun buildSiteSpecificGroups(indexers: List<ProwlarrIndexer>): List<IndexerCategoryGroup> =
+    indexers.mapNotNull { indexer ->
+        val categories = indexer.capabilities?.categories ?: return@mapNotNull null
+
+        val byId = linkedMapOf<Int, CategoryGroup>()
+        for (category in categories) {
+            if (category.id < SITE_SPECIFIC_CATEGORY_ID_THRESHOLD) {
+                continue
+            }
+            val existing = byId[category.id]
+            byId[category.id] = if (existing == null) {
+                CategoryGroup(category.id, category.name, category.subCategories)
+            } else {
+                existing.copy(subCategories = (existing.subCategories + category.subCategories).distinctBy { it.id })
+            }
+        }
+
+        if (byId.isEmpty()) {
+            null
+        } else {
+            IndexerCategoryGroup(indexer.id, indexer.name, byId.values.sortedBy { it.id })
+        }
+    }.sortedBy { it.indexerName }
 
 // Torznab/Newznab spec reserves ids >= 100000 for indexer-specific ("site-specific") categories,
 // precisely so they don't collide with the ~30 standard categories in 1000-8999 (confirmed against
