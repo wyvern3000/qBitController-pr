@@ -52,21 +52,10 @@ jobs:
       # not on the network allowlist), so on failure the tail of the build output is written
       # straight back into the repo via the Contents API instead, which is reachable. Temporary,
       # delete this step (and any build-error.log it leaves behind) once the branch builds clean.
-      #
-      # TEMP (debugging a success-but-no-APK run, see git log for context): widened from
-      # `if: steps.build.outcome == 'failure'` to `if: always()` and appends a listing of whatever
-      # actually landed under composeApp/build/outputs, since the previous run had gradle exit 0
-      # but the expected APK glob matched nothing - narrow this back to failure-only once resolved.
       - name: Save build log to repo on failure
-        if: always()
+        if: steps.build.outcome == 'failure'
         run: |
-          tail -c 55000 build-output.log > build-error-tail.log
-          {
-            echo "=== find composeApp/build/outputs -iname '*.apk' ==="
-            find composeApp/build/outputs -iname '*.apk' 2>&1 || true
-            echo "=== ls -laR composeApp/build/outputs/apk 2>&1 (may not exist) ==="
-            ls -laR composeApp/build/outputs/apk 2>&1 || true
-          } >> build-error-tail.log
+          tail -c 60000 build-output.log > build-error-tail.log
           CONTENT=$(base64 -w0 build-error-tail.log)
           EXISTING_SHA=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/contents/build-error.log?ref=${{ github.ref_name }}" \
