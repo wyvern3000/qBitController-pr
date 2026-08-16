@@ -75,12 +75,21 @@ jobs:
         if: steps.build.outcome == 'failure'
         run: exit 1
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: qbitcontroller-prowlarr-debug-apk
-          path: composeApp/build/outputs/apk/free/debug/*.apk
-          # Belt-and-suspenders alongside the pipefail fix above: if no APK exists, fail loudly
-          # instead of the default "warn" behavior, which is what let the earlier masked failure
-          # look like a clean, successful run.
-          if-no-files-found: error
+      - name: Publish beta release
+        id: publish
+        # actions/upload-artifact was reporting 0 files with if-no-files-found: error even though
+        # the APK was confirmed present on disk (Round 17/18) - user confirmed 2026-08-16 the real
+        # cause is this private repo's Actions/Packages storage quota being full, not a glob or
+        # path bug. Release assets are billed separately from that quota, so publishing a beta
+        # release here sidesteps the problem entirely instead of requiring a quota cleanup first.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="beta-${{ github.run_number }}"
+          SHORT_SHA="$(git rev-parse --short HEAD)"
+          gh release create "$TAG" \
+            composeApp/build/outputs/apk/free/debug/*.apk \
+            --repo "${{ github.repository }}" \
+            --title "Prowlarr dev beta #${{ github.run_number }} ($SHORT_SHA)" \
+            --notes "Dev/test build from \`${{ github.ref_name }}\` @ $SHORT_SHA. Free-flavor debug APK, auto-signed with the debug keystore. Internal testing only, not for general distribution." \
+            --prerelease
