@@ -1,5 +1,22 @@
 name: Build Snapshot
 
+# build.yml (the reusable workflow this calls) declares "permissions: contents:
+# write" at its top level (added Round 19 for the release-attach steps). GitHub
+# Actions only allows GITHUB_TOKEN permissions to stay the same or get MORE
+# restrictive going into a called workflow, never broader - so the caller must
+# grant at least as much, or the entire run is rejected at validation time with
+# "startup_failure" before a single job starts. This repo's default GITHUB_TOKEN
+# permission is read-only (Settings > Actions > General > "Workflow permissions"),
+# and this workflow previously had no permissions block of its own, so it fell
+# back to that read-only default - less than what build.yml requests. That
+# mismatch, not anything about the release-attach logic itself, was the actual
+# cause of the Round 19 startup_failure (confirmed by bisection: removing
+# build.yml's permissions block alone made runs start; the real fix is granting
+# write here instead, since build.yml genuinely needs it when called via
+# build-release.yml).
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
 
