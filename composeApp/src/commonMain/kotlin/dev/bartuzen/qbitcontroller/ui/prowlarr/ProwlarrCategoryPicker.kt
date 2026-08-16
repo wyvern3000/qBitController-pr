@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -20,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -151,6 +155,17 @@ internal fun buildSiteSpecificGroups(indexers: List<ProwlarrIndexer>): List<Inde
 // id sent to search() is unaffected either way.
 internal const val SITE_SPECIFIC_CATEGORY_ID_THRESHOLD = 100_000
 
+// Bug report (round 19): with enough indexers/categories, the expanded picker used to just grow
+// past the bottom of the screen - the enclosing screen Column (ProwlarrSearchScreen.kt) isn't
+// itself scrollable (it can't be: it also hosts the results LazyColumn, and nesting an unbounded-
+// height LazyColumn inside a scrollable parent isn't valid Compose layout), so once the picker's
+// content taller than the viewport, there was no scroll container anywhere that could reach the
+// rest of it - including the results list below, which the user could no longer see or touch at
+// all. Capping this Composable's own height and giving *it* an internal scroll turns "picker grows
+// until it eats the screen" into "picker scrolls within its own box", which keeps the results list
+// below always reachable regardless of how many groups are in play.
+private val CATEGORY_PICKER_MAX_HEIGHT = 320.dp
+
 /**
  * Collapsible category multi-select (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.2,
  * and [buildStandardCategoryGroups] for why the grouping itself deviates from that doc). Two-level: each
@@ -194,6 +209,17 @@ internal fun CategorySelectionSection(
 ) {
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
     val selectedCount = selectedTopCategoryIds.size + selectedSubCategoryIds.size
+
+    // Scrolled back to the top every time the picker (re-)opens, rather than resuming wherever it
+    // was left mid-scroll last time (same touch as the sort dropdown's own scroll reset in
+    // ProwlarrSearchScreen.kt) - otherwise re-opening a picker you'd previously scrolled down in
+    // could land you looking at a blank/partial view with no obvious way to tell why.
+    val panelScrollState = rememberScrollState()
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            panelScrollState.scrollTo(0)
+        }
+    }
 
     Column(modifier = modifier) {
         val summary = if (selectedCount == 0) {
@@ -245,6 +271,8 @@ internal fun CategorySelectionSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(max = CATEGORY_PICKER_MAX_HEIGHT)
+                        .verticalScroll(panelScrollState)
                         .padding(bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -283,7 +311,39 @@ internal fun CategorySelectionSection(
                                 isExpanded = indexerGroup.indexerId in expandedIndexerGroupIds,
                                 onToggleExpanded = { onToggleIndexerGroupExpanded(indexerGroup.indexerId) },
                             ) {
-                                indexerGroup.categories.forEach { group ->
+                                // Bug report (round 19): most site-specific categories are flat
+                                // (no subcategories - e.g. the "OurBits Movies" example in
+                                // buildStandardCategoryGroups' KDoc), so stacking one full-width
+                                // CategoryGroupRow per category - each with its own chevron/spacer
+                                // even when there's nothing to expand - was the single biggest
+                                // contributor to this section's height on indexers with dozens of
+                                // custom categories. Tiling the flat ones into a wrapping FlowRow
+                                // (same treatment already used for subcategory chips below) fixes
+                                // that directly. The (rarer) categories that do have subcategories
+                                // still need the chevron/expand affordance, so those keep the
+                                // original one-per-row layout - listed after the flat chips rather
+                                // than interleaved, which is a one-time, minor reordering within a
+                                // group (each subset keeps its own id-sorted order).
+                                val (flatGroups, expandableGroups) = indexerGroup.categories
+                                    .partition { it.subCategories.isEmpty() }
+
+                                if (flatGroups.isNotEmpty()) {
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        flatGroups.forEach { group ->
+                                            CategoryChip(
+                                                category = group.name,
+                                                isSelected = group.id in selectedTopCategoryIds,
+                                                onClick = { onToggleTopCategory(group.id) },
+                                            )
+                                        }
+                                    }
+                                }
+
+                                expandableGroups.forEach { group ->
                                     val expandKey = siteSpecificExpandKey(indexerGroup.indexerId, group.id)
                                     CategoryGroupRow(
                                         group = group,
