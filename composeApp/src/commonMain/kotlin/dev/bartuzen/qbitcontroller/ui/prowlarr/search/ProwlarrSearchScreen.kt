@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -31,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -123,8 +125,10 @@ import qbitcontroller.composeapp.generated.resources.dialog_cancel
 import qbitcontroller.composeapp.generated.resources.dialog_ok
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flags
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_flags_none
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_indexer_none
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_keyword_hint
+import qbitcontroller.composeapp.generated.resources.prowlarr_search_filter_seeds
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_go_to_settings
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_download
 import qbitcontroller.composeapp.generated.resources.prowlarr_search_indexer
@@ -149,7 +153,6 @@ import qbitcontroller.composeapp.generated.resources.search_result_action_sort_s
 import qbitcontroller.composeapp.generated.resources.search_result_filter_max
 import qbitcontroller.composeapp.generated.resources.search_result_filter_min
 import qbitcontroller.composeapp.generated.resources.search_result_filter_reset
-import qbitcontroller.composeapp.generated.resources.search_result_filter_seeds
 import qbitcontroller.composeapp.generated.resources.search_result_filter_size
 import qbitcontroller.composeapp.generated.resources.search_result_no_browser
 import qbitcontroller.composeapp.generated.resources.size_bytes
@@ -323,6 +326,7 @@ fun ProwlarrSearchScreen(
         ProwlarrFilterDialog(
             filter = filter,
             availableFlags = availableFlags,
+            availableIndexers = indexers,
             onDismiss = { showFilterDialog = false },
             onConfirm = { newFilter ->
                 filter = newFilter
@@ -893,8 +897,18 @@ private fun IndexerSelectionSection(
                 }
 
                 if (selectedOption == IndexerSelection.Selected && !indexers.isNullOrEmpty()) {
+                    // Same bounded-height + internal-scroll treatment as CategorySelectionSection
+                    // (see CATEGORY_PICKER_MAX_HEIGHT KDoc in ProwlarrCategoryPicker.kt) - this
+                    // FlowRow wraps far more compactly per item than the category picker did, so
+                    // it takes many more configured indexers to hit the same overflow, but the
+                    // underlying risk (this Column isn't scrollable, so unbounded height here can
+                    // still push the results list below off-screen) is identical.
+                    val indexerListScrollState = rememberScrollState()
                     FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 240.dp)
+                            .verticalScroll(indexerListScrollState),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -965,20 +979,8 @@ private fun sortAndFilterProwlarrResults(
             }
         }
 
-        if (filter.indexerQuery.isNotEmpty()) {
-            val matchesIndexerQuery = filter.indexerQuery
-                .split(" ")
-                .filter { it.isNotEmpty() && it != "-" }
-                .all { term ->
-                    val isExclusion = term.startsWith("-")
-                    val cleanTerm = term.removePrefix("-")
-                    val containsTerm = result.siteUrl.contains(cleanTerm, ignoreCase = true)
-
-                    if (isExclusion) !containsTerm else containsTerm
-                }
-            if (!matchesIndexerQuery) {
-                return@filter false
-            }
+        if (filter.indexerNames.isNotEmpty() && result.siteUrl !in filter.indexerNames) {
+            return@filter false
         }
 
         if (filter.seedsMin != null && (result.seeders ?: -1) < filter.seedsMin) {
@@ -1010,14 +1012,15 @@ private fun sortAndFilterProwlarrResults(
  * `ui/search`. Two sections the original doesn't have: a title keyword filter (top of the dialog,
  * mirroring the qBit result screen's separate search-mode free-text filter, which lives in that
  * screen's top bar instead of its filter dialog - there's no equivalent search-mode toggle here,
- * so it's a dialog field instead) and a keyword filter against the originating indexer (see
+ * so it's a dialog field instead) and a multi-select filter against the originating indexer (see
  * [ProwlarrSearchViewModel.Filter] KDoc for why that second dimension matters more here than on
- * the qBit plugin result screen).
+ * the qBit plugin result screen, and for round 19's free-text-to-chips change specifically).
  */
 @Composable
 private fun ProwlarrFilterDialog(
     filter: ProwlarrSearchViewModel.Filter,
     availableFlags: List<String>,
+    availableIndexers: List<ProwlarrIndexer>?,
     onDismiss: () -> Unit,
     onConfirm: (filter: ProwlarrSearchViewModel.Filter) -> Unit,
     onReset: () -> Unit,
@@ -1026,8 +1029,8 @@ private fun ProwlarrFilterDialog(
     var keyword by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(filter.keyword))
     }
-    var indexerQuery by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(filter.indexerQuery))
+    val selectedIndexerNames = rememberSaveable(saver = stateListSaver()) {
+        mutableStateListOf<String>().apply { addAll(filter.indexerNames) }
     }
     var seedsMin by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(filter.seedsMin?.toString() ?: ""))
@@ -1125,20 +1128,33 @@ private fun ProwlarrFilterDialog(
                     )
                 }
 
-                OutlinedTextField(
-                    value = indexerQuery,
-                    onValueChange = { indexerQuery = it },
-                    label = {
-                        Text(
-                            text = stringResource(Res.string.prowlarr_search_indexer),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (availableIndexers.isNullOrEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.prowlarr_search_filter_indexer_none),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        availableIndexers.sortedBy { it.name }.forEach { indexer ->
+                            TagChip(
+                                tag = indexer.name,
+                                isSelected = indexer.name in selectedIndexerNames,
+                                onClick = {
+                                    if (indexer.name in selectedIndexerNames) {
+                                        selectedIndexerNames.remove(indexer.name)
+                                    } else {
+                                        selectedIndexerNames.add(indexer.name)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -1198,7 +1214,7 @@ private fun ProwlarrFilterDialog(
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = stringResource(Res.string.search_result_filter_seeds),
+                        text = stringResource(Res.string.prowlarr_search_filter_seeds),
                         style = MaterialTheme.typography.titleMedium,
                         color = LocalCustomColors.current.seederColor,
                     )
@@ -1408,7 +1424,7 @@ private fun ProwlarrFilterDialog(
                             sizeMax = sizeMax.text.toLongOrNull(),
                             sizeMinUnit = sizeMinUnit,
                             sizeMaxUnit = sizeMaxUnit,
-                            indexerQuery = indexerQuery.text,
+                            indexerNames = selectedIndexerNames.toList(),
                             keyword = keyword.text,
                             flags = selectedFlags.toList(),
                         )

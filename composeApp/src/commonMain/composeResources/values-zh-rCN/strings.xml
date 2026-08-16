@@ -730,6 +730,8 @@
     <string name="prowlarr_search_filter_keyword_hint">匹配发布标题，例如 1985</string>
     <string name="prowlarr_search_filter_flags">索引器标志</string>
     <string name="prowlarr_search_filter_flags_none">当前结果中没有索引器标志。</string>
+    <string name="prowlarr_search_filter_indexer_none">索引器尚未加载。</string>
+    <string name="prowlarr_search_filter_seeds">做种数</string>
     <string name="prowlarr_download_defaults_title">Prowlarr 下载默认参数</string>
     <string name="prowlarr_download_defaults_section_default">默认参数</string>
     <string name="prowlarr_download_defaults_server">下载器</string>

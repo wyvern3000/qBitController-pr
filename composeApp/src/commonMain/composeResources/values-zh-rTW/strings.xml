@@ -691,6 +691,8 @@
     <string name="prowlarr_search_filter_keyword_hint">符合發布標題，例如 1985</string>
     <string name="prowlarr_search_filter_flags">索引器標誌</string>
     <string name="prowlarr_search_filter_flags_none">目前結果中沒有索引器標誌。</string>
+    <string name="prowlarr_search_filter_indexer_none">索引器尚未載入。</string>
+    <string name="prowlarr_search_filter_seeds">做種數</string>
     <string name="prowlarr_download_defaults_title">Prowlarr 下載預設參數</string>
     <string name="prowlarr_download_defaults_section_default">預設參數</string>
     <string name="prowlarr_download_defaults_server">下載器</string>

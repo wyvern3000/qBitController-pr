@@ -489,15 +489,22 @@ class ProwlarrSearchViewModel(
      * rather than a shared one - see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section 2.3 - the
      * seeds/size min/max comparison logic below is copied from there, not reused).
      *
-     * [indexerQuery] is the one filter dimension the qBit result screen doesn't have: a single
+     * [indexerNames] is the one filter dimension the qBit result screen doesn't have: a single
      * Prowlarr search can span dozens of different indexers (unlike a qBit plugin search's more
-     * limited notion of "source"), so filtering results down to a keyword match against the
-     * originating indexer is useful here specifically. Matched against [Search.Result.siteUrl]
-     * (which holds the indexer name for Prowlarr-sourced results) case-insensitively, split on
-     * spaces with +/- term exclusion - same syntax as the existing free-text result filter.
+     * limited notion of "source"), so narrowing results down to a chosen subset of originating
+     * indexers is useful here specifically. Matched against [Search.Result.siteUrl] (which holds
+     * the indexer name for Prowlarr-sourced results) via exact membership, not a text query - round
+     * 19 bug report: the original free-text field asked the user to *type* an indexer name/substring
+     * from memory, when the actual configured indexer list (already loaded for
+     * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchScreen]'s own indexer-selection
+     * section, see [ProwlarrIndexer]) was right there and just needed to be surfaced as pickable
+     * chips instead - same multi-select-chips shape as [flags] below, matching if the result's
+     * indexer is ANY of the selected ones (OR, not AND - a result only ever has one indexer, so
+     * requiring all selected at once could never match anything, same reasoning as [flags]). Empty
+     * = no indexer filtering.
      *
-     * [keyword] matches against the release title ([Search.Result.fileName]) - same split/+-
-     * syntax as [indexerQuery] and as the qBit result screen's own free-text filter
+     * [keyword] matches against the release title ([Search.Result.fileName]), split on spaces with
+     * +/- term exclusion - same syntax as the qBit result screen's own free-text filter
      * ([dev.bartuzen.qbitcontroller.ui.search.result.SearchResultViewModel]'s `filterQuery`).
      * Deliberately title-only, **not** "title and description/synopsis" despite that being how
      * this was first requested: checked Prowlarr's actual `/api/v1/search` response schema (both
@@ -520,7 +527,7 @@ class ProwlarrSearchViewModel(
         val sizeMax: Long? = null,
         val sizeMinUnit: Int = 2,
         val sizeMaxUnit: Int = 2,
-        val indexerQuery: String = "",
+        val indexerNames: List<String> = emptyList(),
         val keyword: String = "",
         // Selected indexer flags (e.g. "freeleech"/"halfleech" - see Search.Result.indexerFlags).
         // A result matches if it carries ANY of these (OR, not AND) - freeleech/halfleech are
