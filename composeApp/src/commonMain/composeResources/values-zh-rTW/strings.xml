@@ -697,16 +697,18 @@
     <string name="prowlarr_download_defaults_server_use_default">使用預設下載器</string>
     <string name="prowlarr_download_defaults_server_app_active">目前 App 內選取的伺服器</string>
     <string name="prowlarr_download_defaults_paused">新增後暫停</string>
-    <string name="prowlarr_download_defaults_section_routes">分類路由</string>
+    <string name="prowlarr_download_defaults_section_routes">路由</string>
     <string name="prowlarr_download_defaults_no_routes">尚無分類路由。搜尋結果將使用上方的預設參數下載。</string>
     <string name="prowlarr_download_defaults_add_route">新增路由</string>
     <string name="prowlarr_download_defaults_delete_route">刪除路由</string>
     <string name="prowlarr_download_defaults_move_route_up">上移</string>
     <string name="prowlarr_download_defaults_move_route_down">下移</string>
-    <string name="prowlarr_download_defaults_route_dialog_add">新增分類路由</string>
-    <string name="prowlarr_download_defaults_route_dialog_edit">編輯分類路由</string>
+    <string name="prowlarr_download_defaults_route_dialog_add">新增路由</string>
+    <string name="prowlarr_download_defaults_route_dialog_edit">編輯路由</string>
     <string name="prowlarr_download_defaults_route_name">名稱</string>
     <string name="prowlarr_download_defaults_route_field_hint">留空以使用預設值</string>
-    <string name="prowlarr_download_defaults_route_categories_required">請至少選擇一個分類。</string>
+    <string name="prowlarr_download_defaults_route_match_required">請至少選擇一個分類或索引器。</string>
+    <string name="prowlarr_download_defaults_route_indexers_any">任意索引器</string>
+    <string name="prowlarr_download_defaults_route_summary_both">%1$d 個分類，%2$d 個索引器</string>
     <string name="prowlarr_download_defaults_save_success">下載預設參數已儲存。</string>
 </resources>
