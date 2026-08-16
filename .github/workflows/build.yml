@@ -1,5 +1,16 @@
 name: Build
 
+# `permissions: contents: write` is required at this level, not just on the caller
+# (build-release.yml / build-snapshot.yml): this repo's default GITHUB_TOKEN
+# permission is read-only (confirmed via the Actions API - Settings > Actions >
+# General > "Workflow permissions" is set to "Read repository contents ... only"),
+# and for a called reusable workflow, permissions are the intersection of what the
+# caller grants AND what this file itself declares - so without an explicit grant
+# here too, every job's own GITHUB_TOKEN would still be read-only regardless of
+# what build-release.yml/build-snapshot.yml ask for.
+permissions:
+  contents: write
+
 on:
   workflow_call:
     inputs:
@@ -14,6 +25,23 @@ on:
         required: false
         type: boolean
         default: false
+      # Round 19: when set, each platform job attaches its own build directly to
+      # this release tag via the GitHub REST API (see "Attach to release" steps
+      # below), instead of relying solely on actions/upload-artifact. This repo's
+      # (wyvern3000/qb-pr) Actions/Packages storage quota is full (diagnosed and
+      # confirmed by the repo owner in Round 18 - see PROGRESS.md), which makes
+      # actions/upload-artifact fail on every platform, every time, regardless of
+      # build correctness; release assets are billed separately from that quota
+      # and aren't affected. actions/upload-artifact is kept (now non-fatal via
+      # continue-on-error) rather than removed, since it still works fine wherever
+      # quota isn't exhausted (e.g. if this workflow is ever run against the public
+      # wyvern3000/qBitController-pr release repo instead). Left empty (the
+      # build-snapshot.yml case - no tag exists yet to attach to), the new steps
+      # below are simply skipped and behavior is unchanged from before this round.
+      release-tag:
+        required: false
+        type: string
+        default: ''
     secrets:
       store-file-base64:
         required: false
@@ -25,7 +53,37 @@ on:
         required: false
 
 jobs:
+  # Round 19: creates the release (if it doesn't already exist - reruns of a failed
+  # workflow shouldn't fail here just because a prior attempt already created it)
+  # that every platform job below attaches its own asset to. Runs first and gates
+  # the platform jobs via `needs:` so there's no race between "release doesn't
+  # exist yet" and "job N tries to upload to it" - GitHub Actions jobs otherwise
+  # all start in parallel with no ordering guarantee.
+  create-release:
+    if: inputs.release-tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "${{ inputs.release-tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release create "${{ inputs.release-tag }}" \
+              --repo "${{ github.repository }}" \
+              --title "qBitController ${{ inputs.release-tag }}" \
+              --notes "Automated multi-platform build for ${{ inputs.release-tag }}." \
+              --prerelease
+          fi
+
   build-android:
+    # Round 19: `needs: create-release` establishes upload ordering (see that job's
+    # comment), but create-release only *runs* when release-tag is set - when it's
+    # not (build-snapshot.yml's case), it's skipped, not failed, and a plain `needs:`
+    # would otherwise cascade-skip every platform job along with it. This `if:`
+    # explicitly allows through both a real success AND a legitimate skip, and is
+    # repeated on every platform job below for the same reason.
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -63,12 +121,29 @@ jobs:
           mv "$apk_path" "qbitcontroller-${{ inputs.version }}-android.apk"
 
       - name: Upload artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.sign-android && 'android' || 'android-unsigned' }}
           path: "qbitcontroller-${{ inputs.version }}-android.apk"
 
+      - name: Attach to release
+        if: inputs.release-tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.release-tag }}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          curl -s -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"qbitcontroller-${{ inputs.version }}-android.apk" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-android.apk"
+
   build-ios:
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     runs-on: macos-latest
     steps:
       - name: Check out repository
@@ -105,12 +180,30 @@ jobs:
           zip -r "qbitcontroller-${{ inputs.version }}-ios.ipa" Payload
 
       - name: Upload artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ios-unsigned
           path: "iosApp/qbitcontroller-${{ inputs.version }}-ios.ipa"
 
+      - name: Attach to release
+        if: inputs.release-tag != ''
+        working-directory: iosApp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.release-tag }}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          curl -s -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"qbitcontroller-${{ inputs.version }}-ios.ipa" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-ios.ipa"
+
   build-windows:
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -147,12 +240,30 @@ jobs:
         run: mv composeApp/build/compose/binaries/main-release/msi/qBitController-*.msi "qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi"
 
       - name: Upload artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifactName }}
           path: "qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi"
 
+      - name: Attach to release
+        if: inputs.release-tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.release-tag }}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          curl -s -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi"
+
   build-linux:
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -192,12 +303,36 @@ jobs:
         run: mv composeApp/build/flatpak/qBitController.flatpak "qbitcontroller-${{ inputs.version }}-linux-${{ matrix.arch }}.flatpak"
 
       - name: Upload artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifactName }}
           path: "qbitcontroller-${{ inputs.version }}-linux-${{ matrix.arch }}.flatpak"
 
+      - name: Attach to release
+        # Round 19: this job runs inside a third-party container image (not a
+        # GitHub-hosted runner base image), so unlike every other platform job here
+        # it can't be assumed to have python3/gh preinstalled - checked separately
+        # rather than assumed, since a missing interpreter would silently no-op
+        # this step instead of failing it loudly.
+        if: inputs.release-tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          command -v python3 >/dev/null || { echo "python3 not found in this container - cannot attach to release"; exit 1; }
+          release_id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.release-tag }}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          curl -s -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"qbitcontroller-${{ inputs.version }}-linux-${{ matrix.arch }}.flatpak" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-linux-${{ matrix.arch }}.flatpak"
+
   build-macos:
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -233,7 +368,22 @@ jobs:
         run: mv composeApp/build/compose/binaries/main-release/dmg/qBitController-*.dmg "qbitcontroller-${{ inputs.version }}-macos-${{ matrix.arch }}.dmg"
 
       - name: Upload artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifactName }}
           path: "qbitcontroller-${{ inputs.version }}-macos-${{ matrix.arch }}.dmg"
+
+      - name: Attach to release
+        if: inputs.release-tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.release-tag }}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          curl -s -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"qbitcontroller-${{ inputs.version }}-macos-${{ matrix.arch }}.dmg" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-macos-${{ matrix.arch }}.dmg"

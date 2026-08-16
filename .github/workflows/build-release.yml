@@ -25,6 +25,7 @@ jobs:
       version: ${{ needs.extract-version.outputs.version }}
       sign-android: true
       disable-cache: true
+      release-tag: ${{ github.ref_name }}
     secrets:
       store-file-base64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
       store-password: ${{ secrets.SIGNING_STORE_PASSWORD }}
