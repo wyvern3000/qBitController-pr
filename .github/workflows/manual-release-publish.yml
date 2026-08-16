@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -32,10 +32,12 @@ jobs:
           merge-multiple: true
 
       - name: List downloaded files
+        shell: bash
         run: ls -la
 
       - name: Extract release body from tag message
         id: changelog
+        shell: bash
         run: |
           TAG_NAME=${{ inputs.tag }}
           TAG_SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \

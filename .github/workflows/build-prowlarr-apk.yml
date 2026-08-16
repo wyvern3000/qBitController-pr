@@ -19,8 +19,10 @@ permissions:
   contents: write
 
 jobs:
+  # Needs bash (Git Bash), python3, and the `gh` CLI on this runner's PATH, in addition to
+  # the JDK/Gradle setup below.
   build-android-debug:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -36,6 +38,7 @@ jobs:
 
       - name: Build debug APK
         id: build
+        shell: bash
         # `set -o pipefail` is required here: without it, `cmd | tee file` reports tee's exit code
         # (always 0) as the step's result, not gradlew's - so a real compile failure was silently
         # recorded as steps.build.outcome == 'success', the log-capture step below never ran, and
@@ -54,6 +57,7 @@ jobs:
       # delete this step (and any build-error.log it leaves behind) once the branch builds clean.
       - name: Save build log to repo on failure
         if: steps.build.outcome == 'failure'
+        shell: bash
         run: |
           tail -c 60000 build-output.log > build-error-tail.log
           CONTENT=$(base64 -w0 build-error-tail.log)
@@ -73,10 +77,12 @@ jobs:
 
       - name: Fail job if build failed
         if: steps.build.outcome == 'failure'
+        shell: bash
         run: exit 1
 
       - name: Publish beta release
         id: publish
+        shell: bash
         # actions/upload-artifact was reporting 0 files with if-no-files-found: error even though
         # the APK was confirmed present on disk (Round 17/18) - user confirmed 2026-08-16 the real
         # cause is this private repo's Actions/Packages storage quota being full, not a glob or

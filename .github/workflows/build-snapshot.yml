@@ -22,12 +22,13 @@ on:
 
 jobs:
   extract-version:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
       - name: Extract version
         id: set-version
+        shell: bash
         run: |
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           echo "version=${SHA::7}" >> $GITHUB_OUTPUT          
