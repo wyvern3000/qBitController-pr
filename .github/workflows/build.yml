@@ -61,7 +61,7 @@ jobs:
   # all start in parallel with no ordering guarantee.
   create-release:
     if: inputs.release-tag != ''
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - name: Ensure release exists
         shell: bash
@@ -85,7 +85,7 @@ jobs:
     # repeated on every platform job below for the same reason.
     needs: create-release
     if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -145,10 +145,6 @@ jobs:
             --data-binary @"qbitcontroller-${{ inputs.version }}-android.apk" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-android.apk"
 
-  # Intentionally NOT moved to the self-hosted Windows runner: building for iOS requires
-  # Xcode, which only runs on macOS. There's no self-hosted equivalent here without an
-  # actual Mac - this job stays on GitHub-hosted macos-latest and will keep hitting the
-  # Actions spending-limit block until that's raised separately (see PROGRESS.md).
   build-ios:
     needs: create-release
     if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
@@ -216,17 +212,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Moved to the self-hosted runner - this repo owner's PC is x64, matching this leg.
-          - os: [self-hosted, Windows, X64]
+          - os: windows-latest
             artifactName: windows-x86_64
             arch: x86_64
 
-          # Left on GitHub-hosted windows-11-arm intentionally: a native x64 machine can't
-          # reliably cross-produce a genuine arm64 MSI (packageReleaseMsi bundles a JRE
-          # matching the host architecture it runs on), so mapping this leg onto the local
-          # x64 runner would silently mislabel an x64 binary as arm64 rather than actually
-          # building for arm64. This leg stays blocked by the Actions spending limit until
-          # that's raised, or a real arm64 self-hosted runner is added later.
           - os: windows-11-arm
             artifactName: windows-arm64
             arch: arm64
@@ -277,10 +266,6 @@ jobs:
             --data-binary @"qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=qbitcontroller-${{ inputs.version }}-windows-${{ matrix.arch }}.msi"
 
-  # Intentionally NOT moved: this job runs inside a Linux container (flatpak-github-actions
-  # image below), which a Windows self-hosted runner can't execute - GitHub Actions'
-  # `container:` field requires a Linux runner underneath. Stays on GitHub-hosted, still
-  # blocked by the spending limit for now.
   build-linux:
     needs: create-release
     if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')

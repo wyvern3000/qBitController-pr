@@ -19,10 +19,8 @@ permissions:
   contents: write
 
 jobs:
-  # Needs bash (Git Bash), python3, and the `gh` CLI on this runner's PATH, in addition to
-  # the JDK/Gradle setup below.
   build-android-debug:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v5

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   extract-version:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
@@ -33,20 +33,25 @@ jobs:
       key-alias: ${{ secrets.SIGNING_KEY_ALIAS }}
       key-password: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
+  # Finalizes the release's title/body and takes it out of prerelease status. Runs whenever
+  # extract-version succeeded, regardless of whether every platform in `build` succeeded -
+  # a single flaky leg (e.g. windows-arm64, see build.yml) shouldn't leave the release stuck
+  # with the generic "Automated multi-platform build" placeholder text from build.yml's
+  # create-release step. Each platform job already attaches its own asset directly to the
+  # release via the GitHub REST API (see build.yml's "Attach to release" steps), so this job
+  # no longer downloads/re-uploads artifacts itself - that used to be the only way to get
+  # files onto the release, but is now redundant and, worse, would error out if any platform's
+  # actions/upload-artifact step never ran (it's continue-on-error and skipped entirely when
+  # an earlier step in that job fails).
   upload-release:
     needs:
       - extract-version
       - build
-    # Needs `jq` on PATH in addition to bash/git/gh, for the changelog-extraction step below.
-    runs-on: [self-hosted, Windows, X64]
+    if: always() && needs.extract-version.result == 'success'
+    runs-on: ubuntu-latest
     outputs:
       release-id: ${{ steps.create-release.outputs.id }}
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v5
-        with:
-          merge-multiple: true
-
       - name: Extract release body from tag message
         id: changelog
         shell: bash
@@ -68,10 +73,10 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Create GitHub release
+      - name: Finalize GitHub release
         id: create-release
         uses: softprops/action-gh-release@v2
         with:
           name: qBitController ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.body }}
-          files: qbitcontroller-${{ needs.extract-version.outputs.version }}-*.*
+          prerelease: false

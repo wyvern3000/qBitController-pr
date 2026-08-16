@@ -22,7 +22,7 @@ on:
 
 jobs:
   extract-version:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
