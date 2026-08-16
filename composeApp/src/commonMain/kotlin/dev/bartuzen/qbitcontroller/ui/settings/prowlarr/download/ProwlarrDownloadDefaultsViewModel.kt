@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.bartuzen.qbitcontroller.data.ServerManager
 import dev.bartuzen.qbitcontroller.data.SettingsManager
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
-import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.network.RequestResult
 import kotlinx.coroutines.CancellationException
@@ -24,10 +24,10 @@ import kotlin.random.Random
  * [downloadDefaults] is a one-shot snapshot, not a reactive [kotlinx.coroutines.flow.StateFlow] -
  * same pattern as [dev.bartuzen.qbitcontroller.ui.settings.prowlarr.ProwlarrSettingsViewModel.config]:
  * this section of the screen is a single edit-then-tap-Save form, not something that needs to react
- * to the underlying preference changing out from under it while open. [categoryRoutes] is different
- * - it's a live list the screen adds/edits/deletes entries from in place (see [saveCategoryRoute]/
- * [deleteCategoryRoute]/[moveCategoryRoute]), each change persisted immediately rather than batched
- * behind a single Save action, so it needs to actually be observable.
+ * to the underlying preference changing out from under it while open. [routes] is different - it's
+ * a live list the screen adds/edits/deletes entries from in place (see [saveRoute]/[deleteRoute]/
+ * [moveRoute]), each change persisted immediately rather than batched behind a single Save action,
+ * so it needs to actually be observable.
  */
 class ProwlarrDownloadDefaultsViewModel(
     private val prowlarrRepository: ProwlarrRepository,
@@ -44,8 +44,8 @@ class ProwlarrDownloadDefaultsViewModel(
     // added/removed in another screen while this one is open.
     val servers = serverManager.serversFlow
 
-    private val _categoryRoutes = MutableStateFlow(settingsManager.prowlarrCategoryRoutes.value)
-    val categoryRoutes = _categoryRoutes.asStateFlow()
+    private val _routes = MutableStateFlow(settingsManager.prowlarrDownloadRoutes.value)
+    val routes = _routes.asStateFlow()
 
     // Same null-means-not-loaded-yet convention as ProwlarrSearchViewModel.indexers - a failure here
     // just means the category picker in the add/edit route dialog has nothing to offer yet, it
@@ -89,7 +89,7 @@ class ProwlarrDownloadDefaultsViewModel(
      * place (preserving its position in the list - editing a route doesn't change its match
      * priority).
      */
-    fun saveCategoryRoute(
+    fun saveRoute(
         existingId: String?,
         name: String,
         categoryIds: List<Int>,
@@ -99,7 +99,7 @@ class ProwlarrDownloadDefaultsViewModel(
         category: String?,
         tags: List<String>,
     ) {
-        val route = ProwlarrCategoryRoute(
+        val route = ProwlarrDownloadRoute(
             id = existingId ?: randomRouteId(),
             name = name,
             categoryIds = categoryIds,
@@ -110,33 +110,33 @@ class ProwlarrDownloadDefaultsViewModel(
             tags = tags,
         )
 
-        val current = _categoryRoutes.value
+        val current = _routes.value
         val index = current.indexOfFirst { it.id == route.id }
         val updated = if (index >= 0) {
             current.toMutableList().apply { this[index] = route }
         } else {
             current + route
         }
-        persistCategoryRoutes(updated)
+        persistRoutes(updated)
     }
 
-    fun deleteCategoryRoute(id: String) {
-        persistCategoryRoutes(_categoryRoutes.value.filterNot { it.id == id })
+    fun deleteRoute(id: String) {
+        persistRoutes(_routes.value.filterNot { it.id == id })
     }
 
     /** Moves the route at [fromIndex] to [toIndex] - list order is match priority, see [resolveProwlarrDownloadRouting]. */
-    fun moveCategoryRoute(fromIndex: Int, toIndex: Int) {
-        val current = _categoryRoutes.value
+    fun moveRoute(fromIndex: Int, toIndex: Int) {
+        val current = _routes.value
         if (fromIndex == toIndex || fromIndex !in current.indices || toIndex !in current.indices) {
             return
         }
 
-        persistCategoryRoutes(current.toMutableList().apply { add(toIndex, removeAt(fromIndex)) })
+        persistRoutes(current.toMutableList().apply { add(toIndex, removeAt(fromIndex)) })
     }
 
-    private fun persistCategoryRoutes(routes: List<ProwlarrCategoryRoute>) {
-        _categoryRoutes.value = routes
-        settingsManager.prowlarrCategoryRoutes.value = routes
+    private fun persistRoutes(routes: List<ProwlarrDownloadRoute>) {
+        _routes.value = routes
+        settingsManager.prowlarrDownloadRoutes.value = routes
     }
 
     private fun randomRouteId(): String =

@@ -62,8 +62,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.ServerConfig
 import dev.bartuzen.qbitcontroller.ui.components.ActionMenuItem
@@ -145,15 +145,18 @@ import qbitcontroller.composeapp.generated.resources.torrent_add_upload_speed_li
  * Settings screen for docs/prowlarr-download-defaults-plan.md - the always-applied "Default
  * Parameters" form (mirrors [dev.bartuzen.qbitcontroller.ui.addtorrent.AddTorrentScreen]'s field
  * set, minus the file/magnet picker and torrent-name field, which don't make sense for a shared
- * default) plus an editable "Category Routes" list that overrides just save path/category/tags for
- * results matching specific Torznab categories - see [ProwlarrCategoryRoute] KDoc for why the
- * override is scoped to just those three fields.
+ * default) plus an editable "Routes" list that overrides just save path/category/tags for results
+ * matching a route's category and/or indexer criteria - see [ProwlarrDownloadRoute] KDoc for why
+ * the override is scoped to just those three fields, and
+ * docs/prowlarr-route-and-category-grouping-plan.md section 3 for the indexer matching dimension
+ * that turned this from a category-only list into a "category and/or indexer" one (and prompted
+ * the "Category Routes" -> "Routes" label rename, section 3.5).
  *
  * Save path/category fields are still plain text, not a per-server autocomplete/dropdown like
  * AddTorrentScreen's - this was originally because these defaults needed to make sense regardless
  * of which qBittorrent server ends up handling a download (plan doc section 7). P2 feedback round
  * 1 (docs/prowlarr-p2-feedback-round1-plan.md section 3) added an explicit [ProwlarrDownloadDefaults.serverId]/
- * [ProwlarrCategoryRoute.serverId] field, so that original "server-agnostic" reasoning no longer
+ * [ProwlarrDownloadRoute.serverId] field, so that original "server-agnostic" reasoning no longer
  * strictly holds - each default/route now does pin one specific server. Turning save
  * path/category into a live dropdown backed by that server's real category list wasn't part of
  * that feedback round though, so it's left as plain text for now; worth revisiting later.
@@ -255,7 +258,7 @@ fun ProwlarrDownloadDefaultsScreen(
         isFirstLastPiecePrioritized = isFirstLastPiecePrioritized,
     )
 
-    val categoryRoutes by viewModel.categoryRoutes.collectAsStateWithLifecycle()
+    val routes by viewModel.routes.collectAsStateWithLifecycle()
     val indexers by viewModel.indexers.collectAsStateWithLifecycle()
     val standardCategoryGroups = remember(indexers) { buildStandardCategoryGroups(indexers ?: emptyList()) }
     val siteSpecificCategoryGroups = remember(indexers) { buildSiteSpecificGroups(indexers ?: emptyList()) }
@@ -527,20 +530,20 @@ fun ProwlarrDownloadDefaultsScreen(
                 style = MaterialTheme.typography.titleMedium,
             )
 
-            if (categoryRoutes.isEmpty()) {
+            if (routes.isEmpty()) {
                 Text(
                     text = stringResource(Res.string.prowlarr_download_defaults_no_routes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                categoryRoutes.forEachIndexed { index, route ->
+                routes.forEachIndexed { index, route ->
                     RouteListItem(
                         route = route,
                         canMoveUp = index > 0,
-                        canMoveDown = index < categoryRoutes.lastIndex,
-                        onMoveUp = { viewModel.moveCategoryRoute(index, index - 1) },
-                        onMoveDown = { viewModel.moveCategoryRoute(index, index + 1) },
+                        canMoveDown = index < routes.lastIndex,
+                        onMoveUp = { viewModel.moveRoute(index, index - 1) },
+                        onMoveDown = { viewModel.moveRoute(index, index + 1) },
                         onEdit = { currentDialog = RouteDialog.EditRoute(route) },
                         onDelete = { currentDialog = RouteDialog.DeleteRoute(route.id, route.name) },
                     )
@@ -573,7 +576,7 @@ fun ProwlarrDownloadDefaultsScreen(
                 servers = servers,
                 onDismiss = { currentDialog = null },
                 onConfirm = { name, categoryIds, indexerIds, routeServerId, routeSavePath, routeCategory, routeTags ->
-                    viewModel.saveCategoryRoute(
+                    viewModel.saveRoute(
                         null,
                         name,
                         categoryIds,
@@ -596,7 +599,7 @@ fun ProwlarrDownloadDefaultsScreen(
                 servers = servers,
                 onDismiss = { currentDialog = null },
                 onConfirm = { name, categoryIds, indexerIds, routeServerId, routeSavePath, routeCategory, routeTags ->
-                    viewModel.saveCategoryRoute(
+                    viewModel.saveRoute(
                         dialog.route.id,
                         name,
                         categoryIds,
@@ -615,7 +618,7 @@ fun ProwlarrDownloadDefaultsScreen(
                 routeName = dialog.routeName,
                 onDismiss = { currentDialog = null },
                 onConfirm = {
-                    viewModel.deleteCategoryRoute(dialog.routeId)
+                    viewModel.deleteRoute(dialog.routeId)
                     currentDialog = null
                 },
             )
@@ -734,7 +737,7 @@ private fun EnumDropdown(
 
 @Composable
 private fun RouteListItem(
-    route: ProwlarrCategoryRoute,
+    route: ProwlarrDownloadRoute,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
     onMoveUp: () -> Unit,
@@ -806,14 +809,14 @@ private sealed class RouteDialog {
     data object AddRoute : RouteDialog()
 
     @Serializable
-    data class EditRoute(val route: ProwlarrCategoryRoute) : RouteDialog()
+    data class EditRoute(val route: ProwlarrDownloadRoute) : RouteDialog()
 
     @Serializable
     data class DeleteRoute(val routeId: String, val routeName: String) : RouteDialog()
 }
 
 /**
- * Add/edit dialog for a single [ProwlarrCategoryRoute]. Reuses [CategorySelectionSection] (shared
+ * Add/edit dialog for a single [ProwlarrDownloadRoute]. Reuses [CategorySelectionSection] (shared
  * with the search screen's picker, see ui/prowlarr/ProwlarrCategoryPicker.kt) so selecting which
  * categories this route matches is the exact same interaction as filtering search results by
  * category - no separate picker UI to maintain, including the standard/site-specific-per-indexer
@@ -821,20 +824,22 @@ private sealed class RouteDialog {
  * [IndexerSelectionSection] (ui/prowlarr/ProwlarrIndexerPicker.kt) the same way for the indexer
  * matching dimension (plan doc section 3).
  *
- * Renamed from `CategoryRouteDialog` this round (plan doc section 3.5) - the old name read as "the
- * category-route dialog" now that a route can match on category *and/or* indexer, and it was easy
- * to confuse with the sibling `sealed class RouteDialog` (dialog *visibility* state, an unrelated
- * concept) sharing most of the same words. The rest of the plan doc's 3.5 rename table (the
- * `ProwlarrCategoryRoute` class/file, `SettingsManager`/`ViewModel` property and method names) is
- * deferred to plan step 7 - this dialog's own `existingRoute: ProwlarrCategoryRoute?` parameter
- * type keeps its current name until then.
+ * This dialog was renamed from `CategoryRouteDialog` to `DownloadRouteDialog` a round ago (plan doc
+ * section 3.5) - the old name read as "the category-route dialog" once a route could match on
+ * category *and/or* indexer, and was easy to confuse with the sibling `sealed class RouteDialog`
+ * (dialog *visibility* state, an unrelated concept) sharing most of the same words. The rest of the
+ * plan doc's 3.5 rename table - [ProwlarrDownloadRoute] itself (formerly `ProwlarrCategoryRoute`,
+ * both the class and its file), `SettingsManager.prowlarrDownloadRoutes` (formerly
+ * `prowlarrCategoryRoutes` - the underlying storage key string is unchanged either way), and this
+ * screen's `ProwlarrDownloadDefaultsViewModel` method names (`saveRoute`/`deleteRoute`/`moveRoute`)
+ * - lands in this same round, one commit later.
  *
  * [orphanCategoryIds]/[orphanIndexerIds]: if the route being edited references a category or
  * indexer id that isn't offered by/present in any currently configured indexer (that indexer was
  * since disabled/removed, or indexers just haven't finished loading yet), those ids won't render
  * as chips in either picker - but editing the route and saving shouldn't silently drop them. Both
  * are carried through untouched and merged back into the saved
- * [ProwlarrCategoryRoute.categoryIds]/[ProwlarrCategoryRoute.indexerIds] on confirm.
+ * [ProwlarrDownloadRoute.categoryIds]/[ProwlarrDownloadRoute.indexerIds] on confirm.
  *
  * Validation (plan doc section 3.4): a route needs *at least one* of categories/indexers selected,
  * not both - [matchError] only fires when the category selection (top + sub + orphan ids) *and*
@@ -844,7 +849,7 @@ private sealed class RouteDialog {
  */
 @Composable
 private fun DownloadRouteDialog(
-    existingRoute: ProwlarrCategoryRoute?,
+    existingRoute: ProwlarrDownloadRoute?,
     standardGroups: List<CategoryGroup>,
     siteSpecificIndexerGroups: List<IndexerCategoryGroup>,
     indexers: List<ProwlarrIndexer>,
@@ -885,7 +890,7 @@ private fun DownloadRouteDialog(
     // categoryIds don't record which section a category came from, only its raw id, and that's
     // still true after the standard/site-specific-per-indexer split (see plan doc section 5: the
     // grouping-by-indexer change only affects how site-specific categories are *displayed*, not
-    // what ends up in ProwlarrCategoryRoute.categoryIds).
+    // what ends up in ProwlarrDownloadRoute.categoryIds).
     val allCategoryGroups = remember(standardGroups, siteSpecificIndexerGroups) {
         standardGroups + siteSpecificIndexerGroups.flatMap { it.categories }
     }

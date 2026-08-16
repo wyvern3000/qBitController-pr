@@ -13,14 +13,14 @@ import kotlinx.serialization.Serializable
  *
  * Stored as a single JSON blob via [dev.bartuzen.qbitcontroller.data.SettingsManager]'s
  * `prowlarrDownloadDefaults` (same `jsonPreference` mechanism as `prowlarrConfig`), not a list -
- * there is always exactly one of these, used as the fallback when no [ProwlarrCategoryRoute]
+ * there is always exactly one of these, used as the fallback when no [ProwlarrDownloadRoute]
  * matches a result's categories (or when it does match but a given route field is `null`/empty -
- * see [ProwlarrCategoryRoute] KDoc).
+ * see [ProwlarrDownloadRoute] KDoc).
  */
 @Serializable
 data class ProwlarrDownloadDefaults(
     // The qBittorrent server (see dev.bartuzen.qbitcontroller.model.ServerConfig.id) results get
-    // added to when no ProwlarrCategoryRoute overrides it either - see
+    // added to when no ProwlarrDownloadRoute overrides it either - see
     // dev.bartuzen.qbitcontroller.ui.prowlarr.search.resolveProwlarrDownloadRouting. null means "not
     // set", which falls back to whichever server is currently active elsewhere in the app (the same
     // single-server behavior this had before P2 feedback round 1 added multi-server awareness here -

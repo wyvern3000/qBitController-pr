@@ -3,9 +3,9 @@ package dev.bartuzen.qbitcontroller.data
 import androidx.compose.ui.graphics.Color
 import com.materialkolor.PaletteStyle
 import com.russhwolf.settings.Settings
-import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrConfig
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadRoute
 import dev.bartuzen.qbitcontroller.ui.theme.defaultPrimaryColor
 import dev.bartuzen.qbitcontroller.ui.torrentlist.TorrentFilter
 
@@ -73,7 +73,11 @@ open class SettingsManager(
     // exactly one value while the routes are a list managed independently (add/edit/delete/reorder)
     // in the settings screen.
     val prowlarrDownloadDefaults = jsonPreference(settings, "prowlarrDownloadDefaults", ProwlarrDownloadDefaults())
-    val prowlarrCategoryRoutes = jsonPreference(settings, "prowlarrCategoryRoutes", emptyList<ProwlarrCategoryRoute>())
+    // Property renamed from prowlarrCategoryRoutes this round (docs/prowlarr-route-and-category-
+    // grouping-plan.md section 3.5) - the storage key string stays "prowlarrCategoryRoutes"
+    // unchanged, so existing saved routes keep deserializing correctly; only the Kotlin-side name
+    // changed to track ProwlarrCategoryRoute -> ProwlarrDownloadRoute.
+    val prowlarrDownloadRoutes = jsonPreference(settings, "prowlarrCategoryRoutes", emptyList<ProwlarrDownloadRoute>())
 
     // Superseded by visibleTabs below (see docs/prowlarr-p1-search-ui-and-tabs-plan.md, section
     // 4.3). Kept declared - but no longer written to - purely so the one-time migration below can

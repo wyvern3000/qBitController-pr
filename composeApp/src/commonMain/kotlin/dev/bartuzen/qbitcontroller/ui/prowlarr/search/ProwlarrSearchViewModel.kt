@@ -9,8 +9,8 @@ import dev.bartuzen.qbitcontroller.data.repositories.AddTorrentRepository
 import dev.bartuzen.qbitcontroller.data.repositories.ProwlarrRepository
 import dev.bartuzen.qbitcontroller.data.repositories.search.ProwlarrSearchRepository
 import dev.bartuzen.qbitcontroller.model.Category
-import dev.bartuzen.qbitcontroller.model.ProwlarrCategoryRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadDefaults
+import dev.bartuzen.qbitcontroller.model.ProwlarrDownloadRoute
 import dev.bartuzen.qbitcontroller.model.ProwlarrIndexer
 import dev.bartuzen.qbitcontroller.model.Search
 import dev.bartuzen.qbitcontroller.network.RequestResult
@@ -64,7 +64,7 @@ class ProwlarrSearchViewModel(
         resultIndexerId: Int?,
     ): ProwlarrResolvedDownloadRouting {
         val defaults = settingsManager.prowlarrDownloadDefaults.value
-        val routes = settingsManager.prowlarrCategoryRoutes.value
+        val routes = settingsManager.prowlarrDownloadRoutes.value
         return resolveProwlarrDownloadRouting(resultCategoryIds, resultIndexerId, routes, defaults)
     }
 
@@ -230,8 +230,8 @@ class ProwlarrSearchViewModel(
     }
 
     /**
-     * Adds [searchResult] using the user's configured Prowlarr download defaults/category routes
-     * (`SettingsManager.prowlarrDownloadDefaults`/`prowlarrCategoryRoutes`) - no per-download
+     * Adds [searchResult] using the user's configured Prowlarr download defaults/download routes
+     * (`SettingsManager.prowlarrDownloadDefaults`/`prowlarrDownloadRoutes`) - no per-download
      * popup, see docs/prowlarr-download-defaults-plan.md (this replaces the fixed-empty-defaults
      * behavior from docs/prowlarr-integration-plan.md, round 3, and formally supersedes the
      * never-implemented "jump to AddTorrentScreen every download" direction from
@@ -240,7 +240,7 @@ class ProwlarrSearchViewModel(
      *
      * [fallbackServerId] is the server currently active elsewhere in the app (see
      * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.ProwlarrSearchScreen]'s own `serverId`
-     * param) - only used when neither a matching [ProwlarrCategoryRoute] nor
+     * param) - only used when neither a matching [ProwlarrDownloadRoute] nor
      * [ProwlarrDownloadDefaults] configures a server (P2 feedback round 1, see
      * docs/prowlarr-p2-feedback-round1-plan.md section 3: a user with several qBittorrent servers
      * needs a way to say which one Prowlarr downloads land on that isn't just "whichever one
@@ -257,7 +257,7 @@ class ProwlarrSearchViewModel(
         }
 
         val defaults = settingsManager.prowlarrDownloadDefaults.value
-        val routes = settingsManager.prowlarrCategoryRoutes.value
+        val routes = settingsManager.prowlarrDownloadRoutes.value
         val routing = resolveProwlarrDownloadRouting(searchResult.categories, searchResult.indexerId, routes, defaults)
         val serverId = routing.serverId ?: fallbackServerId
         if (serverId == null) {
@@ -558,7 +558,7 @@ class ProwlarrSearchViewModel(
         data object AddTorrentError : Event()
         data object AddTorrentSuccess : Event()
 
-        // Neither a matching ProwlarrCategoryRoute nor ProwlarrDownloadDefaults configured a
+        // Neither a matching ProwlarrDownloadRoute nor ProwlarrDownloadDefaults configured a
         // server, and the app doesn't currently have one active either - see addTorrent() KDoc.
         data object NoServerAvailable : Event()
     }
@@ -573,7 +573,7 @@ class ProwlarrSearchViewModel(
  *
  * The first entry in [routes] (user-controlled priority via list order, not "most specific match"
  * or any other automatic ranking) that matches wins - a route matches when *both* of its dimensions
- * match, and an empty [ProwlarrCategoryRoute.categoryIds]/[ProwlarrCategoryRoute.indexerIds] is a
+ * match, and an empty [ProwlarrDownloadRoute.categoryIds]/[ProwlarrDownloadRoute.indexerIds] is a
  * wildcard for that one dimension (matches anything), independently of the other dimension. A
  * matched route's own `null`/empty field falls back to [defaults] for that field individually -
  * e.g. a route can override just `savePath` and still inherit the global default `category`/`tags`
@@ -590,7 +590,7 @@ class ProwlarrSearchViewModel(
 internal fun resolveProwlarrDownloadRouting(
     resultCategoryIds: List<Int>,
     resultIndexerId: Int?,
-    routes: List<ProwlarrCategoryRoute>,
+    routes: List<ProwlarrDownloadRoute>,
     defaults: ProwlarrDownloadDefaults,
 ): ProwlarrResolvedDownloadRouting {
     val route = routes.firstOrNull { route ->

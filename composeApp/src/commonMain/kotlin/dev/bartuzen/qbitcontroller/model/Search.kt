@@ -38,7 +38,7 @@ data class Search(
         // populate this, via ProwlarrSearchResult.toSearchResult(). No @SerialName since this isn't
         // part of qBittorrent's own search-plugin wire format; the default keeps decoding qBit's
         // actual API responses (which never send this field) working unchanged. Used by
-        // ProwlarrSearchViewModel.addTorrent() to pick a matching ProwlarrCategoryRoute - see
+        // ProwlarrSearchViewModel.addTorrent() to pick a matching ProwlarrDownloadRoute - see
         // docs/prowlarr-download-defaults-plan.md, section 2.3.
         val categories: List<Int> = emptyList(),
 
@@ -49,7 +49,7 @@ data class Search(
         val indexerFlags: List<String> = emptyList(),
 
         // Which Prowlarr indexer (site) this result came from - the second matching dimension for
-        // ProwlarrCategoryRoute (docs/prowlarr-route-and-category-grouping-plan.md section 3), used
+        // ProwlarrDownloadRoute (docs/prowlarr-route-and-category-grouping-plan.md section 3), used
         // by resolveProwlarrDownloadRouting() alongside [categories]. Same null/empty-for-qBit-own-
         // results rationale as [categories]/[indexerFlags] above, but nullable rather than an empty
         // list/default: unlike those two (naturally "no categories"/"no flags" when absent), a

@@ -6,7 +6,9 @@ import kotlinx.serialization.Serializable
  * A single "if the result matches these criteria, use this save path/category/tags instead" rule -
  * see docs/prowlarr-download-defaults-plan.md, section 2.2, and
  * docs/prowlarr-route-and-category-grouping-plan.md section 3 for the [indexerIds] matching
- * dimension added on top of the original [categoryIds]-only design.
+ * dimension added on top of the original [categoryIds]-only design (that section 3 also covers the
+ * rename from `ProwlarrCategoryRoute` this class used to be - the old name stopped being accurate
+ * once a route could match by indexer alone, with no category involved at all).
  *
  * Deliberately covers **only** [savePath]/[category]/[tags] - the destination-routing fields the
  * user actually asked for ("movie category to one place, music to another") - and not the full
@@ -17,7 +19,9 @@ import kotlinx.serialization.Serializable
  * double the edit UI's field count for a need that wasn't actually asked for.
  *
  * Stored as a list via [dev.bartuzen.qbitcontroller.data.SettingsManager]'s
- * `prowlarrCategoryRoutes`. Resolution is "first list entry that matches wins" (list order =
+ * `prowlarrDownloadRoutes` (Kotlin property name only - the underlying storage key string is still
+ * `"prowlarrCategoryRoutes"`, kept unchanged across this rename so existing saved data keeps
+ * deserializing correctly). Resolution is "first list entry that matches wins" (list order =
  * user-controlled priority) - see
  * [dev.bartuzen.qbitcontroller.ui.prowlarr.search.resolveProwlarrDownloadRouting] for the exact
  * matching rule across both [categoryIds] and [indexerIds]. A matched route's `null`/empty field
@@ -28,7 +32,7 @@ import kotlinx.serialization.Serializable
  * qBittorrent server while music routes to a different one).
  */
 @Serializable
-data class ProwlarrCategoryRoute(
+data class ProwlarrDownloadRoute(
     // Generated once when the route is created (see ProwlarrDownloadDefaultsViewModel.addRoute());
     // stable across edits so the settings list can locate/update/delete a specific entry without
     // relying on list position or re-deriving an id from mutable fields like name/categoryIds.
